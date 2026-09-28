@@ -6,23 +6,7 @@ import React, { useState } from 'react';
 
 
 
-
-
-
-
-
-
-
-
 import { useLocation, Link } from 'react-router-dom';
-
-
-
-
-
-
-
-
 
 
 
@@ -38,6 +22,7 @@ import {
 
 
 
+  Search,
 
 
 
@@ -45,14 +30,15 @@ import {
 
 
 
+  Bell,
 
-  Search,
 
 
 
 
 
 
+  HelpCircle,
 
 
 
@@ -60,14 +46,15 @@ import {
 
 
 
+  Shield,
 
 
-  Bell,
 
 
 
 
 
+  Server,
 
 
 
@@ -75,14 +62,15 @@ import {
 
 
 
+  Sparkles,
 
 
 
-  HelpCircle,
 
 
 
 
+  AlertTriangle,
 
 
 
@@ -90,14 +78,15 @@ import {
 
 
 
+  ChevronRight,
 
 
 
 
-  Shield,
 
 
 
+  Command,
 
 
 
@@ -105,100 +94,7 @@ import {
 
 
 
-
-
-
-
-
-  Server,
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  Sparkles,
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  AlertTriangle,
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  ChevronRight,
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  Command,
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  Wifi,
-
-
-
-
-
-
-
-
+  Wifi,
 
 
 
@@ -214,23 +110,7 @@ import {
 
 
 
-
-
-
-
-
-
-
-
 import { useApp } from '../../context/AppContext';
-
-
-
-
-
-
-
-
 
 
 
@@ -246,6 +126,7 @@ export const Header: React.FC = () => {
 
 
 
+  const location = useLocation();
 
 
 
@@ -253,14 +134,15 @@ export const Header: React.FC = () => {
 
 
 
+  const {
 
-  const location = useLocation();
 
 
 
 
 
 
+    isLiveMode,
 
 
 
@@ -268,14 +150,15 @@ export const Header: React.FC = () => {
 
 
 
+    setIsLiveMode,
 
 
-  const {
 
 
 
 
 
+    setIsSearchModalOpen,
 
 
 
@@ -283,14 +166,15 @@ export const Header: React.FC = () => {
 
 
 
+    backendStatus,
 
 
 
-    isLiveMode,
 
 
 
 
+    reviews,
 
 
 
@@ -298,14 +182,15 @@ export const Header: React.FC = () => {
 
 
 
+  } = useApp();
 
 
 
 
-    setIsLiveMode,
 
 
 
+  const [showNotifications, setShowNotifications] = useState(false);
 
 
 
@@ -313,14 +198,15 @@ export const Header: React.FC = () => {
 
 
 
+  const [showHelp, setShowHelp] = useState(false);
 
 
 
 
 
-    setIsSearchModalOpen,
 
 
+  // Breadcrumbs
 
 
 
@@ -328,14 +214,15 @@ export const Header: React.FC = () => {
 
 
 
+  const path = location.pathname;
 
 
 
 
 
 
-    backendStatus,
 
+  let pageName = 'Impact Assessment';
 
 
 
@@ -343,6 +230,7 @@ export const Header: React.FC = () => {
 
 
 
+  let section = 'Document Lineage';
 
 
 
@@ -350,7 +238,7 @@ export const Header: React.FC = () => {
 
 
 
-    reviews,
+  if (path === '/') {
 
 
 
@@ -358,6 +246,7 @@ export const Header: React.FC = () => {
 
 
 
+    section = 'Governance';
 
 
 
@@ -365,14 +254,15 @@ export const Header: React.FC = () => {
 
 
 
+    pageName = 'Overview';
 
-  } = useApp();
 
 
 
 
 
 
+  } else if (path.startsWith('/documents')) {
 
 
 
@@ -380,14 +270,15 @@ export const Header: React.FC = () => {
 
 
 
+    section = 'Governance';
 
 
-  const [showNotifications, setShowNotifications] = useState(false);
 
 
 
 
 
+    pageName = path.includes('/compare')
 
 
 
@@ -395,14 +286,15 @@ export const Header: React.FC = () => {
 
 
 
+      ? 'Compare Versions'
 
 
 
-  const [showHelp, setShowHelp] = useState(false);
 
 
 
 
+      : 'Documents';
 
 
 
@@ -410,14 +302,15 @@ export const Header: React.FC = () => {
 
 
 
+  } else if (path.startsWith('/assistant')) {
 
 
 
 
-  // Breadcrumbs
 
 
 
+    section = 'Governance';
 
 
 
@@ -425,14 +318,15 @@ export const Header: React.FC = () => {
 
 
 
+    pageName = 'Knowledge Assistant';
 
 
 
 
 
-  const path = location.pathname;
 
 
+  } else if (path.startsWith('/impact')) {
 
 
 
@@ -440,14 +334,15 @@ export const Header: React.FC = () => {
 
 
 
+    section = 'Governance';
 
 
 
 
 
 
-  let pageName = 'Impact Assessment';
 
+    pageName = 'Impact Analysis';
 
 
 
@@ -455,6 +350,7 @@ export const Header: React.FC = () => {
 
 
 
+  } else if (path.startsWith('/reviews')) {
 
 
 
@@ -462,7 +358,7 @@ export const Header: React.FC = () => {
 
 
 
-  let section = 'Document Lineage';
+    section = 'Governance';
 
 
 
@@ -470,6 +366,7 @@ export const Header: React.FC = () => {
 
 
 
+    pageName = 'Review Center';
 
 
 
@@ -477,14 +374,15 @@ export const Header: React.FC = () => {
 
 
 
+  } else if (path.startsWith('/audit')) {
 
-  if (path === '/') {
 
 
 
 
 
 
+    section = 'Governance';
 
 
 
@@ -492,14 +390,15 @@ export const Header: React.FC = () => {
 
 
 
+    pageName = 'Audit Log';
 
 
-    section = 'Governance';
 
 
 
 
 
+  } else if (path.startsWith('/settings')) {
 
 
 
@@ -507,14 +406,15 @@ export const Header: React.FC = () => {
 
 
 
+    section = 'System';
 
 
 
-    pageName = 'Overview';
 
 
 
 
+    pageName = 'Settings & Diagnostics';
 
 
 
@@ -522,14 +422,15 @@ export const Header: React.FC = () => {
 
 
 
+  }
 
 
 
 
-  } else if (path.startsWith('/documents')) {
 
 
 
+  const pendingReviews = reviews.filter(
 
 
 
@@ -537,14 +438,15 @@ export const Header: React.FC = () => {
 
 
 
+    (review) => review.status === 'Pending'
 
 
 
 
 
-    section = 'Governance';
 
 
+  );
 
 
 
@@ -552,15 +454,17 @@ export const Header: React.FC = () => {
 
 
 
+  return (
 
 
 
 
 
 
-    pageName = path.includes('/compare')
 
+    <header className="fixed top-0 left-[248px] right-0 h-[76px] z-30 px-7 flex items-center justify-between border-b border-[#3A3445] bg-gradient-to-r from-[#17151F]/98 via-[#211B2B]/98 to-[#18171F]/98 backdrop-blur-2xl shadow-[0_12px_36px_rgba(20,16,28,0.24)] before:pointer-events-none before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_16%\_0%,rgba(183,243,74,0.16),transparent_25%),radial-gradient(circle_at_82%\_0%,rgba(244,114,182,0.11),transparent_24%)]">
 
+      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#A3E635]/85 via-[#A78BFA]/80 to-[#F472B6]/90 shadow-[0_0_16px_rgba(244,114,182,0.28)]" />
 
 
 
@@ -568,14 +472,15 @@ export const Header: React.FC = () => {
 
 
 
+      {/* LEFT — Breadcrumb */}
 
 
 
 
 
 
-      ? 'Compare Versions'
 
+      <div className="relative z-10 flex items-center gap-3 min-w-0">
 
 
 
@@ -583,6 +488,7 @@ export const Header: React.FC = () => {
 
 
 
+        <div className="relative w-10 h-10 rounded-[14px] bg-gradient-to-br from-[#A3E635] via-[#C4B5FD] to-[#F472B6] border border-white/15 flex items-center justify-center shadow-[0_8px_22px_rgba(163,230,53,0.16)]">
 
 
 
@@ -590,7 +496,7 @@ export const Header: React.FC = () => {
 
 
 
-      : 'Documents';
+          <Shield className="w-4 h-4 text-[#17151F]" />
 
 
 
@@ -598,6 +504,7 @@ export const Header: React.FC = () => {
 
 
 
+        </div>
 
 
 
@@ -605,14 +512,15 @@ export const Header: React.FC = () => {
 
 
 
+        <div className="flex flex-col">
 
-  } else if (path.startsWith('/assistant')) {
 
 
 
 
 
 
+          <div className="flex items-center gap-1.5 text-[11px]">
 
 
 
@@ -620,14 +528,15 @@ export const Header: React.FC = () => {
 
 
 
+            <span className="text-[#AAA2B5] font-medium">
 
 
-    section = 'Governance';
 
 
 
 
 
+              {section}
 
 
 
@@ -635,14 +544,15 @@ export const Header: React.FC = () => {
 
 
 
+            </span>
 
 
 
-    pageName = 'Knowledge Assistant';
 
 
 
 
+            <ChevronRight className="w-3 h-3 text-[#6F687A]" />
 
 
 
@@ -650,14 +560,15 @@ export const Header: React.FC = () => {
 
 
 
+            <span className="text-[#F8F7FB] font-bold">
 
 
 
 
-  } else if (path.startsWith('/impact')) {
 
 
 
+              {pageName}
 
 
 
@@ -665,14 +576,15 @@ export const Header: React.FC = () => {
 
 
 
+            </span>
 
 
 
 
 
-    section = 'Governance';
 
 
+          </div>
 
 
 
@@ -680,14 +592,15 @@ export const Header: React.FC = () => {
 
 
 
+          <div className="flex items-center gap-1.5 mt-0.5">
 
 
 
 
 
 
-    pageName = 'Impact Analysis';
 
+            <span className="w-1.5 h-1.5 rounded-full bg-[#A3E635]" />
 
 
 
@@ -695,6 +608,7 @@ export const Header: React.FC = () => {
 
 
 
+            <span className="text-[9px] uppercase tracking-[0.14em] font-semibold text-[#AAA2B5]">
 
 
 
@@ -702,7 +616,7 @@ export const Header: React.FC = () => {
 
 
 
-  } else if (path.startsWith('/reviews')) {
+              Knowledge Integrity Console
 
 
 
@@ -710,6 +624,7 @@ export const Header: React.FC = () => {
 
 
 
+            </span>
 
 
 
@@ -717,14 +632,15 @@ export const Header: React.FC = () => {
 
 
 
+          </div>
 
-    section = 'Governance';
 
 
 
 
 
 
+        </div>
 
 
 
@@ -732,14 +648,15 @@ export const Header: React.FC = () => {
 
 
 
+      </div>
 
 
-    pageName = 'Review Center';
 
 
 
 
 
+      {/* RIGHT */}
 
 
 
@@ -747,14 +664,15 @@ export const Header: React.FC = () => {
 
 
 
+      <div className="relative z-10 flex items-center gap-3">
 
 
 
-  } else if (path.startsWith('/audit')) {
 
 
 
 
+        {/* Search */}
 
 
 
@@ -762,14 +680,15 @@ export const Header: React.FC = () => {
 
 
 
+        <button
 
 
 
 
-    section = 'Governance';
 
 
 
+          onClick={() => setIsSearchModalOpen(true)}
 
 
 
@@ -777,14 +696,15 @@ export const Header: React.FC = () => {
 
 
 
+          className="group relative w-[310px] h-10 pl-10 pr-14 bg-white/[0.07] border border-white/10 hover:border-[#A78BFA]/55 rounded-[14px] text-xs text-left text-[#B8B1C3] flex items-center transition-all duration-300 shadow-[0_5px_16px_rgba(41,35,61,0.045)] hover:-translate-y-0.5 hover:shadow-[0_8px_22px_rgba(41,35,61,0.07)]"
 
 
 
 
 
-    pageName = 'Audit Log';
 
 
+        >
 
 
 
@@ -792,14 +712,15 @@ export const Header: React.FC = () => {
 
 
 
+          <Search className="w-4 h-4 absolute left-3.5 text-[#8F879B] group-hover:text-[#C4B5FD] transition-colors" />
 
 
 
 
 
 
-  } else if (path.startsWith('/settings')) {
 
+          <span className="truncate">
 
 
 
@@ -807,6 +728,7 @@ export const Header: React.FC = () => {
 
 
 
+            Search knowledge, answers, alerts...
 
 
 
@@ -814,7 +736,7 @@ export const Header: React.FC = () => {
 
 
 
-    section = 'System';
+          </span>
 
 
 
@@ -822,6 +744,7 @@ export const Header: React.FC = () => {
 
 
 
+          <kbd className="absolute right-2.5 h-6 px-2 rounded-lg bg-white/[0.08] border border-white/10 text-[9px] font-mono text-[#C9C2D2] flex items-center gap-1 shadow-sm">
 
 
 
@@ -829,14 +752,15 @@ export const Header: React.FC = () => {
 
 
 
+            <Command className="w-2.5 h-2.5" />
 
-    pageName = 'Settings & Diagnostics';
 
 
 
 
 
 
+            K
 
 
 
@@ -844,14 +768,15 @@ export const Header: React.FC = () => {
 
 
 
+          </kbd>
 
 
-  }
 
 
 
 
 
+        </button>
 
 
 
@@ -859,14 +784,15 @@ export const Header: React.FC = () => {
 
 
 
+        {/* Demo / Live switch */}
 
 
 
-  const pendingReviews = reviews.filter(
 
 
 
 
+        <div className="flex items-center bg-white/[0.06] border border-white/10 rounded-[14px] p-1 shadow-[0_5px_16px_rgba(41,35,61,0.045)] backdrop-blur-xl">
 
 
 
@@ -874,14 +800,15 @@ export const Header: React.FC = () => {
 
 
 
+          {/* Demo */}
 
 
 
 
-    (review) => review.status === 'Pending'
 
 
 
+          <button
 
 
 
@@ -889,14 +816,15 @@ export const Header: React.FC = () => {
 
 
 
+            type="button"
 
 
 
 
 
-  );
 
 
+            onClick={() => setIsLiveMode(false)}
 
 
 
@@ -904,14 +832,15 @@ export const Header: React.FC = () => {
 
 
 
+            className={`h-8 px-3 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition-all duration-200 ${
 
 
 
 
 
 
-  return (
 
+              !isLiveMode
 
 
 
@@ -919,6 +848,7 @@ export const Header: React.FC = () => {
 
 
 
+                ? 'bg-gradient-to-r from-[#FFF7ED] to-[#FDF2F8] text-[#C76A00] border border-[#FED7AA] shadow-sm'
 
 
 
@@ -926,20 +856,15 @@ export const Header: React.FC = () => {
 
 
 
-    <header className="fixed top-0 left-[248px] right-0 z-30 flex h-[76px] items-center justify-between overflow-visible border-b border-[#E4D9EE]/90 bg-[linear-gradient(105deg,rgba(255,255,255,0.94)_0%,rgba(247,243,255,0.94)_34%,rgba(255,244,250,0.92)_68%,rgba(248,255,237,0.92)_100%)] px-7 shadow-[0_10px_34px_rgba(80,55,110,0.09)] backdrop-blur-2xl">
+                : 'text-[#AAA2B5] border border-transparent hover:bg-white/[0.06] hover:text-white'
 
 
 
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-20 left-[8%] h-40 w-40 rounded-full bg-[#C4B5FD]/28 blur-[48px]" />
-        <div className="absolute -top-24 right-[27%] h-44 w-44 rounded-full bg-[#F9A8D4]/25 blur-[52px]" />
-        <div className="absolute -top-20 right-[5%] h-36 w-36 rounded-full bg-[#D9F99D]/25 blur-[48px]" />
-      </div>
-      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#8B5CF6]/70 via-[#EC4899]/65 to-[#A3E635]/75" />
 
 
 
 
+            }`}
 
 
 
@@ -947,14 +872,15 @@ export const Header: React.FC = () => {
 
 
 
+            title="Use illustrative demo data"
 
 
 
 
-      {/* LEFT — Breadcrumb */}
 
 
 
+          >
 
 
 
@@ -962,14 +888,15 @@ export const Header: React.FC = () => {
 
 
 
+            <Sparkles className="w-3.5 h-3.5" />
 
 
 
 
 
-      <div className="relative z-10 flex items-center gap-3 min-w-0">
 
 
+            Demo
 
 
 
@@ -977,14 +904,15 @@ export const Header: React.FC = () => {
 
 
 
+          </button>
 
 
 
 
 
 
-        <div className="relative w-11 h-11 rounded-[16px] bg-gradient-to-br from-[#C4B5FD] via-[#F9A8D4] to-[#D9F99D] border border-white/90 flex items-center justify-center shadow-[0_10px_26px_rgba(139,92,246,0.18)] ring-1 ring-[#8B5CF6]/10">
 
+          {/* Live */}
 
 
 
@@ -992,6 +920,7 @@ export const Header: React.FC = () => {
 
 
 
+          <button
 
 
 
@@ -999,7 +928,7 @@ export const Header: React.FC = () => {
 
 
 
-          <Shield className="w-[18px] h-[18px] text-[#29233D]" />
+            type="button"
 
 
 
@@ -1007,6 +936,7 @@ export const Header: React.FC = () => {
 
 
 
+            onClick={() => setIsLiveMode(true)}
 
 
 
@@ -1014,14 +944,15 @@ export const Header: React.FC = () => {
 
 
 
+            className={`h-8 px-3 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition-all duration-200 ${
 
-        </div>
 
 
 
 
 
 
+              isLiveMode
 
 
 
@@ -1029,14 +960,15 @@ export const Header: React.FC = () => {
 
 
 
+                ? backendStatus.isConnected
 
 
-        <div className="flex flex-col">
 
 
 
 
 
+                  ? 'bg-gradient-to-r from-[#F7FEE7] to-[#FCE7F3] text-[#4D7C0F] border border-[#D9F99D] shadow-sm'
 
 
 
@@ -1044,14 +976,15 @@ export const Header: React.FC = () => {
 
 
 
+                  : 'bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA] shadow-sm'
 
 
 
-          <div className="flex items-center gap-1.5 text-[11px]">
 
 
 
 
+                : 'text-[#AAA2B5] border border-transparent hover:bg-white/[0.06] hover:text-white'
 
 
 
@@ -1059,14 +992,15 @@ export const Header: React.FC = () => {
 
 
 
+            }`}
 
 
 
 
-            <span className="text-[#938DA2] font-medium">
 
 
 
+            title="Connect to local FastAPI backend"
 
 
 
@@ -1074,14 +1008,15 @@ export const Header: React.FC = () => {
 
 
 
+          >
 
 
 
 
 
-              {section}
 
 
+            <Server className="w-3.5 h-3.5" />
 
 
 
@@ -1089,14 +1024,15 @@ export const Header: React.FC = () => {
 
 
 
+            <span>Live</span>
 
 
 
 
 
 
-            </span>
 
+            <span
 
 
 
@@ -1104,6 +1040,7 @@ export const Header: React.FC = () => {
 
 
 
+              className={`w-1.5 h-1.5 rounded-full ${
 
 
 
@@ -1111,7 +1048,7 @@ export const Header: React.FC = () => {
 
 
 
-            <ChevronRight className="w-3 h-3 text-[#C9C2CD]" />
+                backendStatus.isConnected
 
 
 
@@ -1119,6 +1056,7 @@ export const Header: React.FC = () => {
 
 
 
+                  ? 'bg-[#84CC16]'
 
 
 
@@ -1126,14 +1064,15 @@ export const Header: React.FC = () => {
 
 
 
+                  : 'bg-[#EF4444]'
 
-            <span className="text-[#29233D] font-bold">
 
 
 
 
 
 
+              }`}
 
 
 
@@ -1141,14 +1080,15 @@ export const Header: React.FC = () => {
 
 
 
+            />
 
 
-              {pageName}
 
 
 
 
 
+          </button>
 
 
 
@@ -1156,14 +1096,15 @@ export const Header: React.FC = () => {
 
 
 
+        </div>
 
 
 
-            </span>
 
 
 
 
+        {/* Connection indicator */}
 
 
 
@@ -1171,14 +1112,15 @@ export const Header: React.FC = () => {
 
 
 
+        {isLiveMode && backendStatus.isConnected && (
 
 
 
 
-          </div>
 
 
 
+          <div
 
 
 
@@ -1186,14 +1128,15 @@ export const Header: React.FC = () => {
 
 
 
+            className="hidden xl:flex items-center gap-1.5 h-9 px-2.5 rounded-xl bg-gradient-to-r from-[#A3E635]/15 to-[#A3E635]/5 border border-[#A3E635]/30 shadow-sm"
 
 
 
 
 
-          <div className="flex items-center gap-1.5 mt-0.5">
 
 
+            title="FastAPI backend connected"
 
 
 
@@ -1201,14 +1144,15 @@ export const Header: React.FC = () => {
 
 
 
+          >
 
 
 
 
 
 
-            <span className="w-1.5 h-1.5 rounded-full bg-[#A3E635]" />
 
+            <Wifi className="w-3.5 h-3.5 text-[#65A30D]" />
 
 
 
@@ -1216,6 +1160,7 @@ export const Header: React.FC = () => {
 
 
 
+            <span className="text-[9px] font-mono font-bold text-[#65A30D]">
 
 
 
@@ -1223,7 +1168,7 @@ export const Header: React.FC = () => {
 
 
 
-            <span className="text-[9px] uppercase tracking-[0.14em] font-semibold text-[#938DA2]">
+              {backendStatus.latencyMs ?? 18}ms
 
 
 
@@ -1231,6 +1176,7 @@ export const Header: React.FC = () => {
 
 
 
+            </span>
 
 
 
@@ -1238,14 +1184,15 @@ export const Header: React.FC = () => {
 
 
 
+          </div>
 
-              Knowledge Integrity Console
 
 
 
 
 
 
+        )}
 
 
 
@@ -1253,14 +1200,15 @@ export const Header: React.FC = () => {
 
 
 
+        {/* Notifications */}
 
 
-            </span>
 
 
 
 
 
+        <div className="relative">
 
 
 
@@ -1268,14 +1216,15 @@ export const Header: React.FC = () => {
 
 
 
+          <button
 
 
 
-          </div>
 
 
 
 
+            onClick={() => {
 
 
 
@@ -1283,14 +1232,15 @@ export const Header: React.FC = () => {
 
 
 
+              setShowNotifications(!showNotifications);
 
 
 
 
-        </div>
 
 
 
+              setShowHelp(false);
 
 
 
@@ -1298,14 +1248,15 @@ export const Header: React.FC = () => {
 
 
 
+            }}
 
 
 
 
 
-      </div>
 
 
+            className="relative w-10 h-10 flex items-center justify-center rounded-[13px] border border-white/10 bg-white/[0.06] text-[#C5BECE] hover:text-[#DB2777] hover:bg-gradient-to-br hover:from-[#F472B6]/15 hover:to-[#A3E635]/10 hover:border-[#F472B6]/35 transition-all duration-300 shadow-[0_5px_16px_rgba(73,55,94,0.05)] hover:-translate-y-0.5"
 
 
 
@@ -1313,14 +1264,15 @@ export const Header: React.FC = () => {
 
 
 
+            title="Notifications"
 
 
 
 
 
 
-      {/* RIGHT */}
 
+          >
 
 
 
@@ -1328,6 +1280,7 @@ export const Header: React.FC = () => {
 
 
 
+            <Bell className="w-4 h-4" />
 
 
 
@@ -1335,7 +1288,7 @@ export const Header: React.FC = () => {
 
 
 
-      <div className="relative z-10 flex items-center gap-3">
+            {pendingReviews.length > 0 && (
 
 
 
@@ -1343,6 +1296,7 @@ export const Header: React.FC = () => {
 
 
 
+              <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-[#EF4444] text-white text-[9px] font-bold flex items-center justify-center border-2 border-white">
 
 
 
@@ -1350,14 +1304,15 @@ export const Header: React.FC = () => {
 
 
 
+                {pendingReviews.length}
 
-        {/* Search */}
 
 
 
 
 
 
+              </span>
 
 
 
@@ -1365,14 +1320,15 @@ export const Header: React.FC = () => {
 
 
 
+            )}
 
 
-        <button
 
 
 
 
 
+          </button>
 
 
 
@@ -1380,14 +1336,15 @@ export const Header: React.FC = () => {
 
 
 
+          {/* Notifications Dropdown */}
 
 
 
-          onClick={() => setIsSearchModalOpen(true)}
 
 
 
 
+          {showNotifications && (
 
 
 
@@ -1395,14 +1352,15 @@ export const Header: React.FC = () => {
 
 
 
+            <div className="absolute right-0 mt-3 w-[340px] bg-gradient-to-br from-white/98 via-[#FFF9FC]/98 to-[#F7FEE7]/95 border border-white rounded-[20px] shadow-[0_24px_70px_rgba(73,55,94,0.16)] p-3 z-50 animate-in fade-in duration-150 backdrop-blur-2xl">
 
 
 
 
-          className="group relative w-[330px] h-11 pl-11 pr-14 bg-white/82 border border-white/90 hover:border-[#C4B5FD] rounded-[16px] text-xs text-left text-[#81778D] flex items-center transition-all duration-300 shadow-[0_8px_24px_rgba(80,55,110,0.08)] ring-1 ring-[#E9DFF1]/70 hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(139,92,246,0.12)] hover:ring-[#C4B5FD]/70 backdrop-blur-xl"
 
 
 
+              <div className="flex items-center justify-between px-1 pb-3 border-b border-[#F1ECE7]">
 
 
 
@@ -1410,14 +1368,15 @@ export const Header: React.FC = () => {
 
 
 
+                <div>
 
 
 
 
 
-        >
 
 
+                  <span className="text-xs font-bold text-[#29233D] block">
 
 
 
@@ -1425,14 +1384,15 @@ export const Header: React.FC = () => {
 
 
 
+                    Integrity Alerts
 
 
 
 
 
 
-          <Search className="w-4 h-4 absolute left-4 text-[#8B5CF6] group-hover:text-[#EC4899] transition-colors" />
 
+                  </span>
 
 
 
@@ -1440,6 +1400,7 @@ export const Header: React.FC = () => {
 
 
 
+                  <span className="text-[9px] text-[#938DA2]">
 
 
 
@@ -1447,7 +1408,7 @@ export const Header: React.FC = () => {
 
 
 
-          <span className="truncate">
+                    Human review & knowledge triage
 
 
 
@@ -1455,6 +1416,7 @@ export const Header: React.FC = () => {
 
 
 
+                  </span>
 
 
 
@@ -1462,14 +1424,15 @@ export const Header: React.FC = () => {
 
 
 
+                </div>
 
-            Search knowledge, answers, alerts...
 
 
 
 
 
 
+                <span className="px-2 py-1 rounded-lg bg-[#FFF7ED] text-[#D97706] text-[9px] font-bold border border-[#FED7AA]">
 
 
 
@@ -1477,14 +1440,15 @@ export const Header: React.FC = () => {
 
 
 
+                  {pendingReviews.length} pending
 
 
-          </span>
 
 
 
 
 
+                </span>
 
 
 
@@ -1492,14 +1456,15 @@ export const Header: React.FC = () => {
 
 
 
+              </div>
 
 
 
-          <kbd className="absolute right-2.5 h-6 px-2 rounded-lg bg-[#F7F3FB] border border-[#E4D9EE] text-[9px] font-mono text-[#716A7C] flex items-center gap-1 shadow-sm">
 
 
 
 
+              <div className="space-y-2 mt-2 max-h-64 overflow-y-auto">
 
 
 
@@ -1507,14 +1472,15 @@ export const Header: React.FC = () => {
 
 
 
+                {pendingReviews.length === 0 ? (
 
 
 
 
-            <Command className="w-2.5 h-2.5" />
 
 
 
+                  <div className="py-8 text-center">
 
 
 
@@ -1522,14 +1488,15 @@ export const Header: React.FC = () => {
 
 
 
+                    <div className="w-10 h-10 mx-auto rounded-full bg-[#F7FEE7] border border-[#D9F99D] flex items-center justify-center">
 
 
 
 
 
-            K
 
 
+                      <Shield className="w-4 h-4 text-[#65A30D]" />
 
 
 
@@ -1537,14 +1504,15 @@ export const Header: React.FC = () => {
 
 
 
+                    </div>
 
 
 
 
 
 
-          </kbd>
 
+                    <p className="text-xs font-semibold text-[#29233D] mt-2">
 
 
 
@@ -1552,6 +1520,7 @@ export const Header: React.FC = () => {
 
 
 
+                      Queue is clear
 
 
 
@@ -1559,7 +1528,7 @@ export const Header: React.FC = () => {
 
 
 
-        </button>
+                    </p>
 
 
 
@@ -1567,6 +1536,7 @@ export const Header: React.FC = () => {
 
 
 
+                    <p className="text-[10px] text-[#938DA2] mt-1">
 
 
 
@@ -1574,14 +1544,15 @@ export const Header: React.FC = () => {
 
 
 
+                      No pending integrity reviews.
 
-        {/* Demo / Live switch */}
 
 
 
 
 
 
+                    </p>
 
 
 
@@ -1589,14 +1560,15 @@ export const Header: React.FC = () => {
 
 
 
+                  </div>
 
 
-        <div className="flex items-center bg-white/76 border border-white/90 rounded-[16px] p-1 shadow-[0_8px_24px_rgba(80,55,110,0.08)] ring-1 ring-[#E9DFF1]/70 backdrop-blur-xl">
 
 
 
 
 
+                ) : (
 
 
 
@@ -1604,14 +1576,15 @@ export const Header: React.FC = () => {
 
 
 
+                  pendingReviews.map((rev) => (
 
 
 
-          {/* Demo */}
 
 
 
 
+                    <Link
 
 
 
@@ -1619,14 +1592,15 @@ export const Header: React.FC = () => {
 
 
 
+                      key={rev.id}
 
 
 
 
-          <button
 
 
 
+                      to="/reviews"
 
 
 
@@ -1634,14 +1608,15 @@ export const Header: React.FC = () => {
 
 
 
+                      onClick={() => setShowNotifications(false)}
 
 
 
 
 
-            type="button"
 
 
+                      className="block p-3 rounded-xl bg-[#FFFDF8] border border-transparent hover:border-[#FDE68A] hover:bg-[#FFFBEB] transition-all"
 
 
 
@@ -1649,14 +1624,15 @@ export const Header: React.FC = () => {
 
 
 
+                    >
 
 
 
 
 
 
-            onClick={() => setIsLiveMode(false)}
 
+                      <div className="flex items-center gap-2 text-xs font-semibold text-[#29233D]">
 
 
 
@@ -1664,6 +1640,7 @@ export const Header: React.FC = () => {
 
 
 
+                        <div className="w-7 h-7 rounded-lg bg-[#FFF7ED] border border-[#FED7AA] flex items-center justify-center shrink-0">
 
 
 
@@ -1671,7 +1648,7 @@ export const Header: React.FC = () => {
 
 
 
-            className={`h-8 px-3 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition-all duration-200 ${
+                          <AlertTriangle className="w-3.5 h-3.5 text-[#D97706]" />
 
 
 
@@ -1679,6 +1656,7 @@ export const Header: React.FC = () => {
 
 
 
+                        </div>
 
 
 
@@ -1686,14 +1664,15 @@ export const Header: React.FC = () => {
 
 
 
+                        <span className="truncate">
 
-              !isLiveMode
 
 
 
 
 
 
+                          {rev.documentTitle}
 
 
 
@@ -1701,14 +1680,15 @@ export const Header: React.FC = () => {
 
 
 
+                        </span>
 
 
-                ? 'bg-gradient-to-r from-[#F5F3FF] via-[#FDF2F8] to-[#FFF7ED] text-[#7C3AED] border border-[#DDD6FE] shadow-sm'
 
 
 
 
 
+                      </div>
 
 
 
@@ -1716,14 +1696,15 @@ export const Header: React.FC = () => {
 
 
 
+                      <p className="text-[10px] text-[#716A7C] mt-1.5 ml-9 line-clamp-2">
 
 
 
-                : 'text-[#938DA2] border border-transparent hover:text-[#29233D]'
 
 
 
 
+                        {rev.issueSummary}
 
 
 
@@ -1731,14 +1712,15 @@ export const Header: React.FC = () => {
 
 
 
+                      </p>
 
 
 
 
-            }`}
 
 
 
+                      <span className="text-[9px] text-[#938DA2] mt-1 ml-9 block">
 
 
 
@@ -1746,14 +1728,15 @@ export const Header: React.FC = () => {
 
 
 
+                        {rev.createdAt}
 
 
 
 
 
-            title="Use illustrative demo data"
 
 
+                      </span>
 
 
 
@@ -1761,14 +1744,15 @@ export const Header: React.FC = () => {
 
 
 
+                    </Link>
 
 
 
 
 
 
-          >
 
+                  ))
 
 
 
@@ -1776,6 +1760,7 @@ export const Header: React.FC = () => {
 
 
 
+                )}
 
 
 
@@ -1783,7 +1768,7 @@ export const Header: React.FC = () => {
 
 
 
-            <Sparkles className="w-3.5 h-3.5" />
+              </div>
 
 
 
@@ -1791,6 +1776,7 @@ export const Header: React.FC = () => {
 
 
 
+              <Link
 
 
 
@@ -1798,14 +1784,15 @@ export const Header: React.FC = () => {
 
 
 
+                to="/reviews"
 
-            Demo
 
 
 
 
 
 
+                onClick={() => setShowNotifications(false)}
 
 
 
@@ -1813,14 +1800,15 @@ export const Header: React.FC = () => {
 
 
 
+                className="mt-3 block text-center py-2.5 rounded-xl bg-gradient-to-r from-[#BEF264] via-[#D9F99D] to-[#F9A8D4] border border-white text-[10px] font-black text-[#29233D] hover:brightness-95 transition-all shadow-sm"
 
 
-          </button>
 
 
 
 
 
+              >
 
 
 
@@ -1828,14 +1816,15 @@ export const Header: React.FC = () => {
 
 
 
+                Open Human Review Center →
 
 
 
-          {/* Live */}
 
 
 
 
+              </Link>
 
 
 
@@ -1843,14 +1832,15 @@ export const Header: React.FC = () => {
 
 
 
+            </div>
 
 
 
 
-          <button
 
 
 
+          )}
 
 
 
@@ -1858,14 +1848,15 @@ export const Header: React.FC = () => {
 
 
 
+        </div>
 
 
 
 
 
-            type="button"
 
 
+        {/* Help */}
 
 
 
@@ -1873,14 +1864,15 @@ export const Header: React.FC = () => {
 
 
 
+        <div className="relative">
 
 
 
 
 
 
-            onClick={() => setIsLiveMode(true)}
 
+          <button
 
 
 
@@ -1888,6 +1880,7 @@ export const Header: React.FC = () => {
 
 
 
+            onClick={() => {
 
 
 
@@ -1895,7 +1888,7 @@ export const Header: React.FC = () => {
 
 
 
-            className={`h-8 px-3 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition-all duration-200 ${
+              setShowHelp(!showHelp);
 
 
 
@@ -1903,6 +1896,7 @@ export const Header: React.FC = () => {
 
 
 
+              setShowNotifications(false);
 
 
 
@@ -1910,14 +1904,15 @@ export const Header: React.FC = () => {
 
 
 
+            }}
 
-              isLiveMode
 
 
 
 
 
 
+            className="w-10 h-10 flex items-center justify-center rounded-[13px] border border-white/10 bg-white/[0.06] text-[#C5BECE] hover:text-[#7C3AED] hover:bg-gradient-to-br hover:from-[#A78BFA]/15 hover:to-[#F472B6]/10 hover:border-[#A78BFA]/35 transition-all duration-300 shadow-[0_5px_16px_rgba(73,55,94,0.05)] hover:-translate-y-0.5"
 
 
 
@@ -1925,14 +1920,15 @@ export const Header: React.FC = () => {
 
 
 
+            title="Architecture & Help"
 
 
-                ? backendStatus.isConnected
 
 
 
 
 
+          >
 
 
 
@@ -1940,14 +1936,15 @@ export const Header: React.FC = () => {
 
 
 
+            <HelpCircle className="w-4 h-4" />
 
 
 
-                  ? 'bg-gradient-to-r from-[#F7FEE7] to-[#F0FDF4] text-[#4D7C0F] border border-[#D9F99D] shadow-sm'
 
 
 
 
+          </button>
 
 
 
@@ -1955,14 +1952,15 @@ export const Header: React.FC = () => {
 
 
 
+          {showHelp && (
 
 
 
 
-                  : 'bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA] shadow-sm'
 
 
 
+            <div className="absolute right-0 mt-3 w-[350px] bg-gradient-to-br from-white/98 via-[#FAF8FF]/98 to-[#FFF7FB]/95 border border-white rounded-[20px] shadow-[0_24px_70px_rgba(73,55,94,0.16)] p-4 z-50 animate-in fade-in duration-150 backdrop-blur-2xl">
 
 
 
@@ -1970,14 +1968,15 @@ export const Header: React.FC = () => {
 
 
 
+              <div className="flex items-center gap-3">
 
 
 
 
 
-                : 'text-[#938DA2] border border-transparent hover:text-[#29233D]'
 
 
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D9F99D] to-[#F9A8D4] flex items-center justify-center">
 
 
 
@@ -1985,14 +1984,15 @@ export const Header: React.FC = () => {
 
 
 
+                  <Shield className="w-5 h-5 text-[#29233D]" />
 
 
 
 
 
 
-            }`}
 
+                </div>
 
 
 
@@ -2000,6 +2000,7 @@ export const Header: React.FC = () => {
 
 
 
+                <div>
 
 
 
@@ -2007,7 +2008,7 @@ export const Header: React.FC = () => {
 
 
 
-            title="Connect to local FastAPI backend"
+                  <h4 className="text-sm font-bold text-[#29233D]">
 
 
 
@@ -2015,6 +2016,7 @@ export const Header: React.FC = () => {
 
 
 
+                    Sovereign Black Ice
 
 
 
@@ -2022,14 +2024,15 @@ export const Header: React.FC = () => {
 
 
 
+                  </h4>
 
-          >
 
 
 
 
 
 
+                  <span className="text-[9px] uppercase tracking-wider text-[#938DA2]">
 
 
 
@@ -2037,14 +2040,15 @@ export const Header: React.FC = () => {
 
 
 
+                    Knowledge Integrity Layer
 
 
-            <Server className="w-3.5 h-3.5" />
 
 
 
 
 
+                  </span>
 
 
 
@@ -2052,14 +2056,15 @@ export const Header: React.FC = () => {
 
 
 
+                </div>
 
 
 
-            <span>Live</span>
 
 
 
 
+              </div>
 
 
 
@@ -2067,14 +2072,15 @@ export const Header: React.FC = () => {
 
 
 
+              <p className="text-[11px] text-[#716A7C] mt-4 leading-relaxed">
 
 
 
 
-            <span
 
 
 
+                A detected source-document change is not automatically
 
 
 
@@ -2082,14 +2088,15 @@ export const Header: React.FC = () => {
 
 
 
+                treated as an incorrect AI answer. Black Ice identifies
 
 
 
 
 
-              className={`w-1.5 h-1.5 rounded-full ${
 
 
+                divergent claims, maps downstream RAG answers, and
 
 
 
@@ -2097,14 +2104,15 @@ export const Header: React.FC = () => {
 
 
 
+                surfaces evidence for human review.
 
 
 
 
 
 
-                backendStatus.isConnected
 
+              </p>
 
 
 
@@ -2112,6 +2120,7 @@ export const Header: React.FC = () => {
 
 
 
+              <div className="mt-4 p-3 rounded-xl bg-[#FAF9F7] border border-[#EEE8E1] text-[10px] text-[#716A7C] space-y-2">
 
 
 
@@ -2119,7 +2128,7 @@ export const Header: React.FC = () => {
 
 
 
-                  ? 'bg-[#84CC16]'
+                <div className="flex justify-between">
 
 
 
@@ -2127,6 +2136,7 @@ export const Header: React.FC = () => {
 
 
 
+                  <span>Backend</span>
 
 
 
@@ -2134,14 +2144,15 @@ export const Header: React.FC = () => {
 
 
 
+                  <code className="text-[#65A30D] font-semibold">
 
-                  : 'bg-[#EF4444]'
 
 
 
 
 
 
+                    127.0.0.1:8000
 
 
 
@@ -2149,14 +2160,15 @@ export const Header: React.FC = () => {
 
 
 
+                  </code>
 
 
-              }`}
 
 
 
 
 
+                </div>
 
 
 
@@ -2164,14 +2176,15 @@ export const Header: React.FC = () => {
 
 
 
+                <div className="flex justify-between">
 
 
 
-            />
 
 
 
 
+                  <span>API</span>
 
 
 
@@ -2179,14 +2192,15 @@ export const Header: React.FC = () => {
 
 
 
+                  <code className="text-[#DB2777] font-semibold">
 
 
 
 
-          </button>
 
 
 
+                    FastAPI
 
 
 
@@ -2194,14 +2208,15 @@ export const Header: React.FC = () => {
 
 
 
+                  </code>
 
 
 
 
 
-        </div>
 
 
+                </div>
 
 
 
@@ -2209,14 +2224,15 @@ export const Header: React.FC = () => {
 
 
 
+                <div className="flex justify-between">
 
 
 
 
 
 
-        {/* Connection indicator */}
 
+                  <span>Local AI</span>
 
 
 
@@ -2224,6 +2240,7 @@ export const Header: React.FC = () => {
 
 
 
+                  <code className="text-[#29233D] font-semibold">
 
 
 
@@ -2231,7 +2248,7 @@ export const Header: React.FC = () => {
 
 
 
-        {isLiveMode && backendStatus.isConnected && (
+                    Ollama
 
 
 
@@ -2239,6 +2256,7 @@ export const Header: React.FC = () => {
 
 
 
+                  </code>
 
 
 
@@ -2246,14 +2264,15 @@ export const Header: React.FC = () => {
 
 
 
+                </div>
 
-          <div
 
 
 
 
 
 
+                <div className="flex justify-between">
 
 
 
@@ -2261,14 +2280,15 @@ export const Header: React.FC = () => {
 
 
 
+                  <span>Cloud AI</span>
 
 
-            className="hidden xl:flex items-center gap-1.5 h-10 px-3 rounded-[14px] bg-gradient-to-r from-[#F7FEE7] via-white to-[#F0FDF4] border border-[#D9F99D] shadow-[0_6px_18px_rgba(132,204,22,0.10)]"
 
 
 
 
 
+                  <code className="text-[#65A30D] font-semibold">
 
 
 
@@ -2276,14 +2296,15 @@ export const Header: React.FC = () => {
 
 
 
+                    Not required
 
 
 
-            title="FastAPI backend connected"
 
 
 
 
+                  </code>
 
 
 
@@ -2291,14 +2312,15 @@ export const Header: React.FC = () => {
 
 
 
+                </div>
 
 
 
 
-          >
 
 
 
+              </div>
 
 
 
@@ -2306,14 +2328,15 @@ export const Header: React.FC = () => {
 
 
 
+            </div>
 
 
 
 
 
-            <Wifi className="w-3.5 h-3.5 text-[#65A30D]" />
 
 
+          )}
 
 
 
@@ -2321,14 +2344,15 @@ export const Header: React.FC = () => {
 
 
 
+        </div>
 
 
 
 
 
 
-            <span className="text-[9px] font-mono font-bold text-[#65A30D]">
 
+        {/* Divider */}
 
 
 
@@ -2336,6 +2360,7 @@ export const Header: React.FC = () => {
 
 
 
+        <div className="h-6 w-px bg-white/10 mx-0.5" />
 
 
 
@@ -2343,7 +2368,7 @@ export const Header: React.FC = () => {
 
 
 
-              {backendStatus.latencyMs ?? 18}ms
+        {/* Avatar */}
 
 
 
@@ -2351,6 +2376,7 @@ export const Header: React.FC = () => {
 
 
 
+        <div
 
 
 
@@ -2358,14 +2384,15 @@ export const Header: React.FC = () => {
 
 
 
+          className="relative w-10 h-10 rounded-[14px] bg-gradient-to-br from-[#F472B6] via-[#C4B5FD] to-[#A3E635] border border-white/15 shadow-[0_7px_22px_rgba(244,114,182,0.18)] flex items-center justify-center text-[11px] font-black text-[#29233D]"
 
-            </span>
 
 
 
 
 
 
+          title="S. Vance"
 
 
 
@@ -2373,14 +2400,15 @@ export const Header: React.FC = () => {
 
 
 
+        >
 
 
-          </div>
 
 
 
 
 
+          SV
 
 
 
@@ -2388,14 +2416,15 @@ export const Header: React.FC = () => {
 
 
 
+          <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-[#A3E635] border-2 border-[#17151F]" />
 
 
 
-        )}
 
 
 
 
+        </div>
 
 
 
@@ -2403,14 +2432,15 @@ export const Header: React.FC = () => {
 
 
 
+      </div>
 
 
 
 
-        {/* Notifications */}
 
 
 
+    </header>
 
 
 
@@ -2418,2500 +2448,7 @@ export const Header: React.FC = () => {
 
 
 
-
-
-
-
-
-        <div className="relative">
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-          <button
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            onClick={() => {
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-              setShowNotifications(!showNotifications);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-              setShowHelp(false);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            }}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            className="relative w-10 h-10 flex items-center justify-center rounded-[13px] border border-white/90 bg-white/76 text-[#716A7C] hover:text-[#EC4899] hover:bg-gradient-to-br hover:from-[#FDF2F8] hover:to-[#F5F3FF] hover:border-[#F9A8D4] transition-all duration-300 shadow-[0_7px_20px_rgba(80,55,110,0.07)] ring-1 ring-[#E9DFF1]/60 backdrop-blur-xl hover:-translate-y-0.5"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            title="Notifications"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-          >
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            <Bell className="w-4 h-4" />
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            {pendingReviews.length > 0 && (
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-              <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-[#EF4444] text-white text-[9px] font-bold flex items-center justify-center border-2 border-white">
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                {pendingReviews.length}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-              </span>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            )}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-          </button>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-          {/* Notifications Dropdown */}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-          {showNotifications && (
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            <div className="absolute right-0 mt-3 w-[340px] bg-gradient-to-br from-white/98 via-[#FFF9FC]/98 to-[#F7FEE7]/95 border border-white rounded-[20px] shadow-[0_24px_70px_rgba(73,55,94,0.16)] p-3 z-50 animate-in fade-in duration-150 backdrop-blur-2xl">
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-              <div className="flex items-center justify-between px-1 pb-3 border-b border-[#F1ECE7]">
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                <div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                  <span className="text-xs font-bold text-[#29233D] block">
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                    Integrity Alerts
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                  </span>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                  <span className="text-[9px] text-[#938DA2]">
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                    Human review & knowledge triage
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                  </span>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                <span className="px-2 py-1 rounded-lg bg-[#FFF7ED] text-[#D97706] text-[9px] font-bold border border-[#FED7AA]">
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                  {pendingReviews.length} pending
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                </span>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-              </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-              <div className="space-y-2 mt-2 max-h-64 overflow-y-auto">
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                {pendingReviews.length === 0 ? (
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                  <div className="py-8 text-center">
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                    <div className="w-10 h-10 mx-auto rounded-full bg-[#F7FEE7] border border-[#D9F99D] flex items-center justify-center">
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                      <Shield className="w-4 h-4 text-[#7C3AED]" />
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                    </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                    <p className="text-xs font-semibold text-[#29233D] mt-2">
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                      Queue is clear
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                    </p>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                    <p className="text-[10px] text-[#938DA2] mt-1">
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                      No pending integrity reviews.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                    </p>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                  </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                ) : (
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                  pendingReviews.map((rev) => (
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                    <Link
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                      key={rev.id}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                      to="/reviews"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                      onClick={() => setShowNotifications(false)}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                      className="block p-3 rounded-xl bg-[#FFFDF8] border border-transparent hover:border-[#FDE68A] hover:bg-[#FFFBEB] transition-all"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                    >
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                      <div className="flex items-center gap-2 text-xs font-semibold text-[#29233D]">
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                        <div className="w-7 h-7 rounded-lg bg-[#FFF7ED] border border-[#FED7AA] flex items-center justify-center shrink-0">
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                          <AlertTriangle className="w-3.5 h-3.5 text-[#D97706]" />
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                        </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                        <span className="truncate">
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                          {rev.documentTitle}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                        </span>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                      </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                      <p className="text-[10px] text-[#716A7C] mt-1.5 ml-9 line-clamp-2">
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                        {rev.issueSummary}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                      </p>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                      <span className="text-[9px] text-[#938DA2] mt-1 ml-9 block">
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                        {rev.createdAt}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                      </span>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                    </Link>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                  ))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                )}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-              </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-              <Link
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                to="/reviews"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                onClick={() => setShowNotifications(false)}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                className="mt-3 block text-center py-2.5 rounded-xl bg-gradient-to-r from-[#BEF264] via-[#D9F99D] to-[#F9A8D4] border border-white text-[10px] font-black text-[#29233D] hover:brightness-95 transition-all shadow-sm"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-              >
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                Open Human Review Center →
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-              </Link>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-          )}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        {/* Help */}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        <div className="relative">
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-          <button
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            onClick={() => {
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-              setShowHelp(!showHelp);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-              setShowNotifications(false);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            }}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            className="w-10 h-10 flex items-center justify-center rounded-[13px] border border-white/90 bg-white/76 text-[#716A7C] hover:text-[#8B5CF6] hover:bg-gradient-to-br hover:from-[#F5F3FF] hover:to-[#EFF6FF] hover:border-[#C4B5FD] transition-all duration-300 shadow-[0_7px_20px_rgba(80,55,110,0.07)] ring-1 ring-[#E9DFF1]/60 backdrop-blur-xl hover:-translate-y-0.5"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            title="Architecture & Help"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-          >
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            <HelpCircle className="w-4 h-4" />
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-          </button>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-          {showHelp && (
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            <div className="absolute right-0 mt-3 w-[350px] bg-gradient-to-br from-white/98 via-[#FAF8FF]/98 to-[#FFF7FB]/95 border border-white rounded-[20px] shadow-[0_24px_70px_rgba(73,55,94,0.16)] p-4 z-50 animate-in fade-in duration-150 backdrop-blur-2xl">
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-              <div className="flex items-center gap-3">
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D9F99D] to-[#F9A8D4] flex items-center justify-center">
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                  <Shield className="w-5 h-5 text-[#29233D]" />
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                <div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                  <h4 className="text-sm font-bold text-[#29233D]">
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                    Sovereign Black Ice
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                  </h4>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                  <span className="text-[9px] uppercase tracking-wider text-[#938DA2]">
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                    Knowledge Integrity Layer
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                  </span>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-              </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-              <p className="text-[11px] text-[#716A7C] mt-4 leading-relaxed">
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                A detected source-document change is not automatically
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                treated as an incorrect AI answer. Black Ice identifies
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                divergent claims, maps downstream RAG answers, and
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                surfaces evidence for human review.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-              </p>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-              <div className="mt-4 p-3 rounded-xl bg-[#FAF9F7] border border-[#EEE8E1] text-[10px] text-[#716A7C] space-y-2">
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                <div className="flex justify-between">
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                  <span>Backend</span>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                  <code className="text-[#7C3AED] font-semibold">
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                    127.0.0.1:8000
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                  </code>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                <div className="flex justify-between">
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                  <span>API</span>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                  <code className="text-[#DB2777] font-semibold">
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                    FastAPI
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                  </code>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                <div className="flex justify-between">
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                  <span>Local AI</span>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                  <code className="text-[#29233D] font-semibold">
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                    Ollama
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                  </code>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                <div className="flex justify-between">
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                  <span>Cloud AI</span>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                  <code className="text-[#7C3AED] font-semibold">
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                    Not required
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                  </code>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-              </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-          )}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        {/* Divider */}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        <div className="h-7 w-px bg-gradient-to-b from-transparent via-[#D8CDE2] to-transparent mx-0.5" />
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        {/* Avatar */}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        <div
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-          className="relative w-10 h-10 rounded-[14px] bg-gradient-to-br from-[#F9A8D4] via-[#C4B5FD] to-[#D9F99D] border border-white shadow-[0_9px_24px_rgba(139,92,246,0.16)] ring-1 ring-[#8B5CF6]/10 flex items-center justify-center text-[11px] font-black text-[#29233D]"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-          title="S. Vance"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        >
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-          SV
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-          <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-[#A3E635] border-2 border-white" />
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    </header>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  );
-
-
-
-
-
-
-
-
+  );
 
 
 
