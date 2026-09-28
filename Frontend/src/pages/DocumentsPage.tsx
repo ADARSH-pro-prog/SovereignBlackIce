@@ -1,703 +1,1105 @@
-import React, { useState, useRef } from 'react';
+import React, { useRef, useState } from 'react';
+
 import { useNavigate } from 'react-router-dom';
+
 import {
-  FileText,
-  Upload,
-  Download,
-  Filter,
-  Search,
-  CheckCircle,
+
   AlertTriangle,
-  History,
-  GitCompare,
-  Eye,
-  Trash2,
-  MoreVertical,
-  ChevronDown,
-  ChevronUp,
-  FolderOpen,
-  X,
-  Sparkles,
-  ShieldCheck,
-  Shield,
-  Clock,
+
   ArrowRight,
+
+  CheckCircle,
+
+  ChevronUp,
+
+  Download,
+
+  Eye,
+
+  FileText,
+
+  FolderOpen,
+
+  GitCompare,
+
+  History,
+
+  MoreVertical,
+
+  Search,
+
+  ShieldCheck,
+
+  Sparkles,
+
+  Upload,
+
+  X,
+
 } from 'lucide-react';
+
 import { StatusBadge } from '../components/ui/StatusBadge';
+
 import { useApp } from '../context/AppContext';
-import { DocumentItem } from '../types';
 
 export const DocumentsPage: React.FC = () => {
+
   const navigate = useNavigate();
+
   const { documents, uploadDocument, addToast } = useApp();
 
-  // Upload Panel State
   const [isUploadPanelOpen, setIsUploadPanelOpen] = useState(true);
+
   const [compareBaseline, setCompareBaseline] = useState(true);
+
   const [selectedBaselineId, setSelectedBaselineId] = useState('DOC-7704');
+
   const [stagedFile, setStagedFile] = useState<File | null>(null);
+
   const [uploadProgress, setUploadProgress] = useState(100);
+
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Table Filters
   const [searchQuery, setSearchQuery] = useState('');
+
   const [statusFilter, setStatusFilter] = useState('All');
+
   const [sourceFilter, setSourceFilter] = useState('All');
-  const [formatFilter, setFormatFilter] = useState('All');
+
   const [sortOption, setSortOption] = useState<'recent' | 'impact' | 'title'>('recent');
+
   const [currentPage, setCurrentPage] = useState(1);
+
   const [activeMenuDocId, setActiveMenuDocId] = useState<string | null>(null);
 
-  // Handle Drag & Drop
   const handleDrop = (e: React.DragEvent) => {
+
     e.preventDefault();
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFileSelected(e.dataTransfer.files[0]);
-    }
+
+    const file = e.dataTransfer.files?.[0];
+
+    if (file) handleFileSelected(file);
+
   };
 
   const handleFileSelected = (file: File) => {
+
     setStagedFile(file);
+
     setUploadProgress(100);
+
   };
 
   const handleExecuteUpload = async () => {
+
     if (!stagedFile) {
+
       addToast({
+
         type: 'warning',
+
         title: 'No File Selected',
+
         message: 'Please choose or drag a file to upload.',
+
       });
+
       return;
+
     }
 
     setIsAnalyzing(true);
+
     try {
+
       await uploadDocument(
+
         stagedFile,
-        compareBaseline ? selectedBaselineId : undefined
+
+        compareBaseline ? selectedBaselineId : undefined,
+
       );
+
       setStagedFile(null);
+
+    } finally {
+
       setIsAnalyzing(false);
-    } catch {
-      setIsAnalyzing(false);
+
     }
+
   };
 
-  // Filter & Sort
   const filteredDocuments = documents
-    .filter((doc) => {
-      const matchesSearch =
-        doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        doc.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        doc.department.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus =
-        statusFilter === 'All' || doc.integrityStatus === statusFilter;
-      const matchesSource =
-        sourceFilter === 'All' || doc.department === sourceFilter;
-      const matchesFormat =
-        formatFilter === 'All' || doc.fileType === formatFilter.toLowerCase();
 
-      return matchesSearch && matchesStatus && matchesSource && matchesFormat;
+    .filter((doc) => {
+
+      const q = searchQuery.toLowerCase();
+
+      const matchesSearch =
+
+        doc.title.toLowerCase().includes(q) ||
+
+        doc.id.toLowerCase().includes(q) ||
+
+        doc.department.toLowerCase().includes(q);
+
+      const matchesStatus =
+
+        statusFilter === 'All' || doc.integrityStatus === statusFilter;
+
+      const matchesSource =
+
+        sourceFilter === 'All' || doc.department === sourceFilter;
+
+      return matchesSearch && matchesStatus && matchesSource;
+
     })
+
     .sort((a, b) => {
-      if (sortOption === 'impact') {
-        return b.affectedAnswerCount - a.affectedAnswerCount;
-      }
-      if (sortOption === 'title') {
-        return a.title.localeCompare(b.title);
-      }
-      return 0; // recent default
+
+      if (sortOption === 'impact') return b.affectedAnswerCount - a.affectedAnswerCount;
+
+      if (sortOption === 'title') return a.title.localeCompare(b.title);
+
+      return 0;
+
     });
 
   const pageSize = 6;
+
   const totalPages = Math.ceil(filteredDocuments.length / pageSize) || 1;
+
   const paginatedDocs = filteredDocuments.slice(
+
     (currentPage - 1) * pageSize,
-    currentPage * pageSize
+
+    currentPage * pageSize,
+
   );
 
+  const resetFilters = () => {
+
+    setSearchQuery('');
+
+    setStatusFilter('All');
+
+    setSourceFilter('All');
+
+    setSortOption('recent');
+
+    setCurrentPage(1);
+
+  };
+
   return (
-    <div className="flex flex-col gap-6 animate-in fade-in duration-200">
-      {/* Page Header & Top Actions */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl font-bold tracking-tight text-[#F8FAFC]">
-              Documents
-            </h1>
-            <span className="px-2 py-0.5 rounded bg-[#1E293B] text-[#3B82F6] text-[10px] font-mono uppercase tracking-wider border border-[#263247]">
-              KNOWLEDGE BASE v2.4
-            </span>
-          </div>
-          <p className="text-sm text-[#94A3B8]">
-            Manage source documents and monitor structural changes across your
-            institutional knowledge base.
-          </p>
-        </div>
 
-        <div className="flex items-center gap-2.5 shrink-0">
-          <button
-            onClick={() => {
-              addToast({
-                type: 'info',
-                title: 'Bulk Import',
-                message: 'Connecting to Corporate SharePoint / Google Drive sync...',
-              });
-            }}
-            className="h-9 px-3.5 rounded-lg bg-[#1E293B] hover:bg-[#263247] text-xs font-medium text-[#F8FAFC] border border-[#263247] transition-colors flex items-center gap-2"
-          >
-            <Download className="w-4 h-4 text-[#94A3B8]" />
-            <span>Import documents</span>
-          </button>
+    <div className="relative flex flex-col gap-6 animate-in fade-in duration-300 text-[#29233D] before:pointer-events-none before:absolute before:-inset-7 before:-z-10 before:bg-[radial-gradient(circle_at_8%_8%,rgba(217,249,157,0.30),transparent_28%),radial-gradient(circle_at_92%_12%,rgba(249,168,212,0.24),transparent_27%),radial-gradient(circle_at_55%_48%,rgba(233,213,255,0.20),transparent_32%),linear-gradient(135deg,#FFFDF8_0%,#FFF8FC_52%,#FAFFF1_100%)]">
 
-          <button
-            onClick={() => setIsUploadPanelOpen(true)}
-            className="h-9 px-3.5 rounded-lg bg-[#3B82F6] hover:bg-blue-600 text-xs font-medium text-white transition-colors flex items-center gap-1.5 shadow-sm"
-          >
-            <Upload className="w-4 h-4" />
-            <span>Upload document</span>
-          </button>
-        </div>
-      </div>
+      <div className="pointer-events-none absolute -top-24 right-0 h-72 w-72 rounded-full bg-[#FBCFE8]/25 blur-3xl" />
 
-      {/* Summary Metrics Strip */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="h-[120px] p-4 bg-[#111827] border border-[#263247] rounded-xl flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-medium uppercase tracking-wider text-[#94A3B8]">
-              Total Documents
-            </span>
-            <div className="w-7 h-7 rounded bg-[#3B82F6]/10 text-[#3B82F6] flex items-center justify-center">
-              <FileText className="w-4 h-4" />
-            </div>
-          </div>
+      <div className="pointer-events-none absolute top-32 left-1/4 h-72 w-72 rounded-full bg-[#D9F99D]/25 blur-3xl" />
+
+      <section className="relative overflow-hidden rounded-[28px] border border-[#EEE7E1] bg-gradient-to-br from-white/95 via-[#FFF7FB]/90 to-[#F7FEE7]/90 px-6 py-5 shadow-[0_20px_60px_rgba(73,55,94,0.10)] backdrop-blur-xl">
+
+        <div className="absolute right-0 top-0 h-24 w-44 rounded-bl-[80px] bg-gradient-to-br from-[#D9F99D]/45 via-[#FCE7F3]/35 to-transparent" />
+
+        <div className="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+
           <div>
-            <div className="text-2xl font-bold font-mono text-[#F8FAFC]">
-              {documents.length}
+
+            <div className="mb-2 flex items-center gap-2">
+
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#D9F99D] bg-[#F7FEE7] text-[#65A30D] shadow-sm">
+
+                <ShieldCheck className="h-4 w-4" />
+
+              </span>
+
+              <h1 className="text-2xl font-bold tracking-tight text-[#29233D]">Documents</h1>
+
+              <span className="rounded-full border border-[#E9D5FF] bg-[#FAF5FF] px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.16em] text-[#7C3AED]">
+
+                Knowledge Base v2.4
+
+              </span>
+
             </div>
-            <div className="text-xs text-[#64748B] mt-1 flex items-center gap-1">
-              <span>Monitored across 6 departments</span>
-            </div>
+
+            <p className="max-w-2xl text-sm leading-relaxed text-[#81798E]">
+
+              Monitor source integrity, compare knowledge versions, and trace every change into downstream AI impact.
+
+            </p>
+
           </div>
+
+          <div className="flex flex-wrap items-center gap-2.5">
+
+            <button
+
+              onClick={() =>
+
+                addToast({
+
+                  type: 'info',
+
+                  title: 'Bulk Import',
+
+                  message: 'Connecting to Corporate SharePoint / Google Drive sync...',
+
+                })
+
+              }
+
+              className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#E8E0DA] bg-white px-4 text-xs font-semibold text-[#514A60] shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#F9A8D4] hover:shadow-md"
+
+            >
+
+              <Download className="h-4 w-4 text-[#F472B6]" />
+
+              Import documents
+
+            </button>
+
+            <button
+
+              onClick={() => setIsUploadPanelOpen(true)}
+
+              className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/80 bg-gradient-to-r from-[#BEF264] via-[#D9F99D] to-[#F9A8D4] px-4 text-xs font-bold text-[#29233D] shadow-[0_10px_26px_rgba(244,114,182,0.16)] transition-all hover:-translate-y-0.5 hover:brightness-95"
+
+            >
+
+              <Upload className="h-4 w-4" />
+
+              Upload document
+
+            </button>
+
+          </div>
+
         </div>
 
-        <div className="h-[120px] p-4 bg-[#111827] border border-[#263247] rounded-xl flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-medium uppercase tracking-wider text-[#94A3B8]">
-              Recently Updated
-            </span>
-            <div className="w-7 h-7 rounded bg-[#F59E0B]/10 text-[#F59E0B] flex items-center justify-center">
-              <History className="w-4 h-4" />
-            </div>
-          </div>
-          <div>
-            <div className="text-2xl font-bold font-mono text-[#F8FAFC]">12</div>
-            <div className="text-xs text-[#64748B] mt-1">
-              Last 14 days delta (+3 today)
-            </div>
-          </div>
-        </div>
+      </section>
 
-        <div className="h-[120px] p-4 bg-[#111827] border border-[#263247] rounded-xl flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-medium uppercase tracking-wider text-[#94A3B8]">
-              Under Review
-            </span>
-            <div className="w-7 h-7 rounded bg-[#EF4444]/10 text-[#EF4444] flex items-center justify-center">
-              <AlertTriangle className="w-4 h-4" />
-            </div>
-          </div>
-          <div>
-            <div className="text-2xl font-bold font-mono text-[#EF4444]">4</div>
-            <div className="text-xs text-[#EF4444]/80 mt-1">
-              Pending knowledge drift triage
-            </div>
-          </div>
-        </div>
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
 
-        <div className="h-[120px] p-4 bg-[#111827] border border-[#263247] rounded-xl flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-medium uppercase tracking-wider text-[#94A3B8]">
-              No Impact Detected
-            </span>
-            <div className="w-7 h-7 rounded bg-[#14B8A6]/10 text-[#14B8A6] flex items-center justify-center">
-              <CheckCircle className="w-4 h-4" />
-            </div>
-          </div>
-          <div>
-            <div className="text-2xl font-bold font-mono text-[#14B8A6]">96</div>
-            <div className="text-xs text-[#14B8A6]/80 mt-1">
-              Verified nominal baseline
-            </div>
-          </div>
-        </div>
-      </div>
+        <MetricTile
 
-      {/* Storage Allocation Strip */}
-      <div className="flex items-center justify-between text-xs text-[#64748B] px-1">
-        <div className="flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6]" />
-          <span>All sample records represent illustrative demo records [DEMO DATA]</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <span>Storage Allocation: <strong className="text-[#F8FAFC]">7.2 GB</strong> of 10.0 GB (72%)</span>
-          <div className="w-24 h-1.5 bg-[#1E293B] rounded-full overflow-hidden">
-            <div className="h-full bg-[#3B82F6] w-[72%] rounded-full" />
-          </div>
-        </div>
-      </div>
+          title="Total Documents"
 
-      {/* Collapsible Document Ingestion & Analysis Panel */}
+          value={documents.length}
+
+          note="Across 6 departments"
+
+          badge="Integrity active"
+
+          tone="green"
+
+          icon={<FileText className="h-5 w-5" />}
+
+        />
+
+        <MetricTile
+
+          title="Recently Updated"
+
+          value="12"
+
+          note="Last 14 days"
+
+          badge="+3 today"
+
+          tone="orange"
+
+          icon={<History className="h-5 w-5" />}
+
+        />
+
+        <MetricTile
+
+          title="Under Review"
+
+          value="4"
+
+          note="Knowledge drift triage"
+
+          badge="Review queue"
+
+          tone="orange"
+
+          icon={<AlertTriangle className="h-5 w-5" />}
+
+        />
+
+        <MetricTile
+
+          title="No Impact Detected"
+
+          value="96"
+
+          note="Verified nominal baseline"
+
+          badge="Trusted"
+
+          tone="green"
+
+          icon={<CheckCircle className="h-5 w-5" />}
+
+        />
+
+      </section>
+
       {isUploadPanelOpen && (
-        <div className="bg-[#111827] border border-[#263247] rounded-xl overflow-hidden shadow-lg animate-in slide-in-from-top-3 duration-200">
-          {/* Panel Header */}
-          <div className="px-5 py-3 bg-[#1E293B] border-b border-[#263247] flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-6 h-6 rounded bg-[#3B82F6]/10 text-[#3B82F6] flex items-center justify-center">
-                <Upload className="w-3.5 h-3.5" />
+
+        <section className="overflow-hidden rounded-[26px] border border-[#E8E0DA] bg-white shadow-[0_20px_60px_rgba(41,35,61,0.08)]">
+
+          <div className="flex items-center justify-between border-b border-[#F0E9E4] bg-gradient-to-r from-[#FFFDF8] via-[#FFF7FB] to-[#F7FEE7] px-5 py-4">
+
+            <div className="flex flex-wrap items-center gap-2.5">
+
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#D9F99D] bg-white text-[#65A30D] shadow-sm">
+
+                <Upload className="h-4 w-4" />
+
               </div>
-              <span className="text-sm font-semibold text-[#F8FAFC]">
-                Document Ingestion & Integrity Analysis
+
+              <div>
+
+                <div className="text-sm font-bold text-[#29233D]">Document Ingestion & Integrity Analysis</div>
+
+                <div className="text-[10px] text-[#938DA2]">Secure local-first verification pipeline</div>
+
+              </div>
+
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-[#D9F99D] bg-[#F7FEE7] px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-[#65A30D]">
+
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#A3E635]" />
+
+                Engine online
+
               </span>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#14B8A6]/10 text-[#14B8A6] text-[10px] font-mono uppercase tracking-wider">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#14B8A6] animate-pulse" />
-                ENGINE ONLINE
-              </span>
+
             </div>
 
             <button
+
               onClick={() => setIsUploadPanelOpen(false)}
-              className="text-xs text-[#94A3B8] hover:text-[#F8FAFC] flex items-center gap-1"
+
+              className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-[#81798E] transition-colors hover:bg-white hover:text-[#29233D]"
+
             >
-              <span>Hide upload panel</span>
-              <ChevronUp className="w-3.5 h-3.5" />
+
+              Hide panel <ChevronUp className="h-3.5 w-3.5" />
+
             </button>
+
           </div>
 
-          {/* Panel Content Grid */}
-          <div className="p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-            {/* Left: Drag & Drop Area */}
+          <div className="grid grid-cols-1 gap-5 p-5 lg:grid-cols-12">
+
             <div
+
               onDragOver={(e) => e.preventDefault()}
+
               onDrop={handleDrop}
+
               onClick={() => fileInputRef.current?.click()}
-              className="lg:col-span-6 rounded-xl border-2 border-dashed border-[#263247] hover:border-[#3B82F6] bg-[#1E293B]/30 hover:bg-[#1E293B]/50 p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-colors group"
+
+              className="group relative flex min-h-[260px] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-[#DCCFD8] bg-gradient-to-br from-[#FFFDF8] via-white to-[#FDF2F8] p-6 text-center transition-all hover:-translate-y-0.5 hover:border-[#F9A8D4] hover:shadow-[0_14px_35px_rgba(244,114,182,0.10)] lg:col-span-6"
+
             >
+
               <input
+
                 ref={fileInputRef}
+
                 type="file"
+
                 className="hidden"
+
                 accept=".pdf,.docx,.txt,.md"
+
                 onChange={(e) => {
-                  if (e.target.files && e.target.files[0]) {
-                    handleFileSelected(e.target.files[0]);
-                  }
+
+                  const file = e.target.files?.[0];
+
+                  if (file) handleFileSelected(file);
+
                 }}
+
               />
-              <div className="w-12 h-12 rounded-full bg-[#1E293B] border border-[#263247] flex items-center justify-center text-[#3B82F6] mb-3 group-hover:scale-105 transition-transform">
-                <Upload className="w-5 h-5" />
+
+              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-[#FBCFE8] bg-white text-[#DB2777] shadow-[0_8px_24px_rgba(244,114,182,0.13)] transition-transform group-hover:scale-105">
+
+                <Upload className="h-6 w-6" />
+
               </div>
-              <span className="text-sm font-semibold text-[#F8FAFC]">
-                Drag and drop document here, or browse files
-              </span>
-              <p className="text-xs text-[#64748B] mt-1 max-w-sm">
-                Supported formats: PDF, DOCX, TXT, MD • Up to 50 MB per audit package
+
+              <div className="text-sm font-bold text-[#29233D]">Drag & drop a document here</div>
+
+              <p className="mt-1.5 max-w-sm text-xs leading-relaxed text-[#938DA2]">
+
+                PDF, DOCX, TXT or MD • Up to 50 MB per audit package
+
               </p>
-              <button
-                type="button"
-                className="mt-4 px-3 py-1.5 rounded-lg bg-[#1E293B] hover:bg-[#263247] border border-[#263247] text-xs font-medium text-[#F8FAFC] flex items-center gap-1.5"
-              >
-                <FolderOpen className="w-3.5 h-3.5 text-[#3B82F6]" />
-                <span>Choose files</span>
-              </button>
+
+              <span className="mt-4 inline-flex items-center gap-2 rounded-xl border border-[#E8E0DA] bg-white px-3.5 py-2 text-xs font-semibold text-[#514A60] shadow-sm">
+
+                <FolderOpen className="h-3.5 w-3.5 text-[#F472B6]" />
+
+                Choose file
+
+              </span>
+
             </div>
 
-            {/* Right: Ingestion Config & Staged File Analysis */}
-            <div className="lg:col-span-6 flex flex-col justify-between gap-4">
-              {/* Baseline Compare Config */}
-              <div className="flex flex-col gap-2">
-                <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-[#F8FAFC]">
+            <div className="flex flex-col gap-4 lg:col-span-6">
+
+              <div className="rounded-2xl border border-[#EEE7E1] bg-[#FFFCF8] p-4">
+
+                <label className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-[#514A60]">
+
                   <input
+
                     type="checkbox"
+
                     checked={compareBaseline}
+
                     onChange={(e) => setCompareBaseline(e.target.checked)}
-                    className="w-4 h-4 rounded bg-[#1E293B] text-[#3B82F6] focus:ring-0 focus:ring-offset-0"
+
+                    className="h-4 w-4 accent-[#A3E635]"
+
                   />
-                  <span>Compare against an existing document baseline</span>
+
+                  Compare against an existing document baseline
+
                 </label>
 
                 {compareBaseline && (
-                  <div className="flex items-center gap-2 pl-6">
-                    <span className="text-[11px] text-[#64748B] whitespace-nowrap">
-                      Baseline:
-                    </span>
+
+                  <div className="mt-3">
+
+                    <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-[#938DA2]">Baseline</label>
+
                     <select
+
                       value={selectedBaselineId}
+
                       onChange={(e) => setSelectedBaselineId(e.target.value)}
-                      className="w-full h-8 px-2.5 rounded-lg bg-[#1E293B] border border-[#263247] text-xs text-[#F8FAFC] focus:outline-none focus:border-[#3B82F6]"
+
+                      className="h-10 w-full rounded-xl border border-[#E8E0DA] bg-white px-3 text-xs text-[#514A60] outline-none transition-colors focus:border-[#A3E635]"
+
                     >
-                      <option value="DOC-7704">
-                        Employee Reimbursement Policy (v1.0) — DOC-7704
-                      </option>
-                      <option value="DOC-8912">
-                        Vendor Security Standard (v3.0) — DOC-8912
-                      </option>
-                      <option value="DOC-5120">
-                        Data Retention Policy (v2.3) — DOC-5120
-                      </option>
+
+                      <option value="DOC-7704">Employee Reimbursement Policy (v1.0) — DOC-7704</option>
+
+                      <option value="DOC-8912">Vendor Security Standard (v3.0) — DOC-8912</option>
+
+                      <option value="DOC-5120">Data Retention Policy (v2.3) — DOC-5120</option>
+
                     </select>
+
                   </div>
+
                 )}
+
               </div>
 
-              {/* Staged File Details or Default Preview */}
-              <div className="rounded-xl p-3.5 bg-[#1E293B]/70 border border-[#263247] flex flex-col gap-2.5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-8 h-8 rounded bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/20 flex items-center justify-center shrink-0">
-                      <FileText className="w-4 h-4" />
+              <div className="flex-1 rounded-2xl border border-[#FBCFE8] bg-gradient-to-br from-[#FFF7FB] to-white p-4">
+
+                <div className="flex items-center justify-between gap-3">
+
+                  <div className="flex min-w-0 items-center gap-3">
+
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#FBCFE8] bg-white text-[#DB2777]">
+
+                      <FileText className="h-4 w-4" />
+
                     </div>
+
                     <div className="min-w-0">
-                      <div className="text-xs font-semibold text-[#F8FAFC] truncate">
-                        {stagedFile
-                          ? stagedFile.name
-                          : 'Employee_Reimbursement_Policy_v2.0_Final.pdf'}
+
+                      <div className="truncate text-xs font-bold text-[#29233D]">
+
+                        {stagedFile ? stagedFile.name : 'Employee_Reimbursement_Policy_v2.0_Final.pdf'}
+
                       </div>
-                      <div className="text-[10px] text-[#64748B]">
+
+                      <div className="mt-0.5 text-[10px] text-[#938DA2]">
+
                         {stagedFile
+
                           ? `${(stagedFile.size / (1024 * 1024)).toFixed(1)} MB`
+
                           : 'PDF Document • 3.4 MB • Staged for analysis'}
+
                       </div>
+
                     </div>
+
                   </div>
+
                   {stagedFile && (
-                    <button
-                      onClick={() => setStagedFile(null)}
-                      className="text-[#64748B] hover:text-[#F8FAFC] p-1"
-                    >
-                      <X className="w-3.5 h-3.5" />
+
+                    <button onClick={() => setStagedFile(null)} className="rounded-lg p-1.5 text-[#938DA2] hover:bg-white hover:text-[#29233D]">
+
+                      <X className="h-4 w-4" />
+
                     </button>
+
                   )}
+
                 </div>
 
-                {/* Progress bar */}
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center justify-between text-[11px]">
-                    <span className="text-[#14B8A6] flex items-center gap-1">
-                      <CheckCircle className="w-3 h-3" /> Ingestion Ready ({uploadProgress}%)
+                <div className="mt-4">
+
+                  <div className="mb-1.5 flex items-center justify-between text-[10px]">
+
+                    <span className="flex items-center gap-1 font-semibold text-[#65A30D]">
+
+                      <CheckCircle className="h-3 w-3" /> Ingestion Ready ({uploadProgress}%)
+
                     </span>
-                    <span className="font-mono text-[#64748B]">sha256:d8c91...440f</span>
+
+                    <span className="font-mono text-[#938DA2]">sha256:d8c91...440f</span>
+
                   </div>
-                  <div className="w-full h-1 bg-[#111827] rounded-full overflow-hidden">
-                    <div className="h-full bg-[#14B8A6] w-full" />
+
+                  <div className="h-1.5 overflow-hidden rounded-full bg-[#EEF3E7]">
+
+                    <div className="h-full rounded-full bg-[#A3E635]" style={{ width: `${uploadProgress}%` }} />
+
                   </div>
+
                 </div>
 
-                {/* Real-time Diff status */}
-                <div className="p-2 rounded-lg bg-[#111827] border border-[#263247] flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-[#F59E0B] animate-ping" />
-                    <span className="text-[#94A3B8]">
-                      Ready to analyze diff — <strong className="text-[#F59E0B]">3 affected answers identified in baseline</strong>
-                    </span>
+                <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-[#FDE68A] bg-[#FFFBEB] p-3 text-xs">
+
+                  <div className="flex items-center gap-2 text-[#817047]">
+
+                    <span className="h-2 w-2 animate-pulse rounded-full bg-[#F59E0B]" />
+
+                    Ready to analyze diff — <strong className="text-[#D97706]">3 affected answers in baseline</strong>
+
                   </div>
-                  <span className="text-[10px] font-mono text-[#64748B]">1.2s</span>
+
+                  <span className="font-mono text-[10px] text-[#A68C60]">1.2s</span>
+
                 </div>
+
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex items-center justify-end gap-2.5">
+              <div className="flex justify-end gap-2.5">
+
                 <button
+
                   type="button"
+
                   onClick={() => setStagedFile(null)}
-                  className="px-3 py-1.5 rounded-lg bg-[#1E293B] hover:bg-[#263247] text-xs font-medium text-[#94A3B8] hover:text-[#F8FAFC] transition-colors"
+
+                  className="rounded-xl border border-[#E8E0DA] bg-white px-3.5 py-2 text-xs font-semibold text-[#81798E] hover:text-[#29233D]"
+
                 >
+
                   Clear
+
                 </button>
+
                 <button
+
                   type="button"
+
                   onClick={handleExecuteUpload}
+
                   disabled={isAnalyzing}
-                  className="px-4 py-1.5 rounded-lg bg-[#3B82F6] hover:bg-blue-600 text-xs font-medium text-white transition-colors flex items-center gap-1.5 shadow-sm disabled:opacity-50"
+
+                  className="inline-flex items-center gap-2 rounded-xl border border-white/70 bg-gradient-to-r from-[#29233D] via-[#5B3F72] to-[#DB2777] px-4 py-2 text-xs font-bold text-white shadow-[0_10px_26px_rgba(91,63,114,0.20)] transition-all hover:-translate-y-0.5 hover:brightness-105 disabled:opacity-50"
+
                 >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>{isAnalyzing ? 'Analyzing diff...' : 'Upload and analyze'}</span>
+
+                  <Sparkles className="h-3.5 w-3.5 text-[#D9F99D]" />
+
+                  {isAnalyzing ? 'Analyzing diff...' : 'Upload & analyze'}
+
                 </button>
+
               </div>
+
             </div>
+
           </div>
-        </div>
+
+        </section>
+
       )}
 
-      {/* Filter & Search Toolbar */}
-      <div className="bg-[#111827] border border-[#263247] rounded-xl p-3 flex flex-col md:flex-row items-center gap-3">
-        {/* Search */}
-        <div className="relative flex-1 w-full">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B]" />
-          <input
-            type="text"
-            value={searchQuery}
+      <section className="rounded-[22px] border border-white/90 bg-gradient-to-r from-white/90 via-[#FFF9FC]/88 to-[#FAFFF1]/88 p-3 shadow-[0_12px_34px_rgba(73,55,94,0.07)] backdrop-blur-xl">
+
+        <div className="flex flex-col items-center gap-3 md:flex-row">
+
+          <div className="relative w-full flex-1">
+
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#A39AAA]" />
+
+            <input
+
+              value={searchQuery}
+
+              onChange={(e) => {
+
+                setSearchQuery(e.target.value);
+
+                setCurrentPage(1);
+
+              }}
+
+              placeholder="Search documents by name, source, or ID..."
+
+              className="h-10 w-full rounded-xl border border-[#EEE7E1] bg-[#FFFDF8] pl-9 pr-3 text-xs text-[#29233D] outline-none placeholder:text-[#B0A8B7] focus:border-[#F9A8D4] focus:bg-white"
+
+            />
+
+          </div>
+
+          <select
+
+            value={statusFilter}
+
             onChange={(e) => {
-              setSearchQuery(e.target.value);
+
+              setStatusFilter(e.target.value);
+
               setCurrentPage(1);
+
             }}
-            placeholder="Search documents by name, source, or tag..."
-            className="w-full h-9 pl-9 pr-3 rounded-lg bg-[#1E293B] border border-[#263247] text-xs text-[#F8FAFC] placeholder:text-[#64748B] focus:outline-none focus:border-[#3B82F6]"
-          />
+
+            className="h-10 w-full rounded-xl border border-[#EEE7E1] bg-[#FFFDF8] px-3 text-xs text-[#6F687C] outline-none focus:border-[#A3E635] md:w-auto"
+
+          >
+
+            <option value="All">Status: All</option>
+
+            <option value="Review required">Review required</option>
+
+            <option value="Impact analysis">Impact analysis</option>
+
+            <option value="Pending review">Pending review</option>
+
+            <option value="No impact detected">No impact detected</option>
+
+            <option value="No changes detected">No changes detected</option>
+
+            <option value="Verified">Verified</option>
+
+          </select>
+
+          <select
+
+            value={sourceFilter}
+
+            onChange={(e) => {
+
+              setSourceFilter(e.target.value);
+
+              setCurrentPage(1);
+
+            }}
+
+            className="h-10 w-full rounded-xl border border-[#EEE7E1] bg-[#FFFDF8] px-3 text-xs text-[#6F687C] outline-none focus:border-[#A3E635] md:w-auto"
+
+          >
+
+            <option value="All">Source: All</option>
+
+            <option value="Human Resources">Human Resources</option>
+
+            <option value="Compliance">Compliance</option>
+
+            <option value="Legal & Risk">Legal & Risk</option>
+
+            <option value="Operations">Operations</option>
+
+            <option value="IT Security">IT Security</option>
+
+          </select>
+
+          <select
+
+            value={sortOption}
+
+            onChange={(e) => setSortOption(e.target.value as 'recent' | 'impact' | 'title')}
+
+            className="h-10 w-full rounded-xl border border-[#EEE7E1] bg-[#FFFDF8] px-3 text-xs text-[#6F687C] outline-none focus:border-[#F9A8D4] md:w-auto"
+
+          >
+
+            <option value="recent">Sort: Recently updated</option>
+
+            <option value="impact">Sort: Highest impact</option>
+
+            <option value="title">Sort: Title A-Z</option>
+
+          </select>
+
+          <button onClick={resetFilters} className="whitespace-nowrap px-2 text-xs font-semibold text-[#DB2777] hover:underline">
+
+            Clear filters
+
+          </button>
+
         </div>
 
-        {/* Status Dropdown */}
-        <select
-          value={statusFilter}
-          onChange={(e) => {
-            setStatusFilter(e.target.value);
-            setCurrentPage(1);
-          }}
-          className="w-full md:w-auto h-9 px-3 rounded-lg bg-[#1E293B] border border-[#263247] text-xs text-[#94A3B8] focus:outline-none focus:border-[#3B82F6] cursor-pointer"
-        >
-          <option value="All">Status: All statuses</option>
-          <option value="Review required">Review required</option>
-          <option value="Impact analysis">Impact analysis</option>
-          <option value="Pending review">Pending review</option>
-          <option value="No impact detected">No impact detected</option>
-          <option value="No changes detected">No changes detected</option>
-          <option value="Verified">Verified</option>
-        </select>
+      </section>
 
-        {/* Source Dropdown */}
-        <select
-          value={sourceFilter}
-          onChange={(e) => {
-            setSourceFilter(e.target.value);
-            setCurrentPage(1);
-          }}
-          className="w-full md:w-auto h-9 px-3 rounded-lg bg-[#1E293B] border border-[#263247] text-xs text-[#94A3B8] focus:outline-none focus:border-[#3B82F6] cursor-pointer"
-        >
-          <option value="All">Source: All departments</option>
-          <option value="Human Resources">Human Resources</option>
-          <option value="Compliance">Compliance</option>
-          <option value="Legal & Risk">Legal & Risk</option>
-          <option value="Operations">Operations</option>
-          <option value="IT Security">IT Security</option>
-        </select>
+      <section className="overflow-hidden rounded-[26px] border border-white/90 bg-white/92 shadow-[0_22px_60px_rgba(73,55,94,0.09)] backdrop-blur-xl">
 
-        {/* Sort Dropdown */}
-        <select
-          value={sortOption}
-          onChange={(e) =>
-            setSortOption(e.target.value as 'recent' | 'impact' | 'title')
-          }
-          className="w-full md:w-auto h-9 px-3 rounded-lg bg-[#1E293B] border border-[#263247] text-xs text-[#94A3B8] focus:outline-none focus:border-[#3B82F6] cursor-pointer"
-        >
-          <option value="recent">Sort: Recently updated</option>
-          <option value="impact">Sort: Highest impact</option>
-          <option value="title">Sort: Title A-Z</option>
-        </select>
+        <div className="flex items-center justify-between border-b border-[#F0E9E4] bg-gradient-to-r from-[#F7FEE7] via-[#FFFDF8] to-[#FDF2F8] px-5 py-4">
 
-        <button
-          onClick={() => {
-            setSearchQuery('');
-            setStatusFilter('All');
-            setSourceFilter('All');
-            setFormatFilter('All');
-            setSortOption('recent');
-          }}
-          className="text-xs text-[#3B82F6] hover:underline whitespace-nowrap px-1"
-        >
-          Clear filters
-        </button>
-      </div>
-
-      {/* Document Repository Table */}
-      <div className="bg-[#111827] border border-[#263247] rounded-xl overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[900px]">
-            <thead>
-              <tr className="h-10 bg-[#1E293B] text-[11px] font-medium uppercase tracking-wider text-[#94A3B8] border-b border-[#263247]">
-                <th className="px-5 py-2">Document Name & ID</th>
-                <th className="px-4 py-2">Department Source</th>
-                <th className="px-4 py-2">Version</th>
-                <th className="px-4 py-2">Last Modified</th>
-                <th className="px-4 py-2">Integrity Status</th>
-                <th className="px-4 py-2">Downstream Impact</th>
-                <th className="px-4 py-2">Analyzed</th>
-                <th className="px-5 py-2 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#1A2438] text-xs">
-              {paginatedDocs.map((doc) => (
-                <tr
-                  key={doc.id}
-                  className="h-14 hover:bg-[#1E293B]/40 transition-colors"
-                >
-                  <td className="px-5 py-2">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-[#1E293B] border border-[#263247] flex items-center justify-center text-[#3B82F6] shrink-0">
-                        <FileText className="w-4 h-4" />
-                      </div>
-                      <div className="min-w-0">
-                        <div
-                          onClick={() => navigate(`/documents/${doc.id}`)}
-                          className="font-medium text-[#F8FAFC] hover:text-[#3B82F6] cursor-pointer truncate"
-                        >
-                          {doc.title}
-                        </div>
-                        <div className="text-[11px] font-mono text-[#64748B]">
-                          {doc.id} • {doc.fileSize}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-
-                  <td className="px-4 py-2 text-[#94A3B8]">{doc.department}</td>
-
-                  <td className="px-4 py-2">
-                    <button
-                      onClick={() => navigate(`/documents/${doc.id}`)}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#1E293B] hover:bg-[#263247] text-[#3B82F6] font-mono text-[11px] border border-[#263247] transition-colors"
-                    >
-                      <History className="w-3 h-3" />
-                      <span>{doc.currentVersion}</span>
-                    </button>
-                  </td>
-
-                  <td className="px-4 py-2 text-[#94A3B8] whitespace-nowrap">
-                    {doc.lastModified}
-                  </td>
-
-                  <td className="px-4 py-2">
-                    <StatusBadge status={doc.integrityStatus} size="sm" />
-                  </td>
-
-                  <td className="px-4 py-2">
-                    {doc.affectedAnswerCount > 0 ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#F59E0B]/15 text-[#F59E0B] font-medium text-[11px] border border-[#F59E0B]/30">
-                        <AlertTriangle className="w-3 h-3" />
-                        <span>{doc.affectedAnswerCount} answers</span>
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#1E293B] text-[#64748B] text-[11px]">
-                        <CheckCircle className="w-3 h-3" />
-                        <span>0 answers</span>
-                      </span>
-                    )}
-                  </td>
-
-                  <td className="px-4 py-2 text-[#64748B]">{doc.lastAnalyzed}</td>
-
-                  <td className="px-5 py-2 text-right relative">
-                    <div className="inline-flex items-center gap-1">
-                      <button
-                        onClick={() => navigate(`/documents/${doc.id}`)}
-                        className="px-2.5 py-1 rounded bg-[#1E293B] hover:bg-[#263247] border border-[#263247] text-xs text-[#F8FAFC] transition-colors"
-                      >
-                        Inspect
-                      </button>
-
-                      <button
-                        onClick={() =>
-                          setActiveMenuDocId(
-                            activeMenuDocId === doc.id ? null : doc.id
-                          )
-                        }
-                        className="w-7 h-7 rounded hover:bg-[#1E293B] flex items-center justify-center text-[#94A3B8] hover:text-[#F8FAFC]"
-                      >
-                        <MoreVertical className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    {/* Popover Menu */}
-                    {activeMenuDocId === doc.id && (
-                      <div className="absolute right-5 top-12 w-52 bg-[#1E293B] border border-[#263247] rounded-xl shadow-2xl py-1 z-30 text-left">
-                        <button
-                          onClick={() => {
-                            setActiveMenuDocId(null);
-                            navigate(`/documents/${doc.id}`);
-                          }}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[#F8FAFC] hover:bg-[#263247] text-left"
-                        >
-                          <Eye className="w-3.5 h-3.5 text-[#94A3B8]" />
-                          <span>Open details & history</span>
-                        </button>
-                        <button
-                          onClick={() => {
-                            setActiveMenuDocId(null);
-                            navigate(`/documents/${doc.id}/compare`);
-                          }}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[#F8FAFC] hover:bg-[#263247] text-left"
-                        >
-                          <GitCompare className="w-3.5 h-3.5 text-[#3B82F6]" />
-                          <span>Compare versions</span>
-                        </button>
-                        <button
-                          onClick={() => {
-                            setActiveMenuDocId(null);
-                            navigate('/impact');
-                          }}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[#F8FAFC] hover:bg-[#263247] text-left"
-                        >
-                          <ShieldCheck className="w-3.5 h-3.5 text-[#14B8A6]" />
-                          <span>Run integrity check</span>
-                        </button>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination Footer */}
-        <div className="px-5 py-3 bg-[#1E293B] border-t border-[#263247] flex items-center justify-between text-xs text-[#94A3B8]">
           <div>
-            Showing <strong className="text-[#F8FAFC]">{(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, filteredDocuments.length)}</strong> of{' '}
-            <strong className="text-[#F8FAFC]">{filteredDocuments.length}</strong> documents
+
+            <h2 className="text-sm font-bold text-[#29233D]">Knowledge Repository</h2>
+
+            <p className="mt-0.5 text-[10px] text-[#938DA2]">Versioned sources with integrity and downstream impact status</p>
+
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="h-7 px-2.5 rounded bg-[#111827] border border-[#263247] text-[#94A3B8] hover:text-[#F8FAFC] disabled:opacity-40"
-            >
-              Previous
-            </button>
-            <span className="font-mono px-1">
-              Page {currentPage} of {totalPages}
-            </span>
-            <button
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className="h-7 px-2.5 rounded bg-[#111827] border border-[#263247] text-[#94A3B8] hover:text-[#F8FAFC] disabled:opacity-40"
-            >
-              Next
-            </button>
-          </div>
+
+          <span className="rounded-full border border-[#D9F99D] bg-[#F7FEE7] px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-[#65A30D]">
+
+            {filteredDocuments.length} indexed
+
+          </span>
+
         </div>
+
+        <div className="overflow-x-auto">
+
+          <table className="w-full min-w-[900px] border-collapse text-left">
+
+            <thead>
+
+              <tr className="h-11 border-b border-[#EEE7E1] bg-[#FFFCF8] text-[10px] font-bold uppercase tracking-[0.12em] text-[#938DA2]">
+
+                <th className="px-5 py-2">Document Name & ID</th>
+
+                <th className="px-4 py-2">Department</th>
+
+                <th className="px-4 py-2">Version</th>
+
+                <th className="px-4 py-2">Last Modified</th>
+
+                <th className="px-4 py-2">Integrity Status</th>
+
+                <th className="px-4 py-2">Downstream Impact</th>
+
+                <th className="px-4 py-2">Analyzed</th>
+
+                <th className="px-5 py-2 text-right">Actions</th>
+
+              </tr>
+
+            </thead>
+
+            <tbody className="divide-y divide-[#F3EEE9] text-xs">
+
+              {paginatedDocs.map((doc) => (
+
+                <tr key={doc.id} className="h-16 transition-colors hover:bg-[#FFF9FC]">
+
+                  <td className="px-5 py-2">
+
+                    <div className="flex items-center gap-3">
+
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[#D9F99D] bg-[#F7FEE7] text-[#65A30D]">
+
+                        <FileText className="h-4 w-4" />
+
+                      </div>
+
+                      <div className="min-w-0">
+
+                        <button
+
+                          onClick={() => navigate(`/documents/${doc.id}`)}
+
+                          className="block max-w-[240px] truncate text-left font-semibold text-[#29233D] transition-colors hover:text-[#DB2777]"
+
+                        >
+
+                          {doc.title}
+
+                        </button>
+
+                        <div className="mt-0.5 font-mono text-[10px] text-[#A39AAA]">{doc.id} • {doc.fileSize}</div>
+
+                      </div>
+
+                    </div>
+
+                  </td>
+
+                  <td className="px-4 py-2 text-[#716A7C]">{doc.department}</td>
+
+                  <td className="px-4 py-2">
+
+                    <button
+
+                      onClick={() => navigate(`/documents/${doc.id}`)}
+
+                      className="inline-flex items-center gap-1 rounded-lg border border-[#E9D5FF] bg-[#FAF5FF] px-2 py-1 font-mono text-[10px] font-semibold text-[#7C3AED]"
+
+                    >
+
+                      <History className="h-3 w-3" /> {doc.currentVersion}
+
+                    </button>
+
+                  </td>
+
+                  <td className="whitespace-nowrap px-4 py-2 text-[#81798E]">{doc.lastModified}</td>
+
+                  <td className="px-4 py-2"><StatusBadge status={doc.integrityStatus} size="sm" /></td>
+
+                  <td className="px-4 py-2">
+
+                    {doc.affectedAnswerCount > 0 ? (
+
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-[#FBCFE8] bg-[#FDF2F8] px-2.5 py-1 text-[10px] font-bold text-[#DB2777]">
+
+                        <AlertTriangle className="h-3 w-3" /> {doc.affectedAnswerCount} answers
+
+                      </span>
+
+                    ) : (
+
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-[#D9F99D] bg-[#F7FEE7] px-2.5 py-1 text-[10px] font-semibold text-[#65A30D]">
+
+                        <CheckCircle className="h-3 w-3" /> 0 answers
+
+                      </span>
+
+                    )}
+
+                  </td>
+
+                  <td className="px-4 py-2 text-[#938DA2]">{doc.lastAnalyzed}</td>
+
+                  <td className="relative px-5 py-2 text-right">
+
+                    <div className="inline-flex items-center gap-1">
+
+                      <button
+
+                        onClick={() => navigate(`/documents/${doc.id}`)}
+
+                        className="rounded-lg border border-[#E8E0DA] bg-white px-2.5 py-1.5 text-[11px] font-semibold text-[#514A60] shadow-sm hover:border-[#F9A8D4]"
+
+                      >
+
+                        Inspect
+
+                      </button>
+
+                      <button
+
+                        onClick={() => setActiveMenuDocId(activeMenuDocId === doc.id ? null : doc.id)}
+
+                        className="flex h-8 w-8 items-center justify-center rounded-lg text-[#938DA2] hover:bg-[#FDF2F8] hover:text-[#DB2777]"
+
+                      >
+
+                        <MoreVertical className="h-4 w-4" />
+
+                      </button>
+
+                    </div>
+
+                    {activeMenuDocId === doc.id && (
+
+                      <div className="absolute right-5 top-12 z-30 w-52 overflow-hidden rounded-xl border border-[#E8E0DA] bg-white py-1 text-left shadow-[0_18px_45px_rgba(41,35,61,0.15)]">
+
+                        <MenuButton icon={<Eye className="h-3.5 w-3.5" />} label="Open details & history" onClick={() => { setActiveMenuDocId(null); navigate(`/documents/${doc.id}`); }} />
+
+                        <MenuButton icon={<GitCompare className="h-3.5 w-3.5 text-[#DB2777]" />} label="Compare versions" onClick={() => { setActiveMenuDocId(null); navigate(`/documents/${doc.id}/compare`); }} />
+
+                        <MenuButton icon={<ShieldCheck className="h-3.5 w-3.5 text-[#65A30D]" />} label="Run integrity check" onClick={() => { setActiveMenuDocId(null); navigate('/impact'); }} />
+
+                      </div>
+
+                    )}
+
+                  </td>
+
+                </tr>
+
+              ))}
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+        <div className="flex items-center justify-between border-t border-[#EEE7E1] bg-[#FFFCF8] px-5 py-3 text-xs text-[#81798E]">
+
+          <div>
+
+            Showing <strong className="text-[#29233D]">{filteredDocuments.length === 0 ? 0 : (currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, filteredDocuments.length)}</strong> of{' '}
+
+            <strong className="text-[#29233D]">{filteredDocuments.length}</strong> documents
+
+          </div>
+
+          <div className="flex items-center gap-2">
+
+            <button
+
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+
+              disabled={currentPage === 1}
+
+              className="rounded-lg border border-[#E8E0DA] bg-white px-2.5 py-1.5 font-semibold text-[#716A7C] disabled:opacity-40"
+
+            >
+
+              Previous
+
+            </button>
+
+            <span className="px-1 font-mono text-[10px] text-[#938DA2]">Page {currentPage} of {totalPages}</span>
+
+            <button
+
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+
+              disabled={currentPage === totalPages}
+
+              className="rounded-lg border border-[#E8E0DA] bg-white px-2.5 py-1.5 font-semibold text-[#716A7C] disabled:opacity-40"
+
+            >
+
+              Next
+
+            </button>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      <section className="flex flex-col items-center justify-between gap-3 rounded-2xl border border-white/90 bg-gradient-to-r from-[#F7FEE7]/90 via-white/90 to-[#FDF2F8]/90 p-3.5 text-xs text-[#81798E] shadow-[0_10px_30px_rgba(73,55,94,0.07)] backdrop-blur-xl sm:flex-row">
+
+        <div className="flex flex-wrap items-center gap-3">
+
+          <span className="inline-flex items-center gap-1.5 font-semibold text-[#65A30D]">
+
+            <span className="h-2 w-2 rounded-full bg-[#A3E635]" /> Ingestion pipeline healthy
+
+          </span>
+
+          <span className="text-[#D8D0CA]">•</span>
+
+          <span className="font-mono text-[10px]">Block Hash: sha256:7b91d2c49a0...33e8</span>
+
+          <span className="text-[#D8D0CA]">•</span>
+
+          <span>Auto-sync: 60s</span>
+
+        </div>
+
+        <button onClick={() => navigate('/audit')} className="flex items-center gap-1 font-semibold text-[#DB2777] hover:underline">
+
+          View ingestion logs <ArrowRight className="h-3.5 w-3.5" />
+
+        </button>
+
+      </section>
+
+    </div>
+
+  );
+
+};
+
+type Tone = 'green' | 'orange';
+
+const MetricTile: React.FC<{
+
+  title: string;
+
+  value: string | number;
+
+  note: string;
+
+  badge: string;
+
+  tone: Tone;
+
+  icon: React.ReactNode;
+
+}> = ({ title, value, note, badge, tone, icon }) => {
+
+  const green = tone === 'green';
+
+  return (
+
+    <div className={`group relative min-h-[132px] overflow-hidden rounded-2xl border p-5 shadow-[0_9px_28px_rgba(41,35,61,0.06)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_18px_42px_rgba(41,35,61,0.11)] ${green ? 'border-[#E2EBCF] bg-gradient-to-br from-white via-[#FBFFF4] to-[#F7FEE7] hover:border-[#D9F99D]' : 'border-[#F5E6C7] bg-gradient-to-br from-white via-[#FFF9F3] to-[#FFF7FB] hover:border-[#F9A8D4]'}`}>
+
+      <div className={`absolute inset-x-0 top-0 h-[3px] ${green ? 'bg-[#A3E635]' : 'bg-[#F59E0B]'}`} />
+
+      <div className={`pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full blur-2xl ${green ? 'bg-[#D9F99D]/35' : 'bg-[#FDE68A]/30'}`} />
+
+      <div className="relative flex items-start justify-between">
+
+        <div>
+
+          <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#716A7C]">{title}</div>
+
+          <div className="mt-2 text-[30px] font-bold leading-none text-[#29233D]">{value}</div>
+
+        </div>
+
+        <div className={`flex h-11 w-11 items-center justify-center rounded-2xl border shadow-sm transition-transform group-hover:scale-105 ${green ? 'border-[#D9F99D] bg-[#F7FEE7] text-[#65A30D]' : 'border-[#FDE68A] bg-[#FFFBEB] text-[#D97706]'}`}>
+
+          {icon}
+
+        </div>
+
       </div>
 
-      {/* Bottom Pipeline Status Strip */}
-      <div className="rounded-xl p-3 bg-[#111827] border border-[#263247] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#64748B]">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-[#14B8A6]" />
-            <span className="text-[#94A3B8]">Ingestion pipeline healthy</span>
-          </div>
-          <span>•</span>
-          <span className="font-mono">Block Hash: sha256:7b91d2c49a0...33e8</span>
-          <span>•</span>
-          <span>Auto-sync interval: 60s</span>
-        </div>
-        <button
-          onClick={() => navigate('/audit')}
-          className="text-[#3B82F6] hover:underline flex items-center gap-1"
-        >
-          <span>View Ingestion Logs</span>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </button>
+      <div className="relative mt-4 flex items-center justify-between border-t border-[#F2EEE9] pt-3">
+
+        <span className="text-[11px] text-[#938DA2]">{note}</span>
+
+        <span className={`text-[10px] font-semibold ${green ? 'text-[#65A30D]' : 'text-[#D97706]'}`}>{badge}</span>
+
       </div>
+
     </div>
+
   );
+
 };
+
+const MenuButton: React.FC<{
+
+  icon: React.ReactNode;
+
+  label: string;
+
+  onClick: () => void;
+
+}> = ({ icon, label, onClick }) => (
+
+  <button onClick={onClick} className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-[#514A60] transition-colors hover:bg-[#FFF7FB] hover:text-[#29233D]">
+
+    {icon}
+
+    <span>{label}</span>
+
+  </button>
+
+);
