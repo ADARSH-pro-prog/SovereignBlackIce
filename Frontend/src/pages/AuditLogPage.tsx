@@ -168,56 +168,19 @@ export const AuditLogPage: React.FC = () => {
 
       {/* Top Header & Actions */}
 
-      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-gradient-to-br from-white via-[#FFF7FB] to-[#F7FEE7] border border-white/90 rounded-[24px] p-6 shadow-[0_18px_55px_rgba(73,55,94,0.09)]">
-
+      <header className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
         <div>
-
-          <div className="flex items-center gap-2 mb-1">
-
-            <h1 className="text-2xl font-bold tracking-tight text-[#29233D]">
-
-              Audit Log
-
-            </h1>
-
-            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#A3E635]/10 text-[#65A30D] text-xs font-medium border border-[#D9F99D]">
-
-              <span className="w-1.5 h-1.5 rounded-full bg-[#A3E635] animate-pulse" />
-
-              Sync: Live • SEC-EAL6
-
-            </span>
-
-            <span className="px-2 py-0.5 rounded bg-[#F7F3F8] text-[#756D82] text-xs font-mono border border-[#E8E2EC]">
-
-              {isLiveMode ? 'LIVE API AUDIT TRAIL' : '[DEMO DATA - IMMUTABLE HYPERLEDGER]'}
-
-            </span>
-
+          <div className="flex items-center gap-3">
+            <h1 className="display text-[44px] leading-none text-ink">Audit log</h1>
+            {!isLiveMode && (
+              <span className="rounded-full border border-amber/30 px-2 py-0.5 text-xs text-amber">Demo data</span>
+            )}
           </div>
-
-          <p className="text-sm text-[#756D82]">
-
-            Track document activity, integrity events, AI operations, and human
-
-            review decisions.
-
+          <p className="mt-3 max-w-2xl text-[15px] text-ink-2">
+            Every upload, comparison, generated answer and review decision, in order.
           </p>
-
         </div>
-
-        {/* Action Controls */}
-
         <div className="flex items-center gap-2.5 shrink-0 self-start xl:self-auto">
-
-          <div className="px-3 py-1.5 bg-[#F7F3F8] border border-[#E8E2EC] rounded-lg text-xs text-[#29233D] flex items-center gap-2">
-
-            <History className="w-3.5 h-3.5 text-[#938DA2]" />
-
-            <span>Last 30 Days (Sep 1 – Sep 30, 2026)</span>
-
-          </div>
-
           {/* Export Dropdown Trigger */}
 
           <div className="relative">
@@ -226,7 +189,7 @@ export const AuditLogPage: React.FC = () => {
 
               onClick={() => setIsExportDropdownOpen(!isExportDropdownOpen)}
 
-              className="h-9 px-4 rounded-xl bg-gradient-to-r from-[#A3E635] via-[#D9F99D] to-[#F9A8D4] hover:brightness-95 text-xs font-semibold text-[#29233D] transition-all flex items-center gap-2 shadow-[0_8px_22px_rgba(163,230,53,0.20)]"
+              className="h-9 px-4 rounded-xl bg-ice hover:brightness-95 text-xs font-semibold text-void transition-all flex items-center gap-2 "
 
             >
 
@@ -238,9 +201,9 @@ export const AuditLogPage: React.FC = () => {
 
             {isExportDropdownOpen && (
 
-              <div className="absolute right-0 mt-2 w-56 bg-[#F7F3F8] border border-[#E8E2EC] rounded-xl shadow-2xl p-1.5 z-40 text-xs">
+              <div className="absolute right-0 mt-2 w-56 bg-raised border border-line rounded-xl shadow-2xl p-1.5 z-40 text-xs">
 
-                <div className="px-2.5 py-1 text-[10px] font-mono text-[#938DA2] uppercase">
+                <div className="px-2.5 py-1 text-xs text-muted">
 
                   Provenance Export Format
 
@@ -250,13 +213,13 @@ export const AuditLogPage: React.FC = () => {
 
                   onClick={() => handleExport('json')}
 
-                  className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg hover:bg-[#EEE9F2] text-[#29233D] text-left"
+                  className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg hover:bg-line-strong text-ink text-left"
 
                 >
 
                   <span>Immutable Proof Bundle</span>
 
-                  <span className="font-mono text-[#65A30D]">.JSON</span>
+                  <span className="font-mono text-ice">.JSON</span>
 
                 </button>
 
@@ -264,13 +227,13 @@ export const AuditLogPage: React.FC = () => {
 
                   onClick={() => handleExport('csv')}
 
-                  className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg hover:bg-[#EEE9F2] text-[#29233D] text-left"
+                  className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg hover:bg-line-strong text-ink text-left"
 
                 >
 
                   <span>Structured Event Log</span>
 
-                  <span className="font-mono text-[#7C3AED]">.CSV</span>
+                  <span className="font-mono text-ice">.CSV</span>
 
                 </button>
 
@@ -278,13 +241,13 @@ export const AuditLogPage: React.FC = () => {
 
                   onClick={() => handleExport('sig')}
 
-                  className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg hover:bg-[#EEE9F2] text-[#29233D] text-left"
+                  className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg hover:bg-line-strong text-ink text-left"
 
                 >
 
                   <span>Merkle Hash Receipt</span>
 
-                  <span className="font-mono text-[#F59E0B]">.SIG</span>
+                  <span className="font-mono text-amber">.SIG</span>
 
                 </button>
 
@@ -296,133 +259,49 @@ export const AuditLogPage: React.FC = () => {
 
         </div>
 
-      </div>
+      </header>
 
       {/* 4 Metric Cards */}
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-
-        <div className="p-4 bg-gradient-to-br from-white to-[#F7FEE7] border border-[#E8E2EC] rounded-2xl flex flex-col justify-between h-[120px] shadow-[0_8px_25px_rgba(41,35,61,0.05)]">
-
-          <div className="flex items-center justify-between">
-
-            <span className="text-[11px] uppercase tracking-wider text-[#756D82]">
-
-              Total Events
-
-            </span>
-
-            <span className="text-xs text-[#65A30D] font-mono">+14 today</span>
-
-          </div>
-
-          <div>
-
-            <div className="text-2xl font-bold font-mono text-[#29233D]">248</div>
-
-            <div className="text-xs text-[#938DA2] mt-0.5 truncate">
-
-              Verified tamper-evident ledger (Slot #4,891,029)
-
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {(
+          [
+            ['Total events', auditEvents.length, 'Entries in this log'],
+            [
+              'Document changes',
+              auditEvents.filter((e) =>
+                ['Document Uploaded', 'New Version Added', 'Version Comparison Completed'].includes(e.eventType)
+              ).length,
+              'Uploads, versions, comparisons',
+            ],
+            [
+              'AI answers logged',
+              auditEvents.filter((e) => e.eventType === 'AI Answer Generated').length,
+              'Generated with citations',
+            ],
+            [
+              'Review decisions',
+              auditEvents.filter((e) => e.eventType === 'Review Decision Recorded').length,
+              'Human sign-offs recorded',
+            ],
+          ] as const
+        ).map(([label, value, note]) => (
+          <div key={label} className="chart-card flex h-[132px] flex-col justify-between px-5 py-4">
+            <span className="label-mono">{label}</span>
+            <div>
+              <div className="font-mono text-[34px] font-medium leading-none tracking-tight tabular-nums text-ink">{value}</div>
+              <div className="mt-1.5 text-xs text-muted">{note}</div>
             </div>
-
           </div>
-
-        </div>
-
-        <div className="p-4 bg-gradient-to-br from-white to-[#FFF7ED] border border-[#E8E2EC] rounded-2xl flex flex-col justify-between h-[120px] shadow-[0_8px_25px_rgba(41,35,61,0.05)]">
-
-          <div className="flex items-center justify-between">
-
-            <span className="text-[11px] uppercase tracking-wider text-[#756D82]">
-
-              Document Changes
-
-            </span>
-
-            <span className="text-xs text-[#F59E0B] font-mono">3 pending</span>
-
-          </div>
-
-          <div>
-
-            <div className="text-2xl font-bold font-mono text-[#29233D]">12</div>
-
-            <div className="text-xs text-[#938DA2] mt-0.5">
-
-              AST semantic token divergence
-
-            </div>
-
-          </div>
-
-        </div>
-
-        <div className="p-4 bg-gradient-to-br from-white to-[#FDF2F8] border border-[#E8E2EC] rounded-2xl flex flex-col justify-between h-[120px] shadow-[0_8px_25px_rgba(41,35,61,0.05)]">
-
-          <div className="flex items-center justify-between">
-
-            <span className="text-[11px] uppercase tracking-wider text-[#756D82]">
-
-              AI Queries Audited
-
-            </span>
-
-            <span className="text-xs text-[#65A30D] font-mono">100% Grounded</span>
-
-          </div>
-
-          <div>
-
-            <div className="text-2xl font-bold font-mono text-[#29233D]">76</div>
-
-            <div className="text-xs text-[#938DA2] mt-0.5">
-
-              Zero ungrounded hallucinations
-
-            </div>
-
-          </div>
-
-        </div>
-
-        <div className="p-4 bg-gradient-to-br from-white to-[#F5F3FF] border border-[#E8E2EC] rounded-2xl flex flex-col justify-between h-[120px] shadow-[0_8px_25px_rgba(41,35,61,0.05)]">
-
-          <div className="flex items-center justify-between">
-
-            <span className="text-[11px] uppercase tracking-wider text-[#756D82]">
-
-              Review Decisions
-
-            </span>
-
-            <span className="text-xs text-[#7C3AED] font-mono">100% HITL</span>
-
-          </div>
-
-          <div>
-
-            <div className="text-2xl font-bold font-mono text-[#29233D]">18</div>
-
-            <div className="text-xs text-[#938DA2] mt-0.5 truncate">
-
-              S. Vance & Safety Lead sign-offs
-
-            </div>
-
-          </div>
-
-        </div>
-
+        ))}
       </div>
 
       {/* Filter & Query Toolbar */}
 
-      <div className="bg-white/88 border border-[#E8E2EC] rounded-xl p-3 flex flex-col lg:flex-row items-center gap-3">
+      <div className="bg-panel border border-line rounded-xl p-3 flex flex-col lg:flex-row items-center gap-3">
 
         <div className="relative flex-1 w-full">
 
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#938DA2]" />
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-0.5/2 text-muted" />
 
           <input
 
@@ -440,7 +319,7 @@ export const AuditLogPage: React.FC = () => {
 
             placeholder="Search by hash, document, user, or event..."
 
-            className="w-full h-9 pl-9 pr-3 rounded-lg bg-[#F7F3F8] border border-[#E8E2EC] text-xs text-[#29233D] placeholder:text-[#938DA2] focus:outline-none focus:border-[#C4B5FD]"
+            className="w-full h-9 pl-9 pr-3 rounded-lg bg-raised border border-line text-xs text-ink placeholder:text-muted focus:outline-none focus:border-line-strong"
 
           />
 
@@ -458,7 +337,7 @@ export const AuditLogPage: React.FC = () => {
 
           }}
 
-          className="h-9 px-3 rounded-lg bg-[#F7F3F8] border border-[#E8E2EC] text-xs text-[#756D82] focus:outline-none cursor-pointer"
+          className="h-9 px-3 rounded-lg bg-raised border border-line text-xs text-muted focus:outline-none cursor-pointer"
 
         >
 
@@ -492,7 +371,7 @@ export const AuditLogPage: React.FC = () => {
 
           }}
 
-          className="h-9 px-3 rounded-lg bg-[#F7F3F8] border border-[#E8E2EC] text-xs text-[#756D82] focus:outline-none cursor-pointer"
+          className="h-9 px-3 rounded-lg bg-raised border border-line text-xs text-muted focus:outline-none cursor-pointer"
 
         >
 
@@ -522,7 +401,7 @@ export const AuditLogPage: React.FC = () => {
 
           }}
 
-          className="text-xs text-[#7C3AED] hover:underline px-1 whitespace-nowrap"
+          className="text-xs text-ice hover:underline px-1 whitespace-nowrap"
 
         >
 
@@ -538,13 +417,13 @@ export const AuditLogPage: React.FC = () => {
 
         {/* Left Column (7 cols): Data Ledger Table */}
 
-        <div className="lg:col-span-7 bg-white/90 border border-[#E8E2EC] rounded-[22px] overflow-hidden shadow-[0_14px_40px_rgba(41,35,61,0.07)] flex flex-col">
+        <div className="lg:col-span-7 bg-panel border border-line rounded-[10px] overflow-hidden flex flex-col">
 
-          <div className="px-5 py-3 bg-[#F7F3F8] border-b border-[#E8E2EC] flex items-center justify-between text-xs text-[#756D82]">
+          <div className="px-5 py-3 bg-raised border-b border-line flex items-center justify-between text-xs text-muted">
 
-            <span className="font-semibold text-[#29233D]">Ledger Log Entries</span>
+            <span className="font-semibold text-ink">Ledger Log Entries</span>
 
-            <span className="font-mono text-[11px]">Auto-refresh: 10s</span>
+            
 
           </div>
 
@@ -554,7 +433,7 @@ export const AuditLogPage: React.FC = () => {
 
               <thead>
 
-                <tr className="h-9 bg-[#F7F3F8]/70 border-b border-[#E8E2EC] text-[11px] font-medium uppercase tracking-wider text-[#756D82]">
+                <tr className="h-9 bg-raised border-b border-line text-xs font-medium text-muted">
 
                   <th className="px-5">Timestamp & Block</th>
 
@@ -572,13 +451,13 @@ export const AuditLogPage: React.FC = () => {
 
               </thead>
 
-              <tbody className="divide-y divide-[#1A2438] text-xs">
+              <tbody className="divide-y divide-line-strong text-xs">
 
                 {paginatedEvents.length === 0 ? (
 
                   <tr>
 
-                    <td colSpan={6} className="px-5 py-8 text-center text-[#938DA2]">
+                    <td colSpan={6} className="px-5 py-8 text-center text-muted">
 
                       No audit events found matching the filter criteria.
 
@@ -604,9 +483,9 @@ export const AuditLogPage: React.FC = () => {
 
                           isSelected
 
-                            ? 'bg-[#A3E635]/15 hover:bg-[#A3E635]/20'
+                            ? 'bg-ice/15 hover:bg-ice/20'
 
-                            : 'hover:bg-[#F7F3F8]/40'
+                            : 'hover:bg-raised'
 
                         }`}
 
@@ -614,13 +493,13 @@ export const AuditLogPage: React.FC = () => {
 
                         <td className="px-5">
 
-                          <div className="font-medium text-[#29233D]">
+                          <div className="font-medium text-ink">
 
                             {evt.timestamp}
 
                           </div>
 
-                          <div className="font-mono text-[10px] text-[#7C3AED]">
+                          <div className="font-mono text-xs text-ice">
 
                             {evt.txHash.slice(0, 10)}...
 
@@ -630,7 +509,7 @@ export const AuditLogPage: React.FC = () => {
 
                         <td className="px-4">
 
-                          <span className="font-medium text-[#29233D]">
+                          <span className="font-medium text-ink">
 
                             {evt.eventType}
 
@@ -640,13 +519,13 @@ export const AuditLogPage: React.FC = () => {
 
                         <td className="px-4">
 
-                          <div className="text-[#756D82] truncate max-w-[140px]">
+                          <div className="text-muted truncate max-w-[140px]">
 
                             {evt.documentName}
 
                           </div>
 
-                          <div className="text-[10px] text-[#938DA2]">
+                          <div className="text-xs text-muted">
 
                             {evt.documentId}
 
@@ -654,7 +533,7 @@ export const AuditLogPage: React.FC = () => {
 
                         </td>
 
-                        <td className="px-4 text-[#756D82] truncate max-w-[120px]">
+                        <td className="px-4 text-muted truncate max-w-[120px]">
 
                           {evt.actor}
 
@@ -678,7 +557,7 @@ export const AuditLogPage: React.FC = () => {
 
                             }}
 
-                            className="px-2.5 py-1 rounded bg-[#F7F3F8] hover:bg-[#EEE9F2] border border-[#E8E2EC] text-xs text-[#29233D]"
+                            className="px-2.5 py-1 rounded bg-raised hover:bg-line-strong border border-line text-xs text-ink"
 
                           >
 
@@ -704,13 +583,13 @@ export const AuditLogPage: React.FC = () => {
 
           {/* Pagination */}
 
-          <div className="p-3 bg-[#F7F3F8] border-t border-[#E8E2EC] flex items-center justify-between text-xs text-[#756D82]">
+          <div className="p-3 bg-raised border-t border-line flex items-center justify-between text-xs text-muted">
 
             <div>
 
-              Showing <strong className="text-[#29233D]">{filteredEvents.length === 0 ? 0 : (currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, filteredEvents.length)}</strong> of{' '}
+              Showing <strong className="text-ink">{filteredEvents.length === 0 ? 0 : (currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, filteredEvents.length)}</strong> of{' '}
 
-              <strong className="text-[#29233D]">{filteredEvents.length}</strong> events
+              <strong className="text-ink">{filteredEvents.length}</strong> events
 
             </div>
 
@@ -722,7 +601,7 @@ export const AuditLogPage: React.FC = () => {
 
                 disabled={currentPage === 1}
 
-                className="px-2.5 py-1 rounded bg-white/88 border border-[#E8E2EC] disabled:opacity-40"
+                className="px-2.5 py-1 rounded bg-panel border border-line disabled:opacity-40"
 
               >
 
@@ -742,7 +621,7 @@ export const AuditLogPage: React.FC = () => {
 
                 disabled={currentPage === totalPages}
 
-                className="px-2.5 py-1 rounded bg-white/88 border border-[#E8E2EC] disabled:opacity-40"
+                className="px-2.5 py-1 rounded bg-panel border border-line disabled:opacity-40"
 
               >
 
@@ -758,7 +637,7 @@ export const AuditLogPage: React.FC = () => {
 
         {/* Right Column (5 cols): Event Detail Inspection Drawer */}
 
-        <div className="lg:col-span-5 bg-gradient-to-br from-white via-[#FFF9FC] to-[#FAFFF1] border border-[#E8E2EC] rounded-[22px] shadow-[0_14px_40px_rgba(41,35,61,0.08)] sticky top-20 flex flex-col overflow-hidden">
+        <div className="lg:col-span-5 bg-panel border border-line rounded-[10px] sticky top-20 flex flex-col overflow-hidden">
 
           {selectedEvent ? (
 
@@ -766,13 +645,13 @@ export const AuditLogPage: React.FC = () => {
 
               {/* Header */}
 
-              <div className="p-5 bg-[#F7F3F8] border-b border-[#E8E2EC] flex flex-col gap-2">
+              <div className="p-5 bg-raised border-b border-line flex flex-col gap-2">
 
                 <div className="flex items-center justify-between">
 
                   <StatusBadge status={selectedEvent.status} size="sm" />
 
-                  <span className="font-mono text-xs text-[#938DA2]">
+                  <span className="font-mono text-xs text-muted">
 
                     {selectedEvent.id}
 
@@ -780,7 +659,7 @@ export const AuditLogPage: React.FC = () => {
 
                 </div>
 
-                <h3 className="text-base font-bold text-[#29233D]">
+                <h3 className="text-base font-bold text-ink">
 
                   {selectedEvent.eventType}
 
@@ -788,7 +667,7 @@ export const AuditLogPage: React.FC = () => {
 
                 <div className="flex items-center justify-between pt-1">
 
-                  <div className="font-mono text-[11px] text-[#7C3AED] truncate max-w-[240px]">
+                  <div className="font-mono text-xs text-ice truncate max-w-[240px]">
 
                     {selectedEvent.txHash}
 
@@ -812,7 +691,7 @@ export const AuditLogPage: React.FC = () => {
 
                     }}
 
-                    className="px-2 py-0.5 rounded bg-white/88 border border-[#E8E2EC] hover:bg-[#EEE9F2] text-[10px] text-[#756D82] flex items-center gap-1"
+                    className="px-2 py-0.5 rounded bg-panel border border-line hover:bg-line-strong text-xs text-muted flex items-center gap-1"
 
                   >
 
@@ -834,11 +713,11 @@ export const AuditLogPage: React.FC = () => {
 
                 <div className="space-y-2">
 
-                  <div className="flex items-center justify-between text-[#938DA2] text-[10px] uppercase font-mono">
+                  <div className="flex items-center justify-between text-muted text-xs">
 
                     <span>Cryptographic Provenance</span>
 
-                    <span className="text-[#65A30D] flex items-center gap-1 font-semibold">
+                    <span className="text-ice flex items-center gap-1 font-semibold">
 
                       <CheckCircle className="w-3 h-3" /> Chain Verified
 
@@ -846,21 +725,21 @@ export const AuditLogPage: React.FC = () => {
 
                   </div>
 
-                  <div className="p-3 rounded-lg bg-[#FFFDF9]/95 border border-[#E8E2EC] space-y-1.5 font-mono text-[11px]">
+                  <div className="p-3 rounded-lg bg-panel border border-line space-y-1.5 font-mono text-xs">
 
                     <div className="flex justify-between">
 
-                      <span className="text-[#938DA2]">Timestamp:</span>
+                      <span className="text-muted">Timestamp:</span>
 
-                      <span className="text-[#29233D]">{selectedEvent.timestamp}</span>
+                      <span className="text-ink">{selectedEvent.timestamp}</span>
 
                     </div>
 
                     <div className="flex justify-between">
 
-                      <span className="text-[#938DA2]">Ledger Sequence:</span>
+                      <span className="text-muted">Ledger Sequence:</span>
 
-                      <span className="text-[#29233D]">
+                      <span className="text-ink">
 
                         Block {selectedEvent.blockNumber} (Merkle Leaf 42)
 
@@ -870,17 +749,17 @@ export const AuditLogPage: React.FC = () => {
 
                     <div className="flex justify-between">
 
-                      <span className="text-[#938DA2]">Signature Alg:</span>
+                      <span className="text-muted">Signature Alg:</span>
 
-                      <span className="text-[#29233D]">Ed25519 (SHA-256 match)</span>
+                      <span className="text-ink">Ed25519 (SHA-256 match)</span>
 
                     </div>
 
                     <div className="flex justify-between">
 
-                      <span className="text-[#938DA2]">Actor:</span>
+                      <span className="text-muted">Actor:</span>
 
-                      <span className="text-[#65A30D]">{selectedEvent.actor}</span>
+                      <span className="text-ice">{selectedEvent.actor}</span>
 
                     </div>
 
@@ -892,29 +771,29 @@ export const AuditLogPage: React.FC = () => {
 
                 <div className="space-y-2">
 
-                  <span className="text-[10px] text-[#938DA2] uppercase font-mono block">
+                  <span className="text-xs text-muted block">
 
                     Target Document & Reference
 
                   </span>
 
-                  <div className="p-3 rounded-lg bg-[#FFFDF9]/95 border border-[#E8E2EC] space-y-2">
+                  <div className="p-3 rounded-lg bg-panel border border-line space-y-2">
 
-                    <div className="flex items-center justify-between font-medium text-[#29233D]">
+                    <div className="flex items-center justify-between font-medium text-ink">
 
                       <span>{selectedEvent.documentName}</span>
 
-                      <span className="font-mono text-[#7C3AED]">{selectedEvent.documentId}</span>
+                      <span className="font-mono text-ice">{selectedEvent.documentId}</span>
 
                     </div>
 
-                    <div className="text-[11px] text-[#756D82]">
+                    <div className="text-xs text-muted">
 
-                      Version: <strong className="text-[#29233D]">{selectedEvent.documentVersion}</strong>
+                      Version: <strong className="text-ink">{selectedEvent.documentVersion}</strong>
 
                     </div>
 
-                    <div className="text-[11px] text-[#938DA2]">
+                    <div className="text-xs text-muted">
 
                       Details: {selectedEvent.details}
 
@@ -928,15 +807,15 @@ export const AuditLogPage: React.FC = () => {
 
                 {selectedEvent.blastRadiusSummary && (
 
-                  <div className="p-3 rounded-lg bg-[#F59E0B]/10 border border-[#F59E0B]/30 space-y-1">
+                  <div className="p-3 rounded-lg bg-amber/10 border border-amber/30 space-y-1">
 
-                    <span className="text-[10px] uppercase font-mono text-[#F59E0B] font-semibold block">
+                    <span className="text-xs text-amber font-semibold block">
 
                       Blast Radius Notice
 
                     </span>
 
-                    <p className="text-[11px] text-[#756D82]">
+                    <p className="text-xs text-muted">
 
                       {selectedEvent.blastRadiusSummary}
 
@@ -952,9 +831,9 @@ export const AuditLogPage: React.FC = () => {
 
                   <button
 
-                    onClick={() => navigate('/reviews')}
+                    onClick={() => navigate('/dashboard/reviews')}
 
-                    className="w-full py-2 bg-gradient-to-r from-[#A3E635] to-[#F9A8D4] hover:brightness-95 text-[#29233D] rounded-xl text-xs font-semibold flex items-center justify-center gap-2 shadow-sm transition-all"
+                    className="w-full py-2 bg-ice hover:brightness-95 text-void rounded-xl text-xs font-semibold flex items-center justify-center gap-2 shadow-sm transition-all"
 
                   >
 
@@ -966,13 +845,13 @@ export const AuditLogPage: React.FC = () => {
 
                   <button
 
-                    onClick={() => navigate(`/documents/${selectedEvent.documentId}`)}
+                    onClick={() => navigate(`/dashboard/documents/${selectedEvent.documentId}`)}
 
-                    className="w-full py-2 bg-[#F7F3F8] hover:bg-[#EEE9F2] border border-[#E8E2EC] text-xs font-medium text-[#29233D] rounded-lg flex items-center justify-center gap-1.5 transition-colors"
+                    className="w-full py-2 bg-raised hover:bg-line-strong border border-line text-xs font-medium text-ink rounded-lg flex items-center justify-center gap-1.5 transition-colors"
 
                   >
 
-                    <FileText className="w-3.5 h-3.5 text-[#938DA2]" />
+                    <FileText className="w-3.5 h-3.5 text-muted" />
 
                     <span>View Document ({selectedEvent.documentId})</span>
 
@@ -986,13 +865,13 @@ export const AuditLogPage: React.FC = () => {
 
           ) : (
 
-            <div className="p-8 text-center text-[#756D82] flex flex-col items-center justify-center min-h-[300px]">
+            <div className="p-8 text-center text-muted flex flex-col items-center justify-center min-h-[300px]">
 
-              <History className="w-10 h-10 text-[#938DA2] mb-3 opacity-50" />
+              <History className="w-10 h-10 text-muted mb-3 opacity-50" />
 
-              <p className="font-medium text-sm text-[#29233D]">No Audit Event Selected</p>
+              <p className="font-medium text-sm text-ink">No Audit Event Selected</p>
 
-              <p className="text-xs text-[#938DA2] mt-1">Select an entry from the ledger to inspect its cryptographic provenance and impact.</p>
+              <p className="text-xs text-muted mt-1">Select an entry from the ledger to inspect its cryptographic provenance and impact.</p>
 
             </div>
 

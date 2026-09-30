@@ -142,25 +142,19 @@ export const ReviewCenterPage: React.FC = () => {
 
       {/* Page Header */}
 
-      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-gradient-to-br from-white via-[#FFF7FB] to-[#F7FEE7] border border-white/90 rounded-[24px] p-6 relative overflow-hidden shadow-[0_18px_55px_rgba(73,55,94,0.09)]">
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-panel border border-line rounded-[10px] p-6 relative overflow-hidden ">
 
         <div className="max-w-3xl space-y-1">
 
           <div className="flex items-center gap-2.5 flex-wrap">
 
-            <h1 className="text-2xl font-bold tracking-tight text-[#29233D]">
+            <h1 className="display text-[40px] leading-none text-ink">
 
               Human Review Center
 
             </h1>
 
-            <span className="px-2.5 py-0.5 rounded-full bg-[#F7FEE7] border border-[#D9F99D] text-[#65A30D] text-xs font-semibold uppercase font-mono">
-
-              SOVEREIGN TRIAGE GATE
-
-            </span>
-
-            <span className="px-2 py-0.5 rounded bg-[#F7F3F8] text-[#756D82] text-xs font-mono border border-[#E8E3EC]">
+            <span className="px-2 py-0.5 rounded bg-raised text-muted text-xs font-mono border border-line">
 
               {isLiveMode ? 'LIVE API GATE' : '[DEMO DATA]'}
 
@@ -168,7 +162,7 @@ export const ReviewCenterPage: React.FC = () => {
 
           </div>
 
-          <p className="text-xs text-[#756D82] leading-relaxed">
+          <p className="text-xs text-muted leading-relaxed">
 
             Investigate detected changes, review claim mutations, and resolve
 
@@ -186,7 +180,7 @@ export const ReviewCenterPage: React.FC = () => {
 
           <div className="relative w-64">
 
-            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#938DA2]" />
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-0.5/2 text-muted" />
 
             <input
 
@@ -198,7 +192,7 @@ export const ReviewCenterPage: React.FC = () => {
 
               placeholder="Search review items..."
 
-              className="w-full h-9 pl-9 pr-3 rounded-lg bg-[#F7F3F8] border border-[#E8E3EC] text-xs text-[#29233D] placeholder:text-[#938DA2] focus:outline-none focus:border-[#C4B5FD]"
+              className="w-full h-9 pl-9 pr-3 rounded-lg bg-raised border border-line text-xs text-ink placeholder:text-muted focus:outline-none focus:border-line-strong"
 
             />
 
@@ -210,117 +204,93 @@ export const ReviewCenterPage: React.FC = () => {
 
       {/* Summary Metric Strip */}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
 
-        <div className="p-4 bg-white/85 border border-[#E8E3EC] rounded-xl flex flex-col justify-between h-[120px]">
+        <div className="chart-card flex h-[132px] flex-col justify-between px-5 py-4">
 
           <div className="flex items-center justify-between">
 
-            <span className="text-[11px] uppercase tracking-wider text-[#756D82]">
+            <span className="label-mono">
 
               Pending Review
 
             </span>
 
-            <span className="px-1.5 py-0.5 rounded bg-[#F59E0B]/15 text-[#F59E0B] text-[10px] font-semibold">
-
-              Action Req
-
-            </span>
-
           </div>
 
           <div>
 
-            <div className="text-2xl font-bold font-mono text-[#29233D]">
+            <div className="font-mono text-[34px] font-medium leading-none tracking-tight tabular-nums text-ink">
 
               {reviews.filter((r) => r.status === 'Pending').length}
 
             </div>
 
-            <div className="text-xs text-[#F59E0B] mt-0.5">Awaiting auditor sign-off</div>
+            <div className="text-xs text-amber mt-0.5">Awaiting auditor sign-off</div>
 
           </div>
 
         </div>
 
-        <div className="p-4 bg-white/85 border border-[#E8E3EC] rounded-xl flex flex-col justify-between h-[120px]">
+        <div className="chart-card flex h-[132px] flex-col justify-between px-5 py-4">
 
           <div className="flex items-center justify-between">
 
-            <span className="text-[11px] uppercase tracking-wider text-[#756D82]">
+            <span className="label-mono">
 
               In Progress
 
             </span>
 
-            <span className="px-1.5 py-0.5 rounded bg-[#A3E635]/15 text-[#7C3AED] text-[10px] font-semibold">
-
-              Active
-
-            </span>
-
           </div>
 
           <div>
 
-            <div className="text-2xl font-bold font-mono text-[#29233D]">
+            <div className="font-mono text-[34px] font-medium leading-none tracking-tight tabular-nums text-ink">
 
               {reviews.filter((r) => r.status === 'In Progress').length}
 
             </div>
 
-            <div className="text-xs text-[#756D82] mt-0.5">Under active investigation</div>
+            <div className="text-xs text-muted mt-0.5">Under active investigation</div>
 
           </div>
 
         </div>
 
-        <div className="p-4 bg-white/85 border border-[#E8E3EC] rounded-xl flex flex-col justify-between h-[120px]">
+        <div className="chart-card flex h-[132px] flex-col justify-between px-5 py-4">
 
           <div className="flex items-center justify-between">
 
-            <span className="text-[11px] uppercase tracking-wider text-[#756D82]">
+            <span className="label-mono">
 
               Resolved
 
             </span>
 
-            <span className="px-1.5 py-0.5 rounded bg-[#A3E635]/15 text-[#65A30D] text-[10px] font-semibold">
-
-              Closed
-
-            </span>
-
           </div>
 
           <div>
 
-            <div className="text-2xl font-bold font-mono text-[#29233D]">
+            <div className="font-mono text-[34px] font-medium leading-none tracking-tight tabular-nums text-ink">
 
               {reviews.filter((r) => r.status === 'Resolved').length}
 
             </div>
 
-            <div className="text-xs text-[#65A30D] mt-0.5">94.7% SLA Validated</div>
+            <div className="text-xs text-ice mt-0.5">Signed off</div>
 
           </div>
 
         </div>
 
-        <div className="p-4 bg-white/85 border border-[#E8E3EC] rounded-xl flex flex-col justify-between h-[120px]">
+        <div className="chart-card flex h-[132px] flex-col justify-between px-5 py-4">
 
           <div className="flex items-center justify-between">
 
-            <span className="text-[11px] uppercase tracking-wider text-[#756D82]">
+            <span className="label-mono">
 
               Escalated
-
-            </span>
-
-            <span className="px-1.5 py-0.5 rounded bg-[#EF4444]/15 text-[#EF4444] text-[10px] font-semibold">
-
-              Hold
 
             </span>
 
@@ -328,13 +298,13 @@ export const ReviewCenterPage: React.FC = () => {
 
           <div>
 
-            <div className="text-2xl font-bold font-mono text-[#EF4444]">
+            <div className="font-mono text-[34px] font-medium leading-none tracking-tight tabular-nums text-red">
 
               {reviews.filter((r) => r.status === 'Escalated').length}
 
             </div>
 
-            <div className="text-xs text-[#EF4444]/80 mt-0.5">L3 Legal Hold</div>
+            <div className="text-xs text-red/80 mt-0.5">Held for escalation</div>
 
           </div>
 
@@ -344,7 +314,7 @@ export const ReviewCenterPage: React.FC = () => {
 
       {/* Filter Toolbar */}
 
-      <div className="bg-white/85 border border-[#E8E3EC] rounded-xl p-3 flex flex-wrap items-center justify-between gap-3">
+      <div className="bg-panel border border-line rounded-xl p-3 flex flex-wrap items-center justify-between gap-3">
 
         {/* Status Tabs */}
 
@@ -362,9 +332,9 @@ export const ReviewCenterPage: React.FC = () => {
 
                 filterStatus === st
 
-                  ? 'bg-gradient-to-r from-[#A3E635] to-[#F9A8D4] text-[#29233D] shadow-sm'
+                  ? ' bg-ice text-void shadow-sm'
 
-                  : 'text-[#756D82] hover:text-[#29233D] hover:bg-[#F7F3F8]'
+                  : 'text-muted hover:text-ink hover:bg-raised'
 
               }`}
 
@@ -388,7 +358,7 @@ export const ReviewCenterPage: React.FC = () => {
 
             onChange={(e) => setFilterSeverity(e.target.value)}
 
-            className="h-8 px-2.5 rounded-lg bg-[#F7F3F8] border border-[#E8E3EC] text-xs text-[#756D82] focus:outline-none"
+            className="h-8 px-2.5 rounded-lg bg-raised border border-line text-xs text-muted focus:outline-none"
 
           >
 
@@ -414,7 +384,7 @@ export const ReviewCenterPage: React.FC = () => {
 
             }}
 
-            className="text-xs text-[#7C3AED] hover:underline px-1"
+            className="text-xs text-ice hover:underline px-1"
 
           >
 
@@ -436,15 +406,15 @@ export const ReviewCenterPage: React.FC = () => {
 
           <div className="flex items-center justify-between px-1 text-xs">
 
-            <span className="font-semibold text-[#29233D]">
+            <span className="font-semibold text-ink">
 
               Review Queue ({filteredQueue.length})
 
             </span>
 
-            <span className="text-[#65A30D] font-mono text-[11px] flex items-center gap-1">
+            <span className="text-ice font-mono text-xs flex items-center gap-1">
 
-              <span className="w-1.5 h-1.5 rounded-full bg-[#A3E635] animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-ice animate-pulse" />
 
               Live Queue
 
@@ -470,9 +440,9 @@ export const ReviewCenterPage: React.FC = () => {
 
                     isSelected
 
-                      ? 'bg-gradient-to-br from-[#F7FEE7] via-white to-[#FDF2F8] border-2 border-[#C4B5FD] shadow-lg'
+                      ? ' bg-raised border-2 border-line-strong shadow-lg'
 
-                      : 'bg-white/85 border border-[#E8E3EC] hover:border-[#C4B5FD]/60 hover:shadow-md'
+                      : 'bg-panel border border-line hover:border-line-strong hover:shadow-md'
 
                   }`}
 
@@ -480,19 +450,19 @@ export const ReviewCenterPage: React.FC = () => {
 
                   {isSelected && (
 
-                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#A3E635] rounded-l" />
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-ice rounded-l" />
 
                   )}
 
                   <div className="flex items-start justify-between gap-2 mb-1.5">
 
-                    <div className="font-semibold text-xs text-[#29233D] truncate">
+                    <div className="font-semibold text-xs text-ink truncate">
 
                       {item.documentTitle}
 
                     </div>
 
-                    <span className="text-[10px] font-mono text-[#938DA2] shrink-0 bg-[#F7F3F8] px-1.5 py-0.5 rounded border border-[#E8E3EC]">
+                    <span className="text-xs font-mono text-muted shrink-0 bg-raised px-1.5 py-0.5 rounded border border-line">
 
                       {item.documentId}
 
@@ -500,27 +470,27 @@ export const ReviewCenterPage: React.FC = () => {
 
                   </div>
 
-                  <p className="text-xs text-[#756D82] line-clamp-2 leading-relaxed mb-3">
+                  <p className="text-xs text-muted line-clamp-2 leading-relaxed mb-3">
 
                     {item.issueSummary}
 
                   </p>
 
-                  <div className="flex items-center gap-2 flex-wrap mb-3 text-[11px]">
+                  <div className="flex items-center gap-2 flex-wrap mb-3 text-xs">
 
                     <span
 
-                      className={`px-2 py-0.5 rounded font-semibold uppercase text-[10px] ${
+                      className={`px-2 py-0.5 rounded font-semibold uppercase text-xs ${
 
                         item.severity === 'High'
 
-                          ? 'bg-[#EF4444]/15 text-[#EF4444] border border-[#EF4444]/30'
+                          ? 'bg-red/15 text-red border border-red/30'
 
                           : item.severity === 'Medium'
 
-                          ? 'bg-[#F59E0B]/15 text-[#F59E0B] border border-[#F59E0B]/30'
+                          ? 'bg-amber/15 text-amber border border-amber/30'
 
-                          : 'bg-[#F7F3F8] text-[#756D82]'
+                          : 'bg-raised text-muted'
 
                       }`}
 
@@ -530,23 +500,23 @@ export const ReviewCenterPage: React.FC = () => {
 
                     </span>
 
-                    <span className="px-2 py-0.5 rounded bg-[#F7F3F8] text-[#756D82] border border-[#E8E3EC]">
+                    <span className="px-2 py-0.5 rounded bg-raised text-muted border border-line">
 
                       {item.affectedAnswers.length} affected answers
 
                     </span>
 
-                    <span className="text-[#938DA2] ml-auto">{item.createdAt}</span>
+                    <span className="text-muted ml-auto">{item.createdAt}</span>
 
                   </div>
 
-                  <div className="pt-2 border-t border-[#F1EDF2] flex items-center justify-between text-xs">
+                  <div className="pt-2 border-t border-line flex items-center justify-between text-xs">
 
                     <StatusBadge status={item.status} size="sm" />
 
-                    <span className="text-[#938DA2] text-[11px]">
+                    <span className="text-muted text-xs">
 
-                      Assignee: <strong className="text-[#756D82]">{item.assignee}</strong>
+                      Assignee: <strong className="text-muted">{item.assignee}</strong>
 
                     </span>
 
@@ -566,13 +536,13 @@ export const ReviewCenterPage: React.FC = () => {
 
         {!selectedReview ? (
 
-          <div className="lg:col-span-7 bg-white/85 border border-[#E8E3EC] rounded-xl p-8 flex flex-col items-center justify-center text-center gap-3 shadow-sm min-h-[400px]">
+          <div className="lg:col-span-7 bg-panel border border-line rounded-xl p-8 flex flex-col items-center justify-center text-center gap-3 shadow-sm min-h-[400px]">
 
-            <ShieldCheck className="w-12 h-12 text-[#65A30D]" />
+            <ShieldCheck className="w-12 h-12 text-ice" />
 
-            <h2 className="text-lg font-bold text-[#29233D]">Review Queue Clear</h2>
+            <h2 className="text-lg font-bold text-ink">Review Queue Clear</h2>
 
-            <p className="text-xs text-[#756D82] max-w-md">
+            <p className="text-xs text-muted max-w-md">
 
               No knowledge drift alerts or affected copilot answers are currently awaiting auditor review.
 
@@ -580,9 +550,9 @@ export const ReviewCenterPage: React.FC = () => {
 
             <button
 
-              onClick={() => navigate('/documents')}
+              onClick={() => navigate('/dashboard/documents')}
 
-              className="mt-2 px-4 py-2 rounded-lg bg-gradient-to-r from-[#A3E635] to-[#F9A8D4] text-[#29233D] text-xs font-semibold hover:brightness-95 transition-all shadow-sm"
+              className="mt-2 px-4 py-2 rounded-lg bg-ice text-void text-xs font-semibold hover:brightness-95 transition-all shadow-sm"
 
             >
 
@@ -594,15 +564,15 @@ export const ReviewCenterPage: React.FC = () => {
 
         ) : (
 
-          <div className="lg:col-span-7 bg-white/85 border border-[#E8E3EC] rounded-xl p-6 flex flex-col gap-6 shadow-sm">
+          <div className="lg:col-span-7 bg-panel border border-line rounded-xl p-6 flex flex-col gap-6 shadow-sm">
 
             {/* Item Header & Metadata Bar */}
 
-            <div className="pb-4 border-b border-[#E8E3EC] flex flex-col gap-3">
+            <div className="pb-4 border-b border-line flex flex-col gap-3">
 
               <div className="flex flex-wrap items-center justify-between gap-3">
 
-                <h2 className="text-lg font-bold text-[#29233D]">
+                <h2 className="text-lg font-bold text-ink">
 
                   {selectedReview.documentTitle} — Policy Drift Review
 
@@ -612,7 +582,7 @@ export const ReviewCenterPage: React.FC = () => {
 
                   <StatusBadge status={selectedReview.status} size="sm" />
 
-                  <span className="px-2 py-0.5 rounded bg-[#F7F3F8] text-xs font-mono text-[#756D82] border border-[#E8E3EC]">
+                  <span className="px-2 py-0.5 rounded bg-raised text-xs font-mono text-muted border border-line">
 
                     {selectedReview.versionShift}
 
@@ -622,37 +592,37 @@ export const ReviewCenterPage: React.FC = () => {
 
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs text-[#756D82] pt-1">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs text-muted pt-1">
 
                 <div>
 
-                  <span className="text-[10px] text-[#938DA2] uppercase block">Document</span>
+                  <span className="text-xs text-muted block">Document</span>
 
-                  <span className="text-[#29233D] font-medium">{selectedReview.documentId}</span>
+                  <span className="text-ink font-medium">{selectedReview.documentId}</span>
 
                 </div>
 
                 <div>
 
-                  <span className="text-[10px] text-[#938DA2] uppercase block">Lineage Hash</span>
+                  <span className="text-xs text-muted block">Lineage Hash</span>
 
-                  <span className="font-mono text-[#7C3AED] truncate block">{selectedReview.lineageHash}</span>
-
-                </div>
-
-                <div>
-
-                  <span className="text-[10px] text-[#938DA2] uppercase block">Assignee</span>
-
-                  <span className="text-[#29233D]">{selectedReview.assignee}</span>
+                  <span className="font-mono text-ice truncate block">{selectedReview.lineageHash}</span>
 
                 </div>
 
                 <div>
 
-                  <span className="text-[10px] text-[#938DA2] uppercase block">Resolution SLA</span>
+                  <span className="text-xs text-muted block">Assignee</span>
 
-                  <span className="text-[#EF4444] font-medium">{selectedReview.timeRemainingSla}</span>
+                  <span className="text-ink">{selectedReview.assignee}</span>
+
+                </div>
+
+                <div>
+
+                  <span className="text-xs text-muted block">Resolution SLA</span>
+
+                  <span className="text-red font-medium">{selectedReview.timeRemainingSla}</span>
 
                 </div>
 
@@ -666,27 +636,27 @@ export const ReviewCenterPage: React.FC = () => {
 
             <div className="flex items-center justify-between text-xs">
 
-              <span className="font-semibold uppercase tracking-wider text-[#756D82]">
+              <span className="font-semibold text-muted">
 
                 1. What Changed (Semantic Claim Mutation)
 
               </span>
 
-              <span className="text-[10px] font-mono text-[#938DA2]">AST Diff Line 42</span>
+              <span className="text-xs font-mono text-muted">AST Diff Line 42</span>
 
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
 
-              <div className="p-3.5 rounded-xl bg-[#FFFDF9]/90 border border-[#E8E3EC] flex flex-col justify-between">
+              <div className="p-3.5 rounded-xl bg-panel border border-line flex flex-col justify-between">
 
-                <span className="text-[10px] font-mono text-[#938DA2] uppercase mb-1">
+                <span className="text-xs text-muted mb-1">
 
                   Baseline Claim (v1.0)
 
                 </span>
 
-                <p className="text-xs text-[#756D82] leading-relaxed">
+                <p className="text-xs text-muted leading-relaxed">
 
                   "{selectedReview.claimMutation?.previousClaim || 'Employees must submit within 30 days.'}"
 
@@ -694,15 +664,15 @@ export const ReviewCenterPage: React.FC = () => {
 
               </div>
 
-              <div className="p-3.5 rounded-xl bg-[#FFFDF9]/90 border border-[#D9F99D] flex flex-col justify-between">
+              <div className="p-3.5 rounded-xl bg-panel border border-line-strong flex flex-col justify-between">
 
-                <span className="text-[10px] font-mono text-[#65A30D] uppercase mb-1">
+                <span className="text-xs text-ice mb-1">
 
                   Current Claim (v2.0 Active)
 
                 </span>
 
-                <p className="text-xs text-[#29233D] leading-relaxed">
+                <p className="text-xs text-ink leading-relaxed">
 
                   "{selectedReview.claimMutation?.currentClaim || 'Employees must submit within 15 days.'}"
 
@@ -712,17 +682,17 @@ export const ReviewCenterPage: React.FC = () => {
 
             </div>
 
-            <div className="p-3 rounded-lg bg-[#F7F3F8] border border-[#E8E3EC] flex items-center justify-between text-xs text-[#756D82]">
+            <div className="p-3 rounded-lg bg-raised border border-line flex items-center justify-between text-xs text-muted">
 
               <div>
 
-                <strong className="text-[#29233D]">Extracted Shift:</strong>{' '}
+                <strong className="text-ink">Extracted Shift:</strong>{' '}
 
                 {selectedReview.claimMutation?.temporalDelta || 'Temporal window contracted by 15 calendar days (-50%).'}
 
               </div>
 
-              <span className="font-mono text-[#65A30D]">99.4% confidence</span>
+              <span className="font-mono text-ice">99.4% confidence</span>
 
             </div>
 
@@ -730,9 +700,9 @@ export const ReviewCenterPage: React.FC = () => {
 
           {/* Section 2: Why it was flagged */}
 
-          <div className="p-4 rounded-xl bg-[#F59E0B]/10 border border-[#F59E0B]/30 flex flex-col gap-2 text-xs">
+          <div className="p-4 rounded-xl bg-amber/10 border border-amber/30 flex flex-col gap-2 text-xs">
 
-            <div className="flex items-center gap-2 text-[#F59E0B] font-semibold">
+            <div className="flex items-center gap-2 text-amber font-semibold">
 
               <Shield className="w-4 h-4" />
 
@@ -740,7 +710,7 @@ export const ReviewCenterPage: React.FC = () => {
 
             </div>
 
-            <p className="text-[#756D82] leading-relaxed">
+            <p className="text-muted leading-relaxed">
 
               Three previously generated corporate copilot answers cite the superseded 30-day
 
@@ -750,9 +720,9 @@ export const ReviewCenterPage: React.FC = () => {
 
             </p>
 
-            <div className="text-[11px] text-[#938DA2] flex items-center gap-1.5 pt-1">
+            <div className="text-xs text-muted flex items-center gap-1.5 pt-1">
 
-              <Lock className="w-3.5 h-3.5 text-[#F59E0B]" />
+              <Lock className="w-3.5 h-3.5 text-amber" />
 
               <span>Automated purge disabled by governance lock • Auditor validation mandatory</span>
 
@@ -766,7 +736,7 @@ export const ReviewCenterPage: React.FC = () => {
 
             <div className="flex items-center justify-between text-xs">
 
-              <span className="font-semibold uppercase tracking-wider text-[#756D82]">
+              <span className="font-semibold text-muted">
 
                 3. Potentially Affected Copilot Answers ({selectedReview.affectedAnswers.length})
 
@@ -782,13 +752,13 @@ export const ReviewCenterPage: React.FC = () => {
 
                   key={ans.id}
 
-                  className="p-3.5 rounded-xl bg-[#FFFDF9]/90 border border-[#E8E3EC] flex flex-col gap-2 text-xs"
+                  className="p-3.5 rounded-xl bg-panel border border-line flex flex-col gap-2 text-xs"
 
                 >
 
                   <div className="flex items-center justify-between">
 
-                    <span className="font-semibold text-[#29233D]">
+                    <span className="font-semibold text-ink">
 
                       "{ans.queryPrompt}"
 
@@ -798,21 +768,21 @@ export const ReviewCenterPage: React.FC = () => {
 
                   </div>
 
-                  <div className="text-[11px] text-[#938DA2]">Agent: {ans.agentName}</div>
+                  <div className="text-xs text-muted">Agent: {ans.agentName}</div>
 
-                  <div className="p-2 rounded bg-white/85 font-mono text-[11px] text-[#EF4444]">
+                  <div className="p-2 rounded bg-panel font-mono text-xs text-red">
 
                     Superseded Output: "{ans.cachedAnswer}"
 
                   </div>
 
-                  <div className="flex items-center justify-end gap-3 pt-1 text-[11px]">
+                  <div className="flex items-center justify-end gap-3 pt-1 text-xs">
 
                     <button
 
-                      onClick={() => navigate('/impact')}
+                      onClick={() => navigate('/dashboard/impact')}
 
-                      className="text-[#7C3AED] hover:underline"
+                      className="text-ice hover:underline"
 
                     >
 
@@ -836,7 +806,7 @@ export const ReviewCenterPage: React.FC = () => {
 
                       }}
 
-                      className="text-[#65A30D] hover:underline"
+                      className="text-ice hover:underline"
 
                     >
 
@@ -858,7 +828,7 @@ export const ReviewCenterPage: React.FC = () => {
 
           <div className="space-y-3">
 
-            <span className="font-semibold uppercase tracking-wider text-xs text-[#756D82]">
+            <span className="font-semibold text-xs text-muted">
 
               4. Auditor Evaluation Notes & Disposition
 
@@ -874,7 +844,7 @@ export const ReviewCenterPage: React.FC = () => {
 
               placeholder="Add auditor evaluation notes, remediation rationale, or compliance exemption details..."
 
-              className="w-full bg-[#FFFDF9]/90 border border-[#E8E3EC] rounded-xl p-3 text-xs text-[#29233D] placeholder:text-[#938DA2] focus:outline-none focus:border-[#C4B5FD]"
+              className="w-full bg-panel border border-line rounded-xl p-3 text-xs text-ink placeholder:text-muted focus:outline-none focus:border-line-strong"
 
             />
 
@@ -882,7 +852,7 @@ export const ReviewCenterPage: React.FC = () => {
 
               <div>
 
-                <label className="text-[10px] uppercase font-mono text-[#938DA2] block mb-1">
+                <label className="text-xs text-muted block mb-1">
 
                   Assignee Lead
 
@@ -894,7 +864,7 @@ export const ReviewCenterPage: React.FC = () => {
 
                   onChange={(e) => setAssigneeLead(e.target.value)}
 
-                  className="w-full h-8 px-2.5 rounded-lg bg-[#FFFDF9]/90 border border-[#E8E3EC] text-xs text-[#29233D]"
+                  className="w-full h-8 px-2.5 rounded-lg bg-panel border border-line text-xs text-ink"
 
                 >
 
@@ -910,7 +880,7 @@ export const ReviewCenterPage: React.FC = () => {
 
               <div>
 
-                <label className="text-[10px] uppercase font-mono text-[#938DA2] block mb-1">
+                <label className="text-xs text-muted block mb-1">
 
                   Disposition State
 
@@ -922,7 +892,7 @@ export const ReviewCenterPage: React.FC = () => {
 
                   onChange={(e) => setDispositionState(e.target.value)}
 
-                  className="w-full h-8 px-2.5 rounded-lg bg-[#FFFDF9]/90 border border-[#E8E3EC] text-xs text-[#29233D]"
+                  className="w-full h-8 px-2.5 rounded-lg bg-panel border border-line text-xs text-ink"
 
                 >
 
@@ -938,7 +908,7 @@ export const ReviewCenterPage: React.FC = () => {
 
             </div>
 
-            <label className="flex items-center gap-2 text-xs text-[#756D82] cursor-pointer mt-1">
+            <label className="flex items-center gap-2 text-xs text-muted cursor-pointer mt-1">
 
               <input
 
@@ -948,7 +918,7 @@ export const ReviewCenterPage: React.FC = () => {
 
                 onChange={(e) => setLogToImmutableLedger(e.target.checked)}
 
-                className="w-4 h-4 rounded bg-[#FFFDF9]/90 text-[#7C3AED]"
+                className="w-4 h-4 rounded bg-panel text-ice"
 
               />
 
@@ -960,19 +930,19 @@ export const ReviewCenterPage: React.FC = () => {
 
           {/* Collapsible Timeline */}
 
-          <div className="border border-[#E8E3EC] rounded-xl p-3 bg-[#FFFDF9]/90">
+          <div className="border border-line rounded-xl p-3 bg-panel">
 
             <button
 
               onClick={() => setIsTimelineOpen(!isTimelineOpen)}
 
-              className="w-full flex items-center justify-between text-xs text-[#756D82] hover:text-[#29233D]"
+              className="w-full flex items-center justify-between text-xs text-muted hover:text-ink"
 
             >
 
               <div className="flex items-center gap-2">
 
-                <History className="w-4 h-4 text-[#938DA2]" />
+                <History className="w-4 h-4 text-muted" />
 
                 <span>Audit Trail & Provenance Timeline ({selectedReview.reviewHistory.length} events)</span>
 
@@ -992,27 +962,27 @@ export const ReviewCenterPage: React.FC = () => {
 
             {isTimelineOpen && (
 
-              <div className="mt-3 pt-3 border-t border-[#F1EDF2] space-y-2 text-xs">
+              <div className="mt-3 pt-3 border-t border-line space-y-2 text-xs">
 
                 {selectedReview.reviewHistory.map((h, i) => (
 
-                  <div key={i} className="flex items-start gap-2.5 text-[11px]">
+                  <div key={i} className="flex items-start gap-2.5 text-xs">
 
-                    <span className="text-[#938DA2] font-mono shrink-0 w-16">
+                    <span className="text-muted font-mono shrink-0 w-16">
 
                       {h.timestamp}
 
                     </span>
 
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#A3E635] mt-1 shrink-0" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-ice mt-1 shrink-0" />
 
                     <div className="min-w-0">
 
-                      <span className="text-[#29233D] font-medium">{h.action}</span>
+                      <span className="text-ink font-medium">{h.action}</span>
 
-                      <span className="text-[#938DA2] ml-2">by {h.actor}</span>
+                      <span className="text-muted ml-2">by {h.actor}</span>
 
-                      <p className="text-[#756D82] mt-0.5">{h.details}</p>
+                      <p className="text-muted mt-0.5">{h.details}</p>
 
                     </div>
 
@@ -1034,7 +1004,7 @@ export const ReviewCenterPage: React.FC = () => {
 
       {/* Pinned Bottom Decision Action Dock */}
 
-      <div className="fixed bottom-0 left-[248px] right-0 min-h-16 bg-gradient-to-r from-[#FFFDF9]/95 via-[#FFF7FB]/95 to-[#F7FEE7]/95 backdrop-blur-xl border-t border-white/90 z-30 px-7 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-[0_-10px_35px_rgba(73,55,94,0.08)]">
+      <div className="fixed bottom-0 left-[232px] right-0 min-h-16 bg-panel border-t border-line z-30 px-7 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 ">
 
         <div className="flex items-center gap-2.5">
 
@@ -1042,7 +1012,7 @@ export const ReviewCenterPage: React.FC = () => {
 
             onClick={() => setConfirmAction('escalate')}
 
-            className="h-9 px-3.5 rounded-lg bg-[#EF4444]/10 border border-[#EF4444]/30 text-xs font-medium text-[#EF4444] hover:bg-[#EF4444] hover:text-white transition-colors flex items-center gap-1.5"
+            className="h-9 px-3.5 rounded-lg bg-red/10 border border-red/30 text-xs font-medium text-red hover:bg-red hover:text-ink transition-colors flex items-center gap-1.5"
 
           >
 
@@ -1056,7 +1026,7 @@ export const ReviewCenterPage: React.FC = () => {
 
             onClick={() => setConfirmAction('dismiss')}
 
-            className="h-9 px-3.5 rounded-lg bg-[#F7F3F8] border border-[#E8E3EC] text-xs font-medium text-[#756D82] hover:text-[#29233D] hover:bg-[#EDE8EF] transition-colors flex items-center gap-1.5"
+            className="h-9 px-3.5 rounded-lg bg-raised border border-line text-xs font-medium text-muted hover:text-ink hover:bg-line-strong transition-colors flex items-center gap-1.5"
 
           >
 
@@ -1070,11 +1040,11 @@ export const ReviewCenterPage: React.FC = () => {
 
         <div className="flex items-center gap-3">
 
-          <div className="text-[11px] text-right text-[#938DA2] hidden xl:block">
+          <div className="text-xs text-right text-muted hidden xl:block">
 
-            <div>Audit ID: <strong className="font-mono text-[#29233D]">AUD-88219</strong></div>
+            <div>Audit ID: <strong className="font-mono text-ink">AUD-88219</strong></div>
 
-            <div>Sovereign Protocol 12-B Human Verification Requirement</div>
+            <div>Human verification required before answers change</div>
 
           </div>
 
@@ -1082,7 +1052,7 @@ export const ReviewCenterPage: React.FC = () => {
 
             onClick={() => setConfirmAction('refresh_answers')}
 
-            className="h-9 px-4 rounded-lg bg-[#F7F3F8] border border-[#C4B5FD]/50 text-xs font-medium text-[#7C3AED] hover:bg-[#A3E635]/10 transition-colors flex items-center gap-2"
+            className="h-9 px-4 rounded-lg bg-raised border border-line-strong text-xs font-medium text-ice hover:bg-ice/10 transition-colors flex items-center gap-2"
 
           >
 
@@ -1096,7 +1066,7 @@ export const ReviewCenterPage: React.FC = () => {
 
             onClick={() => setConfirmAction('mark_reviewed')}
 
-            className="h-9 px-5 rounded-lg bg-gradient-to-r from-[#A3E635] to-[#F9A8D4] hover:brightness-95 text-xs font-semibold text-[#29233D] transition-all flex items-center gap-2 shadow-lg shadow-[#A3E635]/20"
+            className="h-9 px-5 rounded-lg bg-ice hover:brightness-95 text-xs font-semibold text-void transition-all flex items-center gap-2 shadow-lg "
 
           >
 

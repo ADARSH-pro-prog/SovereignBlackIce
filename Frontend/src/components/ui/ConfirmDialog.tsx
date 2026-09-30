@@ -27,24 +27,24 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 }) => {
   const iconConfig = {
     danger: {
-      icon: <ShieldAlert className="w-5 h-5 text-[#EF4444]" />,
-      bg: 'bg-[#EF4444]/10 border-[#EF4444]/30',
-      btn: 'bg-[#EF4444] hover:bg-[#DC2626] text-white',
+      icon: <ShieldAlert className="w-5 h-5 text-red" />,
+      bg: 'bg-red/10 border-red/30',
+      btn: 'bg-red hover:bg-red text-void',
     },
     warning: {
-      icon: <AlertTriangle className="w-5 h-5 text-[#F59E0B]" />,
-      bg: 'bg-[#F59E0B]/10 border-[#F59E0B]/30',
-      btn: 'bg-[#F59E0B] hover:bg-[#D97706] text-black font-semibold',
+      icon: <AlertTriangle className="w-5 h-5 text-amber" />,
+      bg: 'bg-amber/10 border-amber/30',
+      btn: 'bg-amber hover:bg-amber text-void font-semibold',
     },
     primary: {
-      icon: <Info className="w-5 h-5 text-[#3B82F6]" />,
-      bg: 'bg-[#3B82F6]/10 border-[#3B82F6]/30',
-      btn: 'bg-[#3B82F6] hover:bg-blue-600 text-white',
+      icon: <Info className="w-5 h-5 text-ice" />,
+      bg: 'bg-ice/10 border-ice/30',
+      btn: 'bg-ice hover:bg-ice text-void',
     },
     success: {
-      icon: <CheckCircle className="w-5 h-5 text-[#14B8A6]" />,
-      bg: 'bg-[#14B8A6]/10 border-[#14B8A6]/30',
-      btn: 'bg-[#14B8A6] hover:bg-teal-600 text-black font-semibold',
+      icon: <CheckCircle className="w-5 h-5 text-ice" />,
+      bg: 'bg-ice/10 border-ice/30',
+      btn: 'bg-ice hover:bg-ice text-void font-semibold',
     },
   };
 
@@ -59,17 +59,17 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           >
             {current.icon}
           </div>
-          <p className="text-sm text-[#94A3B8] leading-relaxed pt-1">
+          <p className="text-sm text-muted leading-relaxed pt-1">
             {description}
           </p>
         </div>
 
-        <div className="flex items-center justify-end gap-3 mt-4 pt-4 border-t border-[#263247]">
+        <div className="flex items-center justify-end gap-3 mt-4 pt-4 border-t border-line-strong">
           <button
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            className="px-4 py-2 rounded-lg bg-[#1E293B] border border-[#263247] text-sm font-medium text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-[#263247] transition-colors"
+            className="px-4 py-2 rounded-lg bg-raised-2 border border-line-strong text-sm font-medium text-muted hover:text-ink hover:bg-raised-2 transition-colors"
           >
             {cancelLabel}
           </button>

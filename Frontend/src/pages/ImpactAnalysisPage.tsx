@@ -182,111 +182,50 @@ export const ImpactAnalysisPage: React.FC = () => {
 
   return (
 
-    <div className="relative flex flex-col gap-6 animate-in fade-in duration-200 pb-28 text-[#29233D] before:pointer-events-none before:fixed before:inset-0 before:-z-10 before:bg-[radial-gradient(circle_at_15%_10%,rgba(217,249,157,0.42),transparent_28%),radial-gradient(circle_at_88%_18%,rgba(249,168,212,0.30),transparent_30%),radial-gradient(circle_at_55%_75%,rgba(221,214,254,0.34),transparent_34%),linear-gradient(135deg,#FFFDF9_0%,#FFF8FC_48%,#F7FEE7_100%)]">
+    <div className="relative flex flex-col gap-6 animate-in fade-in duration-200 pb-28 text-ink before:pointer-events-none before:fixed before:inset-0 before:-z-10 ">
 
       {/* Top Page Header */}
-
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 pb-2">
-
-        <div className="space-y-1">
-
-          <div className="flex items-center gap-3 flex-wrap">
-
-            <h1 className="text-2xl font-bold tracking-tight text-[#29233D]">
-
-              Knowledge Impact Analysis
-
-            </h1>
-
-            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE] text-xs font-mono">
-
-              <Network className="w-3.5 h-3.5" />
-
-              <span>GRAPH ENGINE v2.4</span>
-
-            </div>
-
-            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#F7F3F8] text-[#65A30D] border border-[#E8E3EC] text-xs font-mono">
-
-              <span className="w-1.5 h-1.5 rounded-full bg-[#84CC16]" />
-
-              <span>{isLiveMode ? 'NETWORKX LIVE TOPOLOGY' : 'SEMANTIC LINEAGE LIVE'}</span>
-
-            </div>
-
-            <span className="px-2 py-0.5 rounded bg-[#F7F3F8] text-xs font-mono text-[#756D82] border border-[#E8E3EC]">
-
-              {isLiveMode ? 'LIVE API' : '[DEMO DATA]'}
-
-            </span>
-
+      <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="display text-[44px] leading-none text-ink">Impact analysis</h1>
+            {!isLiveMode && (
+              <span className="rounded-full border border-amber/30 px-2 py-0.5 text-xs text-amber">Demo data</span>
+            )}
           </div>
-
-          <p className="text-sm text-[#756D82] max-w-3xl">
-
-            Trace how document modifications and policy mutations affect downstream
-
-            AI-generated answers, vector caches, and enterprise copilot responses.
-
+          <p className="mt-3 max-w-2xl text-[15px] text-ink-2">
+            Follow a change from the source that moved, through the claims it supports, to every AI answer that cited
+            them.
           </p>
-
         </div>
-
-        {/* Right Lineage Meta Strip */}
-
-        <div className="flex items-center gap-3 shrink-0 self-start lg:self-end text-xs">
-
-          <div className="text-right">
-
-            <span className="text-[10px] uppercase text-[#938DA2] block font-mono">
-
-              Graph Engine
-
-            </span>
-
-            <span className="font-mono text-[#29233D]">
-
-              {isLiveMode ? 'NetworkX DiGraph DAG' : 'SHA256:7f0c...9a41 [DEMO DATA]'}
-
-            </span>
-
+        {isLiveMode && graphData && (
+          <div className="flex items-center gap-6 text-sm">
+            <div>
+              <div className="text-xs text-muted">Nodes</div>
+              <div className="tabular-nums text-ink">{graphData.total_nodes}</div>
+            </div>
+            <div className="h-8 w-px bg-line-strong" />
+            <div>
+              <div className="text-xs text-muted">Edges</div>
+              <div className="tabular-nums text-ink">{graphData.total_edges}</div>
+            </div>
           </div>
-
-          <div className="h-6 w-[1px] bg-[#E8E3EC]" />
-
-          <div className="text-right">
-
-            <span className="text-[10px] uppercase text-[#938DA2] block font-mono">
-
-              Topology Nodes
-
-            </span>
-
-            <span className="font-medium text-[#65A30D]">
-
-              {isLiveMode && graphData ? `${graphData.total_nodes} Nodes • ${graphData.total_edges} Edges` : 'Deterministic Reachability'}
-
-            </span>
-
-          </div>
-
-        </div>
-
-      </div>
+        )}
+      </header>
 
       {/* Top Toolbar Strip */}
 
-      <div className="bg-white/85 border border-[#E8E3EC] rounded-2xl p-3 flex flex-col xl:flex-row xl:items-center justify-between gap-3 shadow-sm">
+      <div className="bg-panel border border-line rounded-2xl p-3 flex flex-col xl:flex-row xl:items-center justify-between gap-3 shadow-sm">
 
         <div className="flex flex-wrap items-center gap-2.5">
 
           {/* Document Selector */}
 
-          <div className="flex items-center bg-[#F7F3F8] border border-[#E8E3EC] rounded-lg px-3 h-9 gap-2">
+          <div className="flex items-center bg-raised border border-line rounded-lg px-3 h-9 gap-2">
 
-            <FileText className="w-4 h-4 text-[#7C3AED]" />
+            <FileText className="w-4 h-4 text-ice" />
 
-            <span className="text-[11px] uppercase tracking-wider text-[#938DA2]">Source:</span>
+            <span className="text-xs text-muted">Source:</span>
 
             <select
 
@@ -294,7 +233,7 @@ export const ImpactAnalysisPage: React.FC = () => {
 
               onChange={(e) => setSelectedDocId(e.target.value)}
 
-              className="bg-transparent text-xs font-medium text-[#29233D] focus:outline-none cursor-pointer"
+              className="bg-transparent text-xs font-medium text-ink focus:outline-none cursor-pointer"
 
             >
 
@@ -302,11 +241,11 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                 <>
 
-                  <option value="all" className="bg-[#F7F3F8]">All Documents in Knowledge Graph</option>
+                  <option value="all" className="bg-raised">All Documents in Knowledge Graph</option>
 
                   {documents.map((d) => (
 
-                    <option key={d.id} value={d.id} className="bg-[#F7F3F8]">
+                    <option key={d.id} value={d.id} className="bg-raised">
 
                       {d.title} ({d.id})
 
@@ -320,11 +259,11 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                 <>
 
-                  <option value="DOC-7704" className="bg-[#F7F3F8]">Employee Reimbursement Policy (DOC-7704)</option>
+                  <option value="DOC-7704" className="bg-raised">Employee Reimbursement Policy (DOC-7704)</option>
 
-                  <option value="DOC-8912" className="bg-[#F7F3F8]">Vendor Security Standard (DOC-8912)</option>
+                  <option value="DOC-8912" className="bg-raised">Vendor Security Standard (DOC-8912)</option>
 
-                  <option value="DOC-5120" className="bg-[#F7F3F8]">Data Retention Policy (DOC-5120)</option>
+                  <option value="DOC-5120" className="bg-raised">Data Retention Policy (DOC-5120)</option>
 
                 </>
 
@@ -336,17 +275,17 @@ export const ImpactAnalysisPage: React.FC = () => {
 
           {/* Lineage Selector */}
 
-          <div className="flex items-center bg-[#F7F3F8] border border-[#E8E3EC] rounded-lg px-3 h-9 gap-2">
+          <div className="flex items-center bg-raised border border-line rounded-lg px-3 h-9 gap-2">
 
-            <History className="w-4 h-4 text-[#938DA2]" />
+            <History className="w-4 h-4 text-muted" />
 
-            <span className="text-[11px] uppercase tracking-wider text-[#938DA2]">Lineage:</span>
+            <span className="text-xs text-muted">Lineage:</span>
 
-            <select className="bg-transparent text-xs font-medium text-[#29233D] focus:outline-none cursor-pointer">
+            <select className="bg-transparent text-xs font-medium text-ink focus:outline-none cursor-pointer">
 
-              <option className="bg-[#F7F3F8]">Active Knowledge State (Latest)</option>
+              <option className="bg-raised">Active Knowledge State (Latest)</option>
 
-              <option className="bg-[#F7F3F8]">All Monitored Versions</option>
+              <option className="bg-raised">All Monitored Versions</option>
 
             </select>
 
@@ -354,11 +293,11 @@ export const ImpactAnalysisPage: React.FC = () => {
 
           {/* Impact Level Filter */}
 
-          <div className="flex items-center bg-[#F7F3F8] border border-[#E8E3EC] rounded-lg px-3 h-9 gap-2">
+          <div className="flex items-center bg-raised border border-line rounded-lg px-3 h-9 gap-2">
 
-            <Filter className="w-4 h-4 text-[#F59E0B]" />
+            <Filter className="w-4 h-4 text-amber" />
 
-            <span className="text-[11px] uppercase tracking-wider text-[#938DA2]">Impact:</span>
+            <span className="text-xs text-muted">Impact:</span>
 
             <select
 
@@ -366,15 +305,15 @@ export const ImpactAnalysisPage: React.FC = () => {
 
               onChange={(e) => setActiveFilterTab(e.target.value as any)}
 
-              className="bg-transparent text-xs font-medium text-[#29233D] focus:outline-none cursor-pointer"
+              className="bg-transparent text-xs font-medium text-ink focus:outline-none cursor-pointer"
 
             >
 
-              <option value="all" className="bg-[#F7F3F8]">All impact levels</option>
+              <option value="all" className="bg-raised">All impact levels</option>
 
-              <option value="critical" className="bg-[#F7F3F8]">Critical Conflict only</option>
+              <option value="critical" className="bg-raised">Critical Conflict only</option>
 
-              <option value="review" className="bg-[#F7F3F8]">Review Required only</option>
+              <option value="review" className="bg-raised">Review Required only</option>
 
             </select>
 
@@ -392,11 +331,11 @@ export const ImpactAnalysisPage: React.FC = () => {
 
             disabled={isLoadingGraph}
 
-            className="h-9 px-3.5 rounded-lg bg-[#F7F3F8] border border-[#E8E3EC] hover:bg-[#F3EEF5] text-xs font-medium text-[#29233D] flex items-center gap-1.5 transition-colors disabled:opacity-50"
+            className="h-9 px-3.5 rounded-lg bg-raised border border-line hover:bg-raised text-xs font-medium text-ink flex items-center gap-1.5 transition-colors disabled:opacity-50"
 
           >
 
-            <RefreshCw className={`w-3.5 h-3.5 text-[#7C3AED] ${isLoadingGraph ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 text-ice ${isLoadingGraph ? 'animate-spin' : ''}`} />
 
             <span>{isLoadingGraph ? 'Calculating...' : 'Recalculate impact'}</span>
 
@@ -422,11 +361,11 @@ export const ImpactAnalysisPage: React.FC = () => {
 
             }}
 
-            className="h-9 px-3.5 rounded-lg bg-[#F7F3F8] border border-[#E8E3EC] hover:bg-[#F3EEF5] text-xs font-medium text-[#29233D] flex items-center gap-1.5 transition-colors"
+            className="h-9 px-3.5 rounded-lg bg-raised border border-line hover:bg-raised text-xs font-medium text-ink flex items-center gap-1.5 transition-colors"
 
           >
 
-            <Download className="w-3.5 h-3.5 text-[#756D82]" />
+            <Download className="w-3.5 h-3.5 text-muted" />
 
             <span>Export report</span>
 
@@ -438,19 +377,19 @@ export const ImpactAnalysisPage: React.FC = () => {
 
       {/* 4 Summary Metric Cards */}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
 
-        <div className="p-4 bg-white/85 border border-[#E8E3EC] rounded-2xl flex flex-col justify-between h-[120px]">
+        <div className="chart-card flex h-[132px] flex-col justify-between px-5 py-4">
 
           <div className="flex items-center justify-between">
 
-            <span className="text-[11px] uppercase tracking-wider text-[#756D82]">
+            <span className="label-mono">
 
               {isLiveMode ? 'Knowledge Entities' : 'Changed Claims'}
 
             </span>
 
-            <span className="p-1 rounded bg-[#F5F3FF] text-[#7C3AED]">
+            <span className="p-1 rounded bg-raised text-ice">
 
               <Sparkles className="w-4 h-4" />
 
@@ -460,13 +399,13 @@ export const ImpactAnalysisPage: React.FC = () => {
 
           <div>
 
-            <div className="text-2xl font-bold font-mono text-[#29233D]">
+            <div className="font-mono text-[34px] font-medium leading-none tracking-tight tabular-nums text-ink">
 
               {isLiveMode && graphData ? graphData.total_nodes : '1'}
 
             </div>
 
-            <div className="text-xs text-[#7C3AED] mt-0.5">
+            <div className="text-xs text-ice mt-0.5">
 
               {isLiveMode && graphData
 
@@ -480,17 +419,17 @@ export const ImpactAnalysisPage: React.FC = () => {
 
         </div>
 
-        <div className="p-4 bg-white/85 border border-[#E8E3EC] rounded-2xl flex flex-col justify-between h-[120px]">
+        <div className="chart-card flex h-[132px] flex-col justify-between px-5 py-4">
 
           <div className="flex items-center justify-between">
 
-            <span className="text-[11px] uppercase tracking-wider text-[#756D82]">
+            <span className="label-mono">
 
               {isLiveMode ? 'Graph Dependencies' : 'Potentially Affected Answers'}
 
             </span>
 
-            <span className="p-1 rounded bg-[#F59E0B]/10 text-[#F59E0B]">
+            <span className="p-1 rounded bg-amber/10 text-amber">
 
               <AlertTriangle className="w-4 h-4" />
 
@@ -500,13 +439,13 @@ export const ImpactAnalysisPage: React.FC = () => {
 
           <div>
 
-            <div className="text-2xl font-bold font-mono text-[#29233D]">
+            <div className="font-mono text-[34px] font-medium leading-none tracking-tight tabular-nums text-ink">
 
               {isLiveMode && graphData ? graphData.total_edges : '3'}
 
             </div>
 
-            <div className="text-xs text-[#F59E0B] mt-0.5">
+            <div className="text-xs text-amber mt-0.5">
 
               {isLiveMode ? 'Directed DAG Edges' : 'Drift Alert across 3 agents'}
 
@@ -516,17 +455,17 @@ export const ImpactAnalysisPage: React.FC = () => {
 
         </div>
 
-        <div className="p-4 bg-white/85 border border-[#E8E3EC] rounded-2xl flex flex-col justify-between h-[120px]">
+        <div className="chart-card flex h-[132px] flex-col justify-between px-5 py-4">
 
           <div className="flex items-center justify-between">
 
-            <span className="text-[11px] uppercase tracking-wider text-[#756D82]">
+            <span className="label-mono">
 
               {isLiveMode ? 'Unresolved Alerts' : 'High-Priority Reviews'}
 
             </span>
 
-            <span className="p-1 rounded bg-[#EF4444]/10 text-[#EF4444]">
+            <span className="p-1 rounded bg-red/10 text-red">
 
               <Shield className="w-4 h-4" />
 
@@ -536,13 +475,13 @@ export const ImpactAnalysisPage: React.FC = () => {
 
           <div>
 
-            <div className="text-2xl font-bold font-mono text-[#EF4444]">
+            <div className="font-mono text-[34px] font-medium leading-none tracking-tight tabular-nums text-red">
 
               {isLiveMode ? reviews.filter((r) => r.status !== 'Resolved').length : '2'}
 
             </div>
 
-            <div className="text-xs text-[#EF4444]/80 mt-0.5">
+            <div className="text-xs text-red/80 mt-0.5">
 
               {isLiveMode
 
@@ -556,17 +495,17 @@ export const ImpactAnalysisPage: React.FC = () => {
 
         </div>
 
-        <div className="p-4 bg-white/85 border border-[#E8E3EC] rounded-2xl flex flex-col justify-between h-[120px]">
+        <div className="chart-card flex h-[132px] flex-col justify-between px-5 py-4">
 
           <div className="flex items-center justify-between">
 
-            <span className="text-[11px] uppercase tracking-wider text-[#756D82]">
+            <span className="label-mono">
 
               {isLiveMode ? 'Auditor Resolved' : 'Confirmed Outdated Answers'}
 
             </span>
 
-            <span className="p-1 rounded bg-[#84CC16]/10 text-[#65A30D]">
+            <span className="p-1 rounded bg-ice/10 text-ice">
 
               <CheckCircle className="w-4 h-4" />
 
@@ -576,13 +515,13 @@ export const ImpactAnalysisPage: React.FC = () => {
 
           <div>
 
-            <div className="text-2xl font-bold font-mono text-[#29233D]">
+            <div className="font-mono text-[34px] font-medium leading-none tracking-tight tabular-nums text-ink">
 
               {isLiveMode ? reviews.filter((r) => r.status === 'Resolved').length : '0'}
 
             </div>
 
-            <div className="text-xs text-[#65A30D] mt-0.5">
+            <div className="text-xs text-ice mt-0.5">
 
               {isLiveMode ? 'Signed off in Review Center' : 'Triage pending human auditor review'}
 
@@ -596,27 +535,27 @@ export const ImpactAnalysisPage: React.FC = () => {
 
       {/* Central Interactive Dependency Graph & Inspector Grid */}
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 min-[1560px]:grid-cols-12 gap-6 items-start">
 
         {/* Left Column (8 cols): Graph Canvas */}
 
-        <div className="lg:col-span-8 bg-white/85 border border-[#E8E3EC] rounded-2xl flex flex-col overflow-hidden shadow-sm">
+        <div className="min-[1560px]:col-span-8 chart-card flex flex-col">
 
           {/* Canvas Controls Header */}
 
-          <div className="h-12 border-b border-[#E8E3EC] px-4 bg-gradient-to-r from-[#F7FEE7] via-white to-[#FDF2F8] flex items-center justify-between">
+          <div className="h-12 border-b border-line px-4 bg-raised flex items-center justify-between">
 
             <div className="flex items-center gap-2">
 
-              <Network className="w-4 h-4 text-[#7C3AED]" />
+              <Network className="w-4 h-4 text-ice" />
 
-              <h2 className="text-sm font-semibold text-[#29233D]">
+              <h2 className="text-sm font-semibold text-ink">
 
                 Knowledge Dependency Graph
 
               </h2>
 
-              <span className="px-2 py-0.5 rounded bg-white/85 text-[10px] font-mono text-[#756D82] border border-[#E8E3EC]">
+              <span className="px-2 py-0.5 rounded bg-panel text-xs font-mono text-muted border border-line">
 
                 {isLiveMode ? 'NetworkX DAG' : 'DAG Topology'}
 
@@ -628,13 +567,13 @@ export const ImpactAnalysisPage: React.FC = () => {
 
             <div className="flex items-center gap-2">
 
-              <div className="flex items-center bg-[#FFFDF9] p-0.5 rounded-lg border border-[#E8E3EC]">
+              <div className="flex items-center bg-panel p-0.5 rounded-lg border border-line">
 
                 <button
 
                   onClick={() => setZoomLevel((z) => Math.min(150, z + 15))}
 
-                  className="p-1.5 rounded text-[#756D82] hover:text-[#29233D]"
+                  className="p-1.5 rounded text-muted hover:text-ink"
 
                   title="Zoom in"
 
@@ -648,7 +587,7 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                   onClick={() => setZoomLevel((z) => Math.max(70, z - 15))}
 
-                  className="p-1.5 rounded text-[#756D82] hover:text-[#29233D]"
+                  className="p-1.5 rounded text-muted hover:text-ink"
 
                   title="Zoom out"
 
@@ -662,7 +601,7 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                   onClick={() => setZoomLevel(100)}
 
-                  className="p-1.5 rounded text-[#756D82] hover:text-[#29233D]"
+                  className="p-1.5 rounded text-muted hover:text-ink"
 
                   title="Fit to viewport"
 
@@ -684,11 +623,11 @@ export const ImpactAnalysisPage: React.FC = () => {
 
             style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'top left' }}
 
-            className="relative w-full min-h-[520px] bg-[#FFFDF9] p-6 flex flex-col justify-between overflow-x-auto transition-transform duration-150"
+            className="grid-marks relative w-full min-h-[600px] bg-void p-8 flex flex-col justify-between overflow-x-auto transition-transform duration-150"
 
           >
 
-            <div className="flex items-center justify-between text-[11px] text-[#938DA2] pb-2 border-b border-[#F1EDF2]">
+            <div className="flex items-center justify-between text-xs text-muted pb-2 border-b border-line">
 
               <span>
 
@@ -700,19 +639,19 @@ export const ImpactAnalysisPage: React.FC = () => {
 
               </span>
 
-              <span className="uppercase font-mono">STAGE 1 → STAGE 4 TRACE FLOW</span>
+              <span className="">STAGE 1 → STAGE 4 TRACE FLOW</span>
 
             </div>
 
             {isLoadingGraph ? (
 
-              <div className="py-24 text-center text-[#756D82] flex flex-col items-center justify-center gap-3">
+              <div className="py-24 text-center text-muted flex flex-col items-center justify-center gap-3">
 
-                <RefreshCw className="w-8 h-8 text-[#7C3AED] animate-spin" />
+                <RefreshCw className="w-8 h-8 text-ice animate-spin" />
 
-                <p className="text-sm font-semibold text-[#29233D]">Constructing Dependency Graph...</p>
+                <p className="text-sm font-semibold text-ink">Constructing Dependency Graph...</p>
 
-                <p className="text-xs text-[#938DA2]">Traversing NetworkX edges across documents, chunks, claims, and answers.</p>
+                <p className="text-xs text-muted">Traversing NetworkX edges across documents, chunks, claims, and answers.</p>
 
               </div>
 
@@ -720,17 +659,17 @@ export const ImpactAnalysisPage: React.FC = () => {
 
               <div className="py-20 text-center text-xs flex flex-col items-center gap-3">
 
-                <AlertTriangle className="w-8 h-8 text-[#F59E0B]" />
+                <AlertTriangle className="w-8 h-8 text-amber" />
 
-                <p className="text-sm font-semibold text-[#29233D]">Graph Topology Warning</p>
+                <p className="text-sm font-semibold text-ink">Graph Topology Warning</p>
 
-                <p className="text-[#756D82] max-w-md">{graphError}</p>
+                <p className="text-muted max-w-md">{graphError}</p>
 
                 <button
 
                   onClick={() => fetchGraph(selectedDocId)}
 
-                  className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-[#A3E635] to-[#F9A8D4] text-[#29233D] hover:brightness-95 text-xs font-medium"
+                  className="px-3.5 py-1.5 rounded-lg bg-ice text-void hover:brightness-95 text-xs font-medium"
 
                 >
 
@@ -742,13 +681,13 @@ export const ImpactAnalysisPage: React.FC = () => {
 
             ) : isLiveMode && graphData && graphData.total_nodes === 0 ? (
 
-              <div className="py-24 text-center text-[#756D82] flex flex-col items-center justify-center gap-3">
+              <div className="py-24 text-center text-muted flex flex-col items-center justify-center gap-3">
 
-                <Network className="w-10 h-10 text-[#938DA2]" />
+                <Network className="w-10 h-10 text-muted" />
 
-                <p className="text-sm font-semibold text-[#29233D]">No Graph Entities Recorded</p>
+                <p className="text-sm font-semibold text-ink">No Graph Entities Recorded</p>
 
-                <p className="text-xs text-[#938DA2] max-w-md">
+                <p className="text-xs text-muted max-w-md">
 
                   The dependency graph is currently empty for this document selection. Ingest documents and ask questions via AI Assistant to build live lineage.
 
@@ -758,7 +697,7 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                   onClick={handleRecalculate}
 
-                  className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-[#A3E635] to-[#F9A8D4] text-[#29233D] hover:brightness-95 text-xs font-medium"
+                  className="px-3.5 py-1.5 rounded-lg bg-ice text-void hover:brightness-95 text-xs font-medium"
 
                 >
 
@@ -776,7 +715,7 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                 <div className="flex flex-col gap-2">
 
-                  <span className="text-[10px] uppercase font-mono text-[#938DA2] text-center mb-1">
+                  <span className="text-xs text-muted text-center mb-1">
 
                     Stage 1: Documents ({graphData!.node_counts_by_type?.document || 0})
 
@@ -800,9 +739,9 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                           selectedNode?.id === node.id || selectedNode === 'doc'
 
-                            ? 'bg-[#F7F3F8] border-2 border-[#C4B5FD] shadow-lg ring-1 ring-[#C4B5FD]/40'
+                            ? 'bg-raised border-2 border-line-strong shadow-lg ring-1 ring-line-strong'
 
-                            : 'bg-white/85 border border-[#E8E3EC] hover:border-[#C4B5FD]/60'
+                            : 'bg-panel border border-line hover:border-line-strong'
 
                         }`}
 
@@ -810,7 +749,7 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                         <div className="flex items-center justify-between mb-1">
 
-                          <span className="text-[10px] font-mono text-[#7C3AED] uppercase">
+                          <span className="text-xs text-ice">
 
                             {node.type}
 
@@ -818,13 +757,13 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                         </div>
 
-                        <h4 className="text-xs font-semibold text-[#29233D] truncate">
+                        <h4 className="text-xs font-semibold text-ink truncate">
 
                           {node.title}
 
                         </h4>
 
-                        <span className="text-[10px] font-mono text-[#938DA2] truncate block mt-0.5">
+                        <span className="text-xs font-mono text-muted truncate block mt-0.5">
 
                           {node.id}
 
@@ -840,7 +779,7 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                 <div className="flex flex-col gap-2">
 
-                  <span className="text-[10px] uppercase font-mono text-[#938DA2] text-center mb-1">
+                  <span className="text-xs text-muted text-center mb-1">
 
                     Stage 2: Claims ({graphData!.node_counts_by_type?.claim || 0})
 
@@ -864,9 +803,9 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                           selectedNode?.id === node.id || selectedNode === 'claim'
 
-                            ? 'bg-[#F7F3F8] border-2 border-[#F59E0B] shadow-lg ring-1 ring-[#F59E0B]/30'
+                            ? 'bg-raised border-2 border-amber shadow-lg ring-1 ring-amber/30'
 
-                            : 'bg-white/85 border border-[#E8E3EC] hover:border-[#F59E0B]/60'
+                            : 'bg-panel border border-line hover:border-amber/60'
 
                         }`}
 
@@ -874,7 +813,7 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                         <div className="flex items-center justify-between mb-1">
 
-                          <span className="text-[10px] font-mono text-[#F59E0B] uppercase">
+                          <span className="text-xs text-amber">
 
                             {node.type}
 
@@ -882,13 +821,13 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                         </div>
 
-                        <h4 className="text-xs font-semibold text-[#29233D] truncate">
+                        <h4 className="text-xs font-semibold text-ink truncate">
 
                           {node.title}
 
                         </h4>
 
-                        <span className="text-[10px] font-mono text-[#938DA2] truncate block mt-0.5">
+                        <span className="text-xs font-mono text-muted truncate block mt-0.5">
 
                           {node.id}
 
@@ -904,7 +843,7 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                 <div className="flex flex-col gap-2">
 
-                  <span className="text-[10px] uppercase font-mono text-[#938DA2] text-center mb-1">
+                  <span className="text-xs text-muted text-center mb-1">
 
                     Stage 3: Answers ({graphData!.node_counts_by_type?.answer || 0})
 
@@ -928,9 +867,9 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                           selectedNode?.id === node.id
 
-                            ? 'bg-[#F7F3F8] border-2 border-[#C4B5FD]'
+                            ? 'bg-raised border-2 border-line-strong'
 
-                            : 'bg-white/85 border border-[#E8E3EC] hover:border-[#C4B5FD]/60'
+                            : 'bg-panel border border-line hover:border-line-strong'
 
                         }`}
 
@@ -938,7 +877,7 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                         <div className="flex items-center justify-between mb-1">
 
-                          <span className="text-[10px] font-mono text-[#7C3AED] uppercase">
+                          <span className="text-xs text-ice">
 
                             Answer
 
@@ -946,13 +885,13 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                         </div>
 
-                        <h4 className="text-xs font-semibold text-[#29233D] truncate">
+                        <h4 className="text-xs font-semibold text-ink truncate">
 
                           "{node.title}"
 
                         </h4>
 
-                        <span className="text-[10px] font-mono text-[#938DA2] truncate block mt-0.5">
+                        <span className="text-xs font-mono text-muted truncate block mt-0.5">
 
                           {node.id}
 
@@ -964,7 +903,7 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                   {graphData!.nodes.filter((n) => n.type === 'answer').length === 0 && (
 
-                    <div className="p-3 rounded-2xl bg-white/85 border border-dashed border-[#E8E3EC] text-center text-[11px] text-[#938DA2]">
+                    <div className="p-3 rounded-2xl bg-panel border border-dashed border-line text-center text-xs text-muted">
 
                       No answers grounded on this document yet.
 
@@ -978,7 +917,7 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                 <div className="flex flex-col gap-2">
 
-                  <span className="text-[10px] uppercase font-mono text-[#938DA2] text-center mb-1">
+                  <span className="text-xs text-muted text-center mb-1">
 
                     Stage 4: Review Gate ({reviews.filter((r) => r.status !== 'Resolved').length})
 
@@ -992,9 +931,9 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                       selectedNode === 'gate'
 
-                        ? 'bg-[#F7F3F8] border-2 border-[#A3E635] shadow-lg ring-1 ring-[#A3E635]/30'
+                        ? 'bg-raised border-2 border-ice shadow-lg ring-1 ring-ice/30'
 
-                        : 'bg-white/85 border border-[#E8E3EC] hover:border-[#A3E635]/60'
+                        : 'bg-panel border border-line hover:border-ice/60'
 
                     }`}
 
@@ -1002,13 +941,13 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                     <div className="flex items-center justify-between mb-2">
 
-                      <span className="p-1 rounded bg-[#F59E0B]/15 text-[#F59E0B]">
+                      <span className="p-1 rounded bg-amber/15 text-amber">
 
                         <Shield className="w-4 h-4" />
 
                       </span>
 
-                      <span className="text-[10px] font-mono text-[#F59E0B] font-semibold uppercase">
+                      <span className="text-xs text-amber font-semibold">
 
                         {reviews.filter((r) => r.status !== 'Resolved').length} PENDING
 
@@ -1016,13 +955,13 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                     </div>
 
-                    <h3 className="text-xs font-semibold text-[#29233D]">
+                    <h3 className="text-xs font-semibold text-ink">
 
                       Human Review Gate
 
                     </h3>
 
-                    <div className="text-[10px] text-[#938DA2] mt-0.5">
+                    <div className="text-xs text-muted mt-0.5">
 
                       Sovereign Triage
 
@@ -1034,11 +973,11 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                         e.stopPropagation();
 
-                        navigate('/reviews');
+                        navigate('/dashboard/reviews');
 
                       }}
 
-                      className="w-full mt-3 py-1.5 bg-[#F7F3F8] hover:bg-[#F3EEF5] border border-[#E8E3EC] rounded-lg text-xs font-medium text-[#29233D] flex items-center justify-center gap-1"
+                      className="w-full mt-3 py-1.5 bg-raised hover:bg-raised border border-line rounded-lg text-xs font-medium text-ink flex items-center justify-center gap-1"
 
                     >
 
@@ -1056,11 +995,16 @@ export const ImpactAnalysisPage: React.FC = () => {
 
             ) : (
 
-              <div className="grid grid-cols-4 gap-4 items-center my-auto py-6">
+              <div className="relative grid grid-cols-4 gap-6 items-center my-auto py-10">
+                {/* Propagation path: source → claim → answers → review gate */}
+                <div aria-hidden className="pointer-events-none absolute inset-x-[10%] top-1/2 flex -translate-y-1/2">
+                  <span className="h-px flex-1 border-t border-dashed border-ice/40" />
+                  <span className="h-px flex-[2] border-t border-dashed border-amber/60" />
+                </div>
 
                 {/* STAGE 1: SOURCE DOCUMENT */}
 
-                <div className="flex flex-col items-center">
+                <div className="relative z-10 flex flex-col items-center">
 
                   <div
 
@@ -1070,9 +1014,9 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                       selectedNode === 'doc'
 
-                        ? 'bg-[#F7F3F8] border-2 border-[#C4B5FD] shadow-lg ring-2 ring-[#C4B5FD]/40'
+                        ? 'bg-raised border-2 border-line-strong shadow-lg ring-2 ring-line-strong'
 
-                        : 'bg-white/85 border border-[#E8E3EC] hover:border-[#C4B5FD]/60'
+                        : 'bg-panel border border-line hover:border-line-strong'
 
                     }`}
 
@@ -1080,13 +1024,13 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                     <div className="flex items-center justify-between mb-2">
 
-                      <span className="p-1 rounded bg-[#F5F3FF] text-[#7C3AED]">
+                      <span className="p-1 rounded bg-raised text-ice">
 
                         <FileText className="w-4 h-4" />
 
                       </span>
 
-                      <span className="text-[10px] font-mono text-[#7C3AED] font-semibold uppercase">
+                      <span className="text-xs text-ice font-semibold">
 
                         SOURCE
 
@@ -1094,19 +1038,19 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                     </div>
 
-                    <h3 className="text-xs font-semibold text-[#29233D]">
+                    <h3 className="text-xs font-semibold text-ink">
 
                       Reimbursement Policy
 
                     </h3>
 
-                    <div className="text-[10px] font-mono text-[#938DA2] mt-1">
+                    <div className="text-xs font-mono text-muted mt-1">
 
                       DOC-7704 • v2.0
 
                     </div>
 
-                    <div className="mt-2 pt-2 border-t border-[#F1EDF2] text-[10px] text-[#756D82]">
+                    <div className="mt-2 pt-2 border-t border-line text-xs text-muted">
 
                       Domain: Human Res.
 
@@ -1114,7 +1058,7 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                   </div>
 
-                  <span className="text-[10px] uppercase font-mono text-[#938DA2] mt-2">
+                  <span className="text-xs text-muted mt-2">
 
                     Origin Anchor
 
@@ -1124,7 +1068,7 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                 {/* STAGE 2: CHANGED CLAIM (MUTATOR) */}
 
-                <div className="flex flex-col items-center">
+                <div className="relative z-10 flex flex-col items-center">
 
                   <div
 
@@ -1134,9 +1078,9 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                       selectedNode === 'claim'
 
-                        ? 'bg-[#F7F3F8] border-2 border-[#F59E0B] shadow-xl ring-2 ring-[#F59E0B]/20'
+                        ? 'bg-raised border-2 border-amber shadow-xl ring-2 ring-amber/20'
 
-                        : 'bg-white/85 border border-[#E8E3EC] hover:border-[#F59E0B]/60'
+                        : 'bg-panel border border-line hover:border-amber/60'
 
                     }`}
 
@@ -1144,13 +1088,13 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                     <div className="flex items-center justify-between mb-2">
 
-                      <span className="p-1 rounded bg-[#F59E0B]/15 text-[#F59E0B]">
+                      <span className="p-1 rounded bg-amber/15 text-amber">
 
                         <Sparkles className="w-4 h-4" />
 
                       </span>
 
-                      <span className="text-[10px] font-mono text-[#F59E0B] font-semibold uppercase">
+                      <span className="text-xs text-amber font-semibold">
 
                         Mutated §4.2
 
@@ -1158,31 +1102,31 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                     </div>
 
-                    <h3 className="text-xs font-semibold text-[#29233D]">
+                    <h3 className="text-xs font-semibold text-ink">
 
                       Submission Deadline
 
                     </h3>
 
-                    <div className="text-[10px] font-mono text-[#938DA2] mt-0.5">
+                    <div className="text-xs font-mono text-muted mt-0.5">
 
                       Claim #CLM-4201
 
                     </div>
 
-                    <div className="mt-2 p-1.5 rounded bg-[#FFFDF9] border border-[#E8E3EC] flex items-center justify-between text-xs">
+                    <div className="mt-2 p-1.5 rounded bg-panel border border-line flex items-center justify-between text-xs">
 
-                      <span className="line-through text-[#EF4444] font-mono">30 days</span>
+                      <span className="line-through text-red font-mono">30 days</span>
 
-                      <ArrowRight className="w-3 h-3 text-[#938DA2]" />
+                      <ArrowRight className="w-3 h-3 text-muted" />
 
-                      <span className="text-[#65A30D] font-mono font-semibold">15 days</span>
+                      <span className="text-ice font-mono font-semibold">15 days</span>
 
                     </div>
 
                   </div>
 
-                  <span className="text-[10px] uppercase font-mono text-[#938DA2] mt-2">
+                  <span className="text-xs text-muted mt-2">
 
                     Semantic Mutator
 
@@ -1192,7 +1136,7 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                 {/* STAGE 3: 3 AFFECTED COPILOT ANSWERS */}
 
-                <div className="flex flex-col gap-2.5 justify-center">
+                <div className="relative z-10 flex flex-col gap-2.5 justify-center">
 
                   <div
 
@@ -1202,9 +1146,9 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                       selectedNode === 'ans1'
 
-                        ? 'bg-[#F7F3F8] border-2 border-[#F59E0B]'
+                        ? 'bg-raised border-2 border-amber'
 
-                        : 'bg-white/85 border border-[#E8E3EC] hover:border-[#F59E0B]/60'
+                        : 'bg-panel border border-line hover:border-amber/60'
 
                     }`}
 
@@ -1212,19 +1156,19 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                     <div className="flex items-center justify-between mb-0.5">
 
-                      <span className="font-semibold text-[#29233D] truncate">
+                      <span className="font-semibold text-ink truncate">
 
                         Slack HR Copilot
 
                       </span>
 
-                      <span className="text-[9px] font-mono text-[#F59E0B] uppercase">REVIEW</span>
+                      <span className="text-xs text-amber">REVIEW</span>
 
                     </div>
 
-                    <p className="text-[11px] text-[#756D82] truncate">"How long to submit?"</p>
+                    <p className="text-xs text-muted truncate">"How long to submit?"</p>
 
-                    <span className="text-[10px] text-[#EF4444]">Cites 30d</span>
+                    <span className="text-xs text-red">Cites 30d</span>
 
                   </div>
 
@@ -1236,9 +1180,9 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                       selectedNode === 'ans2'
 
-                        ? 'bg-[#F7F3F8] border-2 border-[#F59E0B]'
+                        ? 'bg-raised border-2 border-amber'
 
-                        : 'bg-white/85 border border-[#E8E3EC] hover:border-[#F59E0B]/60'
+                        : 'bg-panel border border-line hover:border-amber/60'
 
                     }`}
 
@@ -1246,19 +1190,19 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                     <div className="flex items-center justify-between mb-0.5">
 
-                      <span className="font-semibold text-[#29233D] truncate">
+                      <span className="font-semibold text-ink truncate">
 
                         Enterprise Search
 
                       </span>
 
-                      <span className="text-[9px] font-mono text-[#F59E0B] uppercase">REVIEW</span>
+                      <span className="text-xs text-amber">REVIEW</span>
 
                     </div>
 
-                    <p className="text-[11px] text-[#756D82] truncate">"Cutoff timeline..."</p>
+                    <p className="text-xs text-muted truncate">"Cutoff timeline..."</p>
 
-                    <span className="text-[10px] text-[#938DA2]">Chunk superseded</span>
+                    <span className="text-xs text-muted">Chunk superseded</span>
 
                   </div>
 
@@ -1270,9 +1214,9 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                       selectedNode === 'ans3'
 
-                        ? 'bg-[#F7F3F8] border-2 border-[#EF4444]'
+                        ? 'bg-raised border-2 border-red'
 
-                        : 'bg-white/85 border border-[#EF4444]/60 hover:border-[#EF4444]'
+                        : 'bg-panel border border-red/60 hover:border-red'
 
                     }`}
 
@@ -1280,13 +1224,13 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                     <div className="flex items-center justify-between mb-0.5">
 
-                      <span className="font-semibold text-[#29233D] truncate">
+                      <span className="font-semibold text-ink truncate">
 
                         Finance Copilot
 
                       </span>
 
-                      <span className="text-[9px] font-mono text-[#EF4444] font-bold uppercase">
+                      <span className="text-xs text-red font-bold">
 
                         CRITICAL
 
@@ -1294,9 +1238,9 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                     </div>
 
-                    <p className="text-[11px] text-[#756D82] truncate">"Can I submit at day 20?"</p>
+                    <p className="text-xs text-muted truncate">"Can I submit at day 20?"</p>
 
-                    <span className="text-[10px] text-[#EF4444] font-medium">Contradiction: says YES</span>
+                    <span className="text-xs text-red font-medium">Contradiction: says YES</span>
 
                   </div>
 
@@ -1304,7 +1248,7 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                 {/* STAGE 4: HUMAN REVIEW GATE */}
 
-                <div className="flex flex-col items-center">
+                <div className="relative z-10 flex flex-col items-center">
 
                   <div
 
@@ -1314,9 +1258,9 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                       selectedNode === 'gate'
 
-                        ? 'bg-[#F7F3F8] border-2 border-[#A3E635] shadow-lg ring-2 ring-[#A3E635]/30'
+                        ? 'bg-raised border-2 border-ice shadow-lg ring-2 ring-ice/30'
 
-                        : 'bg-white/85 border border-[#E8E3EC] hover:border-[#A3E635]/60'
+                        : 'bg-panel border border-line hover:border-ice/60'
 
                     }`}
 
@@ -1324,13 +1268,13 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                     <div className="flex items-center justify-between mb-2">
 
-                      <span className="p-1 rounded bg-[#F59E0B]/15 text-[#F59E0B]">
+                      <span className="p-1 rounded bg-amber/15 text-amber">
 
                         <Shield className="w-4 h-4" />
 
                       </span>
 
-                      <span className="text-[10px] font-mono text-[#F59E0B] font-semibold uppercase">
+                      <span className="text-xs text-amber font-semibold">
 
                         3 PENDING
 
@@ -1338,13 +1282,13 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                     </div>
 
-                    <h3 className="text-xs font-semibold text-[#29233D]">
+                    <h3 className="text-xs font-semibold text-ink">
 
                       Human Review Gate
 
                     </h3>
 
-                    <div className="text-[10px] text-[#938DA2] mt-0.5">
+                    <div className="text-xs text-muted mt-0.5">
 
                       Sovereign Triage
 
@@ -1356,11 +1300,11 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                         e.stopPropagation();
 
-                        navigate('/reviews');
+                        navigate('/dashboard/reviews');
 
                       }}
 
-                      className="w-full mt-3 py-1.5 bg-[#F7F3F8] hover:bg-[#F3EEF5] border border-[#E8E3EC] rounded-lg text-xs font-medium text-[#29233D] flex items-center justify-center gap-1"
+                      className="w-full mt-3 py-1.5 bg-raised hover:bg-raised border border-line rounded-lg text-xs font-medium text-ink flex items-center justify-center gap-1"
 
                     >
 
@@ -1372,7 +1316,7 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                   </div>
 
-                  <span className="text-[10px] uppercase font-mono text-[#938DA2] mt-2">
+                  <span className="text-xs text-muted mt-2">
 
                     Governance Gate
 
@@ -1384,11 +1328,11 @@ export const ImpactAnalysisPage: React.FC = () => {
 
             )}
 
-            <div className="flex items-center justify-between pt-3 border-t border-[#F1EDF2] text-[11px] text-[#938DA2]">
+            <div className="flex items-center justify-between pt-3 border-t border-line text-xs text-muted">
 
               <span className="flex items-center gap-1.5">
 
-                <span className="w-2 h-2 rounded-full bg-[#84CC16]" />
+                <span className="w-2 h-2 rounded-full bg-ice" />
 
                 {isLiveMode && graphData
 
@@ -1398,7 +1342,7 @@ export const ImpactAnalysisPage: React.FC = () => {
 
               </span>
 
-              <span className="font-mono text-[#7C3AED]">Zero cycles detected</span>
+              <span className="font-mono text-ice">Zero cycles detected</span>
 
             </div>
 
@@ -1408,17 +1352,17 @@ export const ImpactAnalysisPage: React.FC = () => {
 
         {/* Right Column (4 cols): Node Inspector Panel */}
 
-        <div className="lg:col-span-4 bg-white/85 border border-[#E8E3EC] rounded-2xl flex flex-col shadow-sm">
+        <div className="min-[1560px]:col-span-4 chart-card flex flex-col">
 
-          <div className="h-12 border-b border-[#E8E3EC] px-4 bg-gradient-to-r from-[#F7FEE7] via-white to-[#FDF2F8] flex items-center justify-between">
+          <div className="h-12 border-b border-line px-4 bg-raised flex items-center justify-between">
 
-            <h3 className="text-sm font-semibold text-[#29233D]">
+            <h3 className="text-sm font-semibold text-ink">
 
               Node Inspector
 
             </h3>
 
-            <span className="text-[10px] font-mono text-[#F59E0B] bg-[#F59E0B]/10 px-2 py-0.5 rounded font-semibold uppercase">
+            <span className="text-xs text-amber bg-amber/10 px-2 py-0.5 rounded font-semibold">
 
               {isLiveMode ? 'Live Entity' : 'Pending Triage'}
 
@@ -1430,13 +1374,13 @@ export const ImpactAnalysisPage: React.FC = () => {
 
             {/* Target Node Summary */}
 
-            <div className="p-3.5 rounded-2xl bg-[#F7F3F8] border border-[#E8E3EC]">
+            <div className="p-3.5 rounded-2xl bg-raised border border-line">
 
-              <div className="flex items-center justify-between text-[10px] font-mono text-[#938DA2] mb-1">
+              <div className="flex items-center justify-between text-xs font-mono text-muted mb-1">
 
                 <span>ENTITY KEY</span>
 
-                <span className="text-[#7C3AED] truncate max-w-[160px]">
+                <span className="text-ice truncate max-w-[160px]">
 
                   {typeof selectedNode === 'object' && selectedNode?.id
 
@@ -1448,7 +1392,7 @@ export const ImpactAnalysisPage: React.FC = () => {
 
               </div>
 
-              <div className="text-sm font-semibold text-[#29233D] truncate">
+              <div className="text-sm font-semibold text-ink truncate">
 
                 {typeof selectedNode === 'object' && selectedNode?.label
 
@@ -1458,7 +1402,7 @@ export const ImpactAnalysisPage: React.FC = () => {
 
               </div>
 
-              <div className="text-xs text-[#756D82] mt-0.5">
+              <div className="text-xs text-muted mt-0.5">
 
                 {typeof selectedNode === 'object' && selectedNode?.type
 
@@ -1474,11 +1418,11 @@ export const ImpactAnalysisPage: React.FC = () => {
 
             <div className="space-y-2 text-xs">
 
-              <div className="flex justify-between py-1 border-b border-[#F1EDF2]">
+              <div className="flex justify-between py-1 border-b border-line">
 
-                <span className="text-[#938DA2]">Entity Classification:</span>
+                <span className="text-muted">Entity Classification:</span>
 
-                <span className="text-[#29233D] font-medium uppercase font-mono">
+                <span className="text-ink font-medium">
 
                   {typeof selectedNode === 'object' && selectedNode?.type
 
@@ -1490,11 +1434,11 @@ export const ImpactAnalysisPage: React.FC = () => {
 
               </div>
 
-              <div className="flex justify-between py-1 border-b border-[#F1EDF2]">
+              <div className="flex justify-between py-1 border-b border-line">
 
-                <span className="text-[#938DA2]">Extraction Method:</span>
+                <span className="text-muted">Extraction Method:</span>
 
-                <span className="font-mono text-[#7C3AED]">
+                <span className="font-mono text-ice">
 
                   {isLiveMode ? 'NetworkX DAG Ingestion' : 'AST Semantic Token Diff'}
 
@@ -1502,11 +1446,11 @@ export const ImpactAnalysisPage: React.FC = () => {
 
               </div>
 
-              <div className="flex justify-between py-1 border-b border-[#F1EDF2]">
+              <div className="flex justify-between py-1 border-b border-line">
 
-                <span className="text-[#938DA2]">Connected Edges:</span>
+                <span className="text-muted">Connected Edges:</span>
 
-                <span className="text-[#EF4444] font-medium">
+                <span className="text-red font-medium">
 
                   {isLiveMode && graphData && typeof selectedNode === 'object'
 
@@ -1528,9 +1472,9 @@ export const ImpactAnalysisPage: React.FC = () => {
 
             {typeof selectedNode === 'object' && selectedNode?.properties ? (
 
-              <div className="p-3 rounded-lg bg-[#FFFDF9] border border-[#E8E3EC] space-y-1.5 font-mono text-[11px]">
+              <div className="p-3 rounded-lg bg-panel border border-line space-y-1.5 font-mono text-xs">
 
-                <span className="text-[10px] text-[#938DA2] uppercase block">
+                <span className="text-xs text-muted block">
 
                   Node Properties:
 
@@ -1540,9 +1484,9 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                   <div key={k} className="flex justify-between gap-2 overflow-hidden">
 
-                    <span className="text-[#756D82]">{k}:</span>
+                    <span className="text-muted">{k}:</span>
 
-                    <span className="text-[#29233D] truncate">{String(v)}</span>
+                    <span className="text-ink truncate">{String(v)}</span>
 
                   </div>
 
@@ -1554,45 +1498,45 @@ export const ImpactAnalysisPage: React.FC = () => {
 
               <div className="space-y-2">
 
-                <div className="flex justify-between text-[11px] text-[#938DA2]">
+                <div className="flex justify-between text-xs text-muted">
 
-                  <span className="uppercase font-mono">Claim Value Mutation</span>
+                  <span className="">Claim Value Mutation</span>
 
-                  <span className="text-[#65A30D] font-medium">Diff Match 99.4%</span>
+                  <span className="text-ice font-medium">Diff Match 99.4%</span>
 
                 </div>
 
-                <div className="p-2.5 rounded bg-[#FFFDF9] border border-[#E8E3EC]">
+                <div className="p-2.5 rounded bg-panel border border-line">
 
-                  <div className="text-[10px] text-[#938DA2] font-mono uppercase mb-0.5">
+                  <div className="text-xs text-muted mb-0.5">
 
                     v1.0 (Sep 18 Baseline)
 
                   </div>
 
-                  <p className="text-[#756D82] leading-relaxed">
+                  <p className="text-muted leading-relaxed">
 
                     "Employees must submit reimbursement claims within{' '}
 
-                    <span className="text-[#EF4444] line-through font-mono">30 days</span> of the expense occurrence."
+                    <span className="text-red line-through font-mono">30 days</span> of the expense occurrence."
 
                   </p>
 
                 </div>
 
-                <div className="p-2.5 rounded bg-[#FFFDF9] border border-[#D9F99D]">
+                <div className="p-2.5 rounded bg-panel border border-line-strong">
 
-                  <div className="text-[10px] text-[#65A30D] font-mono uppercase mb-0.5">
+                  <div className="text-xs text-ice mb-0.5">
 
                     v2.0 (Sep 26 Active)
 
                   </div>
 
-                  <p className="text-[#29233D] leading-relaxed">
+                  <p className="text-ink leading-relaxed">
 
                     "Employees must submit reimbursement claims within{' '}
 
-                    <span className="text-[#65A30D] font-bold font-mono">15 days</span> of the expense occurrence."
+                    <span className="text-ice font-bold font-mono">15 days</span> of the expense occurrence."
 
                   </p>
 
@@ -1604,9 +1548,9 @@ export const ImpactAnalysisPage: React.FC = () => {
 
             {/* Inversion hazard callout */}
 
-            <div className="p-3 rounded-lg bg-[#EF4444]/10 border border-[#EF4444]/30 space-y-1">
+            <div className="p-3 rounded-lg bg-red/10 border border-red/30 space-y-1">
 
-              <div className="flex items-center gap-1.5 text-[#EF4444] font-semibold text-xs">
+              <div className="flex items-center gap-1.5 text-red font-semibold text-xs">
 
                 <AlertTriangle className="w-3.5 h-3.5" />
 
@@ -1614,7 +1558,7 @@ export const ImpactAnalysisPage: React.FC = () => {
 
               </div>
 
-              <p className="text-[11px] text-[#756D82] leading-relaxed">
+              <p className="text-xs text-muted leading-relaxed">
 
                 Changes to this entity propagate through graph edges to grounded copilot answers. Validate changes in the Review Center.
 
@@ -1628,9 +1572,9 @@ export const ImpactAnalysisPage: React.FC = () => {
 
               <button
 
-                onClick={() => navigate('/documents')}
+                onClick={() => navigate('/dashboard/documents')}
 
-                className="w-full py-2 bg-gradient-to-r from-[#A3E635] to-[#F9A8D4] hover:brightness-95 text-[#29233D] rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-colors shadow-sm"
+                className="w-full py-2 bg-ice hover:brightness-95 text-void rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-colors shadow-sm"
 
               >
 
@@ -1648,11 +1592,11 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                 }}
 
-                className="w-full py-2 bg-[#F7F3F8] hover:bg-[#F3EEF5] border border-[#E8E3EC] text-xs font-medium text-[#29233D] rounded-lg flex items-center justify-center gap-2 transition-colors"
+                className="w-full py-2 bg-raised hover:bg-raised border border-line text-xs font-medium text-ink rounded-lg flex items-center justify-center gap-2 transition-colors"
 
               >
 
-                <RefreshCw className="w-3.5 h-3.5 text-[#756D82]" />
+                <RefreshCw className="w-3.5 h-3.5 text-muted" />
 
                 <span>Re-traverse NetworkX Edges</span>
 
@@ -1668,9 +1612,9 @@ export const ImpactAnalysisPage: React.FC = () => {
 
       {/* Protocol Explanation Callout */}
 
-      <div className="bg-white/85 border-l-4 border-l-[#3B82F6] border-y border-r border-[#E8E3EC] rounded-r-xl p-5 flex items-start gap-4 shadow-sm">
+      <div className="bg-panel border-l-4 border-l-ice border-y border-r border-line rounded-r-xl p-5 flex items-start gap-4 shadow-sm">
 
-        <div className="p-2 rounded-lg bg-[#F5F3FF] text-[#7C3AED] shrink-0">
+        <div className="p-2 rounded-lg bg-raised text-ice shrink-0">
 
           <Shield className="w-5 h-5" />
 
@@ -1680,21 +1624,15 @@ export const ImpactAnalysisPage: React.FC = () => {
 
           <div className="flex items-center gap-2">
 
-            <h3 className="text-sm font-semibold text-[#29233D]">
+            <h3 className="text-sm font-semibold text-ink">
 
               Understanding Dependency Blast Radius & False-Positive Prevention
 
             </h3>
 
-            <span className="text-[10px] font-mono text-[#938DA2] px-1.5 py-0.5 rounded bg-[#F7F3F8]">
-
-              SOVEREIGN PROTOCOL 12-B
-
-            </span>
-
           </div>
 
-          <p className="text-xs text-[#756D82] leading-relaxed max-w-5xl">
+          <p className="text-xs text-muted leading-relaxed max-w-5xl">
 
             These answers are structurally linked to the previous 30-day deadline claim.
 
@@ -1716,19 +1654,19 @@ export const ImpactAnalysisPage: React.FC = () => {
 
       {/* Affected Knowledge Items Table */}
 
-      <div className="bg-white/85 border border-[#E8E3EC] rounded-2xl overflow-hidden shadow-sm">
+      <div className="bg-panel border border-line rounded-2xl overflow-hidden shadow-sm">
 
-        <div className="px-5 py-3 border-b border-[#E8E3EC] flex items-center justify-between bg-gradient-to-r from-[#F7FEE7]/80 via-white to-[#FDF2F8]/80">
+        <div className="px-5 py-3 border-b border-line flex items-center justify-between bg-raised ">
 
           <div className="flex items-center gap-3">
 
-            <h3 className="text-sm font-semibold text-[#29233D]">
+            <h3 className="text-sm font-semibold text-ink">
 
               Affected Knowledge Items
 
             </h3>
 
-            <span className="px-2 py-0.5 rounded bg-[#F59E0B]/10 text-[#F59E0B] text-xs font-mono font-semibold">
+            <span className="px-2 py-0.5 rounded bg-amber/10 text-amber text-xs font-mono font-semibold">
 
               3 Items Detected
 
@@ -1738,7 +1676,7 @@ export const ImpactAnalysisPage: React.FC = () => {
 
           {/* Filter Tabs */}
 
-          <div className="flex items-center bg-[#FFFDF9] p-1 rounded-lg border border-[#E8E3EC]">
+          <div className="flex items-center bg-panel p-1 rounded-lg border border-line">
 
             <button
 
@@ -1748,9 +1686,9 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                 activeFilterTab === 'all'
 
-                  ? 'bg-[#F7F3F8] text-[#29233D]'
+                  ? 'bg-raised text-ink'
 
-                  : 'text-[#756D82]'
+                  : 'text-muted'
 
               }`}
 
@@ -1768,9 +1706,9 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                 activeFilterTab === 'critical'
 
-                  ? 'bg-[#F7F3F8] text-[#EF4444]'
+                  ? 'bg-raised text-red'
 
-                  : 'text-[#756D82]'
+                  : 'text-muted'
 
               }`}
 
@@ -1788,9 +1726,9 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                 activeFilterTab === 'review'
 
-                  ? 'bg-[#F7F3F8] text-[#F59E0B]'
+                  ? 'bg-raised text-amber'
 
-                  : 'text-[#756D82]'
+                  : 'text-muted'
 
               }`}
 
@@ -1810,7 +1748,7 @@ export const ImpactAnalysisPage: React.FC = () => {
 
             <thead>
 
-              <tr className="h-9 bg-[#F7F3F8] text-[11px] font-medium uppercase tracking-wider text-[#756D82]">
+              <tr className="h-9 bg-raised text-xs font-medium text-muted">
 
                 <th className="px-5">Knowledge Item & Agent Source</th>
 
@@ -1828,7 +1766,7 @@ export const ImpactAnalysisPage: React.FC = () => {
 
             </thead>
 
-            <tbody className="divide-y divide-[#F1EDF2] text-xs">
+            <tbody className="divide-y divide-line text-xs">
 
               {filteredAnswers.map((ans) => (
 
@@ -1836,19 +1774,19 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                   key={ans.id}
 
-                  className="h-14 hover:bg-gradient-to-r from-[#F7FEE7]/80 via-white to-[#FDF2F8]/80 transition-colors"
+                  className="h-14 bg-raised transition-colors"
 
                 >
 
                   <td className="px-5">
 
-                    <div className="font-medium text-[#29233D]">
+                    <div className="font-medium text-ink">
 
                       "{ans.queryPrompt}"
 
                     </div>
 
-                    <div className="text-[11px] text-[#938DA2]">
+                    <div className="text-xs text-muted">
 
                       {ans.agentName} • ID: {ans.id}
 
@@ -1858,7 +1796,7 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                   <td className="px-4">
 
-                    <span className="font-mono text-[11px] text-[#756D82] px-2 py-0.5 rounded bg-[#F7F3F8]">
+                    <span className="font-mono text-xs text-muted px-2 py-0.5 rounded bg-raised">
 
                       {ans.citedChunkId}
 
@@ -1870,11 +1808,11 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                     <div className="flex items-center gap-1.5">
 
-                      <span className="line-through text-[#EF4444] font-mono">30 days</span>
+                      <span className="line-through text-red font-mono">30 days</span>
 
-                      <ArrowRight className="w-3 h-3 text-[#938DA2]" />
+                      <ArrowRight className="w-3 h-3 text-muted" />
 
-                      <span className="text-[#65A30D] font-mono font-semibold">15 days</span>
+                      <span className="text-ice font-mono font-semibold">15 days</span>
 
                     </div>
 
@@ -1886,15 +1824,15 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                   </td>
 
-                  <td className="px-4 text-[#938DA2] font-mono">{ans.lastUpdated}</td>
+                  <td className="px-4 text-muted font-mono">{ans.lastUpdated}</td>
 
                   <td className="px-5 text-right">
 
                     <button
 
-                      onClick={() => navigate('/reviews')}
+                      onClick={() => navigate('/dashboard/reviews')}
 
-                      className="px-2.5 py-1 rounded bg-[#F7F3F8] hover:bg-[#F3EEF5] border border-[#E8E3EC] text-xs text-[#29233D]"
+                      className="px-2.5 py-1 rounded bg-raised hover:bg-raised border border-line text-xs text-ink"
 
                     >
 
@@ -1918,15 +1856,15 @@ export const ImpactAnalysisPage: React.FC = () => {
 
       {/* Sticky Bottom Dock */}
 
-      <div className="fixed bottom-0 left-[248px] right-0 h-16 bg-white/90 backdrop-blur-md border-t border-[#E8E3EC] z-30 px-7 flex items-center justify-between">
+      <div className="fixed bottom-0 left-[232px] right-0 h-16 bg-panel border-t border-line z-30 px-7 flex items-center justify-between">
 
-        <div className="flex items-center gap-2 text-xs text-[#756D82]">
+        <div className="flex items-center gap-2 text-xs text-muted">
 
-          <span className="w-2 h-2 rounded-full bg-[#84CC16]" />
+          <span className="w-2 h-2 rounded-full bg-ice" />
 
           <span>
 
-            <strong className="text-[#29233D]">Blast radius analysis complete:</strong> 3 downstream dependencies mapped across 128 monitored documents.
+            <strong className="text-ink">Blast radius analysis complete:</strong> {filteredAnswers.length} downstream answers mapped across {documents.length} monitored documents.
 
           </span>
 
@@ -1936,13 +1874,13 @@ export const ImpactAnalysisPage: React.FC = () => {
 
           <button
 
-            onClick={() => navigate('/documents/DOC-7704')}
+            onClick={() => navigate('/dashboard/documents/DOC-7704')}
 
-            className="h-9 px-3.5 rounded-lg bg-white/85 border border-[#E8E3EC] text-xs text-[#29233D] hover:bg-[#F7F3F8] flex items-center gap-1.5 transition-colors"
+            className="h-9 px-3.5 rounded-lg bg-panel border border-line text-xs text-ink hover:bg-raised flex items-center gap-1.5 transition-colors"
 
           >
 
-            <FileText className="w-4 h-4 text-[#938DA2]" />
+            <FileText className="w-4 h-4 text-muted" />
 
             <span>Open Source Document</span>
 
@@ -1950,13 +1888,13 @@ export const ImpactAnalysisPage: React.FC = () => {
 
           <button
 
-            onClick={() => navigate('/documents/DOC-7704/compare')}
+            onClick={() => navigate('/dashboard/documents/DOC-7704/compare')}
 
-            className="h-9 px-3.5 rounded-lg bg-white/85 border border-[#E8E3EC] text-xs text-[#29233D] hover:bg-[#F7F3F8] flex items-center gap-1.5 transition-colors"
+            className="h-9 px-3.5 rounded-lg bg-panel border border-line text-xs text-ink hover:bg-raised flex items-center gap-1.5 transition-colors"
 
           >
 
-            <History className="w-4 h-4 text-[#938DA2]" />
+            <History className="w-4 h-4 text-muted" />
 
             <span>View Version Comparison</span>
 
@@ -1964,9 +1902,9 @@ export const ImpactAnalysisPage: React.FC = () => {
 
           <button
 
-            onClick={() => navigate('/reviews')}
+            onClick={() => navigate('/dashboard/reviews')}
 
-            className="h-9 px-4 rounded-lg bg-gradient-to-r from-[#A3E635] to-[#F9A8D4] hover:brightness-95 text-xs font-semibold text-[#29233D] flex items-center gap-1.5 shadow-sm transition-colors"
+            className="h-9 px-4 rounded-lg bg-ice hover:brightness-95 text-xs font-semibold text-void flex items-center gap-1.5 shadow-sm transition-colors"
 
           >
 

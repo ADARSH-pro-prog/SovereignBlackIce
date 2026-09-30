@@ -14,59 +14,48 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
 }) => {
   const norm = status?.toLowerCase() || '';
 
-  let colorClass =
-    'bg-[#1E293B] text-[#94A3B8] border-[#263247]';
-  let dotColor = 'bg-[#64748B]';
-
-  if (
+  // Semantic only: ice = trusted, amber = needs review, red = compromised, green = resolved.
+  let tone = 'text-ink-2 border-line-strong bg-raised';
+  if (norm.includes('resolved') || norm.includes('approved')) {
+    tone = 'text-green border-green/25 bg-green/[0.07]';
+  } else if (
     norm.includes('verified') ||
     norm.includes('nominal') ||
-    norm.includes('resolved') ||
     norm.includes('completed') ||
-    norm.includes('no impact')
+    norm.includes('no impact') ||
+    norm.includes('no changes')
   ) {
-    colorClass = 'bg-[#14B8A6]/15 text-[#14B8A6] border-[#14B8A6]/30';
-    dotColor = 'bg-[#14B8A6]';
-  } else if (
-    norm.includes('review') ||
-    norm.includes('pending') ||
-    norm.includes('medium') ||
-    norm.includes('warning')
-  ) {
-    colorClass = 'bg-[#F59E0B]/15 text-[#F59E0B] border-[#F59E0B]/30';
-    dotColor = 'bg-[#F59E0B]';
+    tone = 'text-ice border-ice/25 bg-ice/[0.06]';
   } else if (
     norm.includes('critical') ||
     norm.includes('conflict') ||
     norm.includes('escalated') ||
     norm.includes('high') ||
     norm.includes('error') ||
-    norm.includes('outdated')
+    norm.includes('outdated') ||
+    norm.includes('rejected')
   ) {
-    colorClass = 'bg-[#EF4444]/15 text-[#EF4444] border-[#EF4444]/30';
-    dotColor = 'bg-[#EF4444]';
+    tone = 'text-red border-red/30 bg-red/[0.07]';
   } else if (
-    norm.includes('progress') ||
-    norm.includes('impact analysis') ||
-    norm.includes('active') ||
-    norm.includes('info')
+    norm.includes('review') ||
+    norm.includes('pending') ||
+    norm.includes('medium') ||
+    norm.includes('warning') ||
+    norm.includes('impact')
   ) {
-    colorClass = 'bg-[#3B82F6]/15 text-[#3B82F6] border-[#3B82F6]/30';
-    dotColor = 'bg-[#3B82F6]';
+    tone = 'text-amber border-amber/30 bg-amber/[0.07]';
   }
 
-  const sizeClasses =
-    size === 'sm'
-      ? 'px-2 py-0.5 text-[11px]'
-      : 'px-2.5 py-1 text-xs';
+  const sizeClasses = size === 'sm' ? 'h-6 px-2 text-xs' : 'h-7 px-2.5 text-xs';
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border font-medium whitespace-nowrap ${sizeClasses} ${colorClass}`}
+      className={`inline-flex items-center gap-1.5 rounded-full border font-medium whitespace-nowrap ${sizeClasses} ${tone}`}
     >
       <span
-        className={`w-1.5 h-1.5 rounded-full ${dotColor} ${
-          pulse ? 'animate-pulse' : ''
+        aria-hidden
+        className={`h-1.5 w-1.5 rounded-full bg-current ${
+          pulse ? 'animate-[breathe_2.4s_ease-in-out_infinite]' : ''
         }`}
       />
       <span>{status}</span>

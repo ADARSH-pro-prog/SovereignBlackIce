@@ -23,8 +23,9 @@ import {
   Info,
 
   ExternalLink,
+
   Save,
-  LogOut,
+
 } from 'lucide-react';
 
 import { useApp } from '../context/AppContext';
@@ -33,7 +34,8 @@ import { API_BASE_URL } from '../services/api';
 
 export const SettingsPage: React.FC = () => {
 
-  const { isLiveMode, setIsLiveMode, backendStatus, checkBackendConnection, addToast, user, logout } =
+  const { isLiveMode, setIsLiveMode, backendStatus, checkBackendConnection, addToast } =
+
     useApp();
 
   const [apiUrl, setApiUrl] = useState(API_BASE_URL);
@@ -52,81 +54,37 @@ export const SettingsPage: React.FC = () => {
 
   return (
 
-    <div className="relative flex flex-col gap-6 animate-in fade-in duration-200 max-w-4xl pb-16 text-[#29233D] before:pointer-events-none before:absolute before:-inset-7 before:-z-10 before:bg-[radial-gradient(circle_at_8%_5%,rgba(217,249,157,0.30),transparent_27%),radial-gradient(circle_at_92%_12%,rgba(249,168,212,0.25),transparent_27%),radial-gradient(circle_at_52%_50%,rgba(233,213,255,0.20),transparent_32%),linear-gradient(135deg,#FFFDF8_0%,#FFF8FC_52%,#FAFFF1_100%)]">
+    <div className="relative flex flex-col gap-6 animate-in fade-in duration-200 max-w-4xl pb-16 text-ink before:pointer-events-none before:absolute before:-inset-7 before:-z-10 ">
 
       {/* Header */}
 
       <div>
 
-        <h1 className="text-2xl font-bold tracking-tight text-[#29233D]">
+        <h1 className="display text-[40px] leading-none text-ink">
 
           System Settings & Diagnostics
 
         </h1>
 
-        <p className="text-sm text-[#756D82] mt-1">
-          Configure API endpoints, inspect local Ollama model states, and monitor
-          knowledge base retrieval telemetry.
-        </p>
-      </div>
+        <p className="text-sm text-muted mt-1">
 
-      {/* Authenticated Identity Card */}
-      {user && (
-        <div className="bg-gradient-to-br from-white/95 via-[#FFF9FC]/92 to-[#F7FEE7]/88 border border-white/90 rounded-[22px] p-6 flex items-center justify-between shadow-[0_16px_45px_rgba(73,55,94,0.07)] backdrop-blur-xl">
-          <div className="flex items-center gap-4">
-            {user.picture ? (
-              <img
-                src={user.picture}
-                alt={user.name || user.email}
-                className="w-14 h-14 rounded-2xl border-2 border-white shadow-md object-cover"
-                referrerPolicy="no-referrer"
-              />
-            ) : (
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#F472B6] via-[#BFA8FF] to-[#B7F34A] text-[#171719] font-black text-lg flex items-center justify-center shadow-md">
-                {user.name
-                  ? user.name
-                      .split(' ')
-                      .map((n) => n[0])
-                      .join('')
-                      .substring(0, 2)
-                      .toUpperCase()
-                  : user.email.substring(0, 2).toUpperCase()}
-              </div>
-            )}
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-base font-bold text-[#29233D]">
-                  {user.name || 'Sovereign Operator'}
-                </h2>
-                <span className="inline-flex items-center gap-1 rounded-full bg-[#ECFCCB] px-2.5 py-0.5 text-[10px] font-semibold text-[#4D7C0F]">
-                  <CheckCircle2 className="w-3 h-3 text-[#65A30D]" />
-                  Google Verified
-                </span>
-              </div>
-              <p className="text-xs text-[#756D82] mt-0.5">{user.email}</p>
-              <p className="text-[10px] font-mono text-[#A8A29E] mt-0.5">Session ID: {user.id}</p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={logout}
-            className="flex items-center gap-2 rounded-xl border border-[#FDA4AF] bg-[#FFF1F2] px-4 py-2 text-xs font-semibold text-[#E11D48] transition-all hover:bg-[#FFE4E6] hover:shadow-sm"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            Sign Out
-          </button>
-        </div>
-      )}
+          Configure API endpoints, inspect local Ollama model states, and monitor
+
+          knowledge base retrieval telemetry.
+
+        </p>
+
+      </div>
 
       {/* Mode Selection Card */}
 
-      <div className="bg-gradient-to-br from-white/95 via-[#FFF9FC]/92 to-[#F7FEE7]/88 border border-white/90 rounded-[22px] p-6 flex flex-col gap-4 shadow-[0_16px_45px_rgba(73,55,94,0.07)] backdrop-blur-xl">
+      <div className=" bg-panel border border-line rounded-[10px] p-6 flex flex-col gap-4 ">
 
         <div className="flex items-center justify-between">
 
           <div className="flex items-center gap-2.5">
 
-            <div className="w-8 h-8 rounded-lg bg-[#F5F3FF] text-[#7C3AED] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-raised text-ice flex items-center justify-center">
 
               <Server className="w-4 h-4" />
 
@@ -134,13 +92,13 @@ export const SettingsPage: React.FC = () => {
 
             <div>
 
-              <h2 className="text-sm font-semibold text-[#29233D]">
+              <h2 className="text-sm font-semibold text-ink">
 
                 Application Operating Mode
 
               </h2>
 
-              <p className="text-xs text-[#756D82]">
+              <p className="text-xs text-muted">
 
                 Switch between real local FastAPI backend or illustrative demo data.
 
@@ -150,7 +108,7 @@ export const SettingsPage: React.FC = () => {
 
           </div>
 
-          <div className="flex items-center bg-[#F8F4F8] p-1 rounded-lg border border-[#E8E1EA]">
+          <div className="flex items-center bg-raised p-1 rounded-lg border border-line">
 
             <button
 
@@ -160,9 +118,9 @@ export const SettingsPage: React.FC = () => {
 
                 !isLiveMode
 
-                  ? 'bg-gradient-to-r from-[#BEF264] to-[#F9A8D4] text-[#29233D] shadow-sm'
+                  ? ' bg-ice text-void shadow-sm'
 
-                  : 'text-[#756D82] hover:text-[#29233D]'
+                  : 'text-muted hover:text-ink'
 
               }`}
 
@@ -180,9 +138,9 @@ export const SettingsPage: React.FC = () => {
 
                 isLiveMode
 
-                  ? 'bg-gradient-to-r from-[#BEF264] to-[#F9A8D4] text-[#29233D] shadow-sm'
+                  ? ' bg-ice text-void shadow-sm'
 
-                  : 'text-[#756D82] hover:text-[#29233D]'
+                  : 'text-muted hover:text-ink'
 
               }`}
 
@@ -196,11 +154,11 @@ export const SettingsPage: React.FC = () => {
 
         </div>
 
-        <div className="p-4 rounded-xl bg-gradient-to-r from-[#F7FEE7]/60 via-white/80 to-[#FDF2F8]/65 border border-white/90 text-xs text-[#756D82] leading-relaxed">
+        <div className="p-4 rounded-xl bg-raised border border-line text-xs text-muted leading-relaxed">
 
           {isLiveMode ? (
 
-            <span className="text-[#29233D]">
+            <span className="text-ink">
 
               <strong>Live Mode Active:</strong> The frontend dispatches real HTTP
 
@@ -232,19 +190,19 @@ export const SettingsPage: React.FC = () => {
 
       {/* Backend API Configuration */}
 
-      <div className="bg-gradient-to-br from-white/95 via-[#FAF8FF]/92 to-[#FFF7FB]/90 border border-white/90 rounded-[22px] p-6 flex flex-col gap-5 shadow-[0_16px_45px_rgba(73,55,94,0.07)] backdrop-blur-xl">
+      <div className=" bg-panel border border-line rounded-[10px] p-6 flex flex-col gap-5 ">
 
-        <div className="flex items-center justify-between pb-3 border-b border-[#E8E1EA]">
+        <div className="flex items-center justify-between pb-3 border-b border-line">
 
           <div>
 
-            <h2 className="text-sm font-semibold text-[#29233D]">
+            <h2 className="text-sm font-semibold text-ink">
 
               Backend Connection & Endpoints
 
             </h2>
 
-            <p className="text-xs text-[#756D82]">
+            <p className="text-xs text-muted">
 
               Target development server: <code>http://127.0.0.1:8000</code>
 
@@ -258,13 +216,13 @@ export const SettingsPage: React.FC = () => {
 
             disabled={isTesting}
 
-            className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-white to-[#F5F3FF] hover:border-[#C4B5FD] border border-[#E8E1EA] text-xs font-semibold text-[#29233D] flex items-center gap-1.5 transition-all shadow-sm hover:-translate-y-0.5"
+            className="px-3.5 py-1.5 rounded-xl bg-panel hover:border-line-strong border border-line text-xs font-semibold text-ink flex items-center gap-1.5 transition-all shadow-sm hover:-translate-y-0.5"
 
           >
 
             <RefreshCw
 
-              className={`w-3.5 h-3.5 text-[#7C3AED] ${
+              className={`w-3.5 h-3.5 text-ice ${
 
                 isTesting ? 'animate-spin' : ''
 
@@ -282,7 +240,7 @@ export const SettingsPage: React.FC = () => {
 
           <div>
 
-            <label className="text-[11px] font-mono text-[#938DA2] uppercase block mb-1">
+            <label className="text-xs text-muted block mb-1">
 
               API Base URL (VITE_API_BASE_URL)
 
@@ -298,7 +256,7 @@ export const SettingsPage: React.FC = () => {
 
                 onChange={(e) => setApiUrl(e.target.value)}
 
-                className="flex-1 h-9 px-3 rounded-xl bg-white/85 border border-[#E8E1EA] font-mono text-xs text-[#29233D] focus:outline-none focus:border-[#C4B5FD] focus:ring-2 focus:ring-[#EDE9FE] transition-all"
+                className="flex-1 h-9 px-3 rounded-xl bg-panel border border-line font-mono text-xs text-ink focus:outline-none focus:border-line-strong focus:ring-2 focus:ring-line-strong transition-all"
 
               />
 
@@ -318,7 +276,7 @@ export const SettingsPage: React.FC = () => {
 
                 }}
 
-                className="px-4 h-9 rounded-xl border border-white/80 bg-gradient-to-r from-[#BEF264] via-[#D9F99D] to-[#F9A8D4] text-[#29233D] font-bold hover:brightness-95 transition-all shadow-[0_8px_22px_rgba(244,114,182,0.15)]"
+                className="px-4 h-9 rounded-xl border border-line bg-ice text-void font-bold hover:brightness-95 transition-all "
 
               >
 
@@ -338,9 +296,9 @@ export const SettingsPage: React.FC = () => {
 
               backendStatus.isConnected
 
-                ? 'bg-[#F7FEE7] border-[#D9F99D]'
+                ? 'bg-raised border-line-strong'
 
-                : 'bg-[#EF4444]/10 border-[#EF4444]/30'
+                : 'bg-red/10 border-red/30'
 
             }`}
 
@@ -350,17 +308,17 @@ export const SettingsPage: React.FC = () => {
 
               {backendStatus.isConnected ? (
 
-                <CheckCircle2 className="w-5 h-5 text-[#65A30D]" />
+                <CheckCircle2 className="w-5 h-5 text-ice" />
 
               ) : (
 
-                <XCircle className="w-5 h-5 text-[#EF4444]" />
+                <XCircle className="w-5 h-5 text-red" />
 
               )}
 
               <div>
 
-                <span className="font-semibold text-xs text-[#29233D] block">
+                <span className="font-semibold text-xs text-ink block">
 
                   {backendStatus.isConnected
 
@@ -370,7 +328,7 @@ export const SettingsPage: React.FC = () => {
 
                 </span>
 
-                <span className="text-[11px] text-[#756D82]">
+                <span className="text-xs text-muted">
 
                   {backendStatus.isConnected
 
@@ -392,7 +350,7 @@ export const SettingsPage: React.FC = () => {
 
               rel="noreferrer"
 
-              className="text-xs text-[#7C3AED] hover:underline flex items-center gap-1 font-medium"
+              className="text-xs text-ice hover:underline flex items-center gap-1 font-medium"
 
             >
 
@@ -414,15 +372,15 @@ export const SettingsPage: React.FC = () => {
 
         {/* Local Ollama Status */}
 
-        <div className="bg-gradient-to-br from-white/96 via-[#FBFFF4]/92 to-[#F7FEE7]/88 border border-white/90 rounded-[22px] p-5 flex flex-col justify-between shadow-[0_14px_38px_rgba(73,55,94,0.07)] backdrop-blur-xl">
+        <div className=" bg-panel border border-line rounded-[10px] p-5 flex flex-col justify-between ">
 
           <div className="space-y-3">
 
             <div className="flex items-center gap-2.5">
 
-              <Cpu className="w-4 h-4 text-[#7C3AED]" />
+              <Cpu className="w-4 h-4 text-ice" />
 
-              <h3 className="text-sm font-semibold text-[#29233D]">
+              <h3 className="text-sm font-semibold text-ink">
 
                 Local Ollama AI Model
 
@@ -430,7 +388,7 @@ export const SettingsPage: React.FC = () => {
 
             </div>
 
-            <p className="text-xs text-[#756D82] leading-relaxed">
+            <p className="text-xs text-muted leading-relaxed">
 
               In-house private LLM inference running locally via Ollama. No cloud AI
 
@@ -438,13 +396,13 @@ export const SettingsPage: React.FC = () => {
 
             </p>
 
-            <div className="space-y-1.5 font-mono text-[11px] text-[#938DA2]">
+            <div className="space-y-1.5 font-mono text-xs text-muted">
 
               <div className="flex justify-between">
 
                 <span>Model Engine:</span>
 
-                <span className="text-[#29233D]">llama3:8b-instruct-q4</span>
+                <span className="text-ink">llama3:8b-instruct-q4</span>
 
               </div>
 
@@ -452,7 +410,7 @@ export const SettingsPage: React.FC = () => {
 
                 <span>Zero Hallucination Gate:</span>
 
-                <span className="text-[#65A30D]">Enforced (99.4%)</span>
+                <span className="text-ice">Enforced</span>
 
               </div>
 
@@ -460,7 +418,7 @@ export const SettingsPage: React.FC = () => {
 
                 <span>Context Window:</span>
 
-                <span className="text-[#29233D]">8,192 tokens</span>
+                <span className="text-ink">8,192 tokens</span>
 
               </div>
 
@@ -468,9 +426,9 @@ export const SettingsPage: React.FC = () => {
 
           </div>
 
-          <div className="pt-3 border-t border-[#EFE9ED] mt-3 flex items-center gap-1.5 text-xs text-[#65A30D]">
+          <div className="pt-3 border-t border-line mt-3 flex items-center gap-1.5 text-xs text-ice">
 
-            <span className="w-2 h-2 rounded-full bg-[#A3E635]" />
+            <span className="w-2 h-2 rounded-full bg-ice" />
 
             <span>Local AI Ready</span>
 
@@ -480,15 +438,15 @@ export const SettingsPage: React.FC = () => {
 
         {/* Vector DB: ChromaDB */}
 
-        <div className="bg-gradient-to-br from-white/96 via-[#FFF9FC]/92 to-[#FAF5FF]/90 border border-white/90 rounded-[22px] p-5 flex flex-col justify-between shadow-[0_14px_38px_rgba(73,55,94,0.07)] backdrop-blur-xl">
+        <div className=" bg-panel border border-line rounded-[10px] p-5 flex flex-col justify-between ">
 
           <div className="space-y-3">
 
             <div className="flex items-center gap-2.5">
 
-              <Database className="w-4 h-4 text-[#65A30D]" />
+              <Database className="w-4 h-4 text-ice" />
 
-              <h3 className="text-sm font-semibold text-[#29233D]">
+              <h3 className="text-sm font-semibold text-ink">
 
                 ChromaDB Vector Retrieval
 
@@ -496,7 +454,7 @@ export const SettingsPage: React.FC = () => {
 
             </div>
 
-            <p className="text-xs text-[#756D82] leading-relaxed">
+            <p className="text-xs text-muted leading-relaxed">
 
               Institutional document chunks and semantic embeddings indexed in local
 
@@ -504,13 +462,13 @@ export const SettingsPage: React.FC = () => {
 
             </p>
 
-            <div className="space-y-1.5 font-mono text-[11px] text-[#938DA2]">
+            <div className="space-y-1.5 font-mono text-xs text-muted">
 
               <div className="flex justify-between">
 
                 <span>Primary Shard:</span>
 
-                <span className="text-[#29233D]">KB-WEST-09</span>
+                <span className="text-ink">KB-WEST-09</span>
 
               </div>
 
@@ -518,7 +476,7 @@ export const SettingsPage: React.FC = () => {
 
                 <span>Total Embeddings:</span>
 
-                <span className="text-[#29233D]">1,482 vectors</span>
+                <span className="text-ink">1,482 vectors</span>
 
               </div>
 
@@ -526,7 +484,7 @@ export const SettingsPage: React.FC = () => {
 
                 <span>Distance Metric:</span>
 
-                <span className="text-[#29233D]">Cosine (bge-large)</span>
+                <span className="text-ink">Cosine (bge-large)</span>
 
               </div>
 
@@ -534,9 +492,9 @@ export const SettingsPage: React.FC = () => {
 
           </div>
 
-          <div className="pt-3 border-t border-[#EFE9ED] mt-3 flex items-center gap-1.5 text-xs text-[#65A30D]">
+          <div className="pt-3 border-t border-line mt-3 flex items-center gap-1.5 text-xs text-ice">
 
-            <span className="w-2 h-2 rounded-full bg-[#A3E635]" />
+            <span className="w-2 h-2 rounded-full bg-ice" />
 
             <span>Vector Index Healthy</span>
 
@@ -548,17 +506,17 @@ export const SettingsPage: React.FC = () => {
 
       {/* Application Information & Governance Compliance */}
 
-      <div className="bg-gradient-to-r from-[#F7FEE7]/88 via-white/94 to-[#FDF2F8]/88 border border-white/90 rounded-[22px] p-5 flex flex-col gap-3 text-xs shadow-[0_14px_38px_rgba(73,55,94,0.07)] backdrop-blur-xl">
+      <div className=" bg-raised border border-line rounded-[10px] p-5 flex flex-col gap-3 text-xs ">
 
-        <div className="flex items-center gap-2 text-sm font-semibold text-[#29233D]">
+        <div className="flex items-center gap-2 text-sm font-semibold text-ink">
 
-          <Shield className="w-4 h-4 text-[#7C3AED]" />
+          <Shield className="w-4 h-4 text-ice" />
 
           <span>Governance & Compliance Assurance</span>
 
         </div>
 
-        <p className="text-[#756D82] leading-relaxed">
+        <p className="text-muted leading-relaxed">
 
           Sovereign Black Ice adheres to strict enterprise cybersecurity
 
@@ -566,7 +524,7 @@ export const SettingsPage: React.FC = () => {
 
         </p>
 
-        <ul className="list-disc pl-5 space-y-1 text-[#756D82]">
+        <ul className="list-disc pl-5 space-y-1 text-muted">
 
           <li>
 

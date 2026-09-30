@@ -185,82 +185,28 @@ export const AssistantPage: React.FC = () => {
   };
 
   return (
-    <div className="relative pb-20 text-[#29233D]">
+    <div className="relative pb-20 text-ink">
 
       {/* DREAMY BACKGROUND */}
-      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-[#FFFDF9]">
-        <div className="absolute -top-32 left-[18%] h-[520px] w-[520px] rounded-full bg-[#D9F99D]/35 blur-[110px]" />
-        <div className="absolute top-[18%] right-[-80px] h-[500px] w-[500px] rounded-full bg-[#F9A8D4]/25 blur-[120px]" />
-        <div className="absolute bottom-[-180px] left-[35%] h-[600px] w-[600px] rounded-full bg-[#DDD6FE]/30 blur-[130px]" />
-        <div className="absolute top-[48%] left-[-180px] h-[440px] w-[440px] rounded-full bg-[#E0F2FE]/40 blur-[120px]" />
+      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-panel">
+        <div className="absolute -top-32 left-[18%] h-[520px] w-[520px] rounded-full bg-raised hidden" />
+        <div className="absolute top-[18%] right-[-80px] h-[500px] w-[500px] rounded-full bg-raised hidden" />
+        <div className="absolute bottom-[-180px] left-[35%] h-[600px] w-[600px] rounded-full bg-raised hidden" />
+        <div className="absolute top-[48%] left-[-180px] h-[440px] w-[440px] rounded-full bg-raised hidden" />
       </div>
 
       {/* HERO */}
-      <section className="relative overflow-hidden rounded-[30px] border border-white/80 bg-gradient-to-br from-white via-[#FFF9FC] to-[#F7FEE7] px-6 py-6 shadow-[0_25px_80px_rgba(73,55,94,0.10)] lg:px-8">
-
-        <div className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-[#D9F99D]/55 blur-3xl" />
-        <div className="pointer-events-none absolute right-[18%] top-[-80px] h-52 w-52 rounded-full bg-[#FBCFE8]/45 blur-3xl" />
-
-        <div className="relative flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
-
-          <div>
-            <div className="mb-3 flex flex-wrap items-center gap-2">
-              <span className="flex items-center gap-1.5 rounded-full border border-[#D9F99D] bg-[#F7FEE7] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#65A30D]">
-                <Sparkles className="h-3 w-3" />
-                Sovereign Intelligence
-              </span>
-
-              <span className="rounded-full border border-[#FBCFE8] bg-[#FDF2F8] px-3 py-1 text-[10px] font-semibold text-[#DB2777]">
-                Grounded RAG
-              </span>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#D9F99D] bg-gradient-to-br from-[#ECFCCB] to-[#FCE7F3] shadow-[0_10px_30px_rgba(163,230,53,0.18)]">
-                <WandSparkles className="h-6 w-6 text-[#6B21A8]" />
-              </div>
-
-              <div>
-                <h1 className="text-3xl font-black tracking-[-0.035em] text-[#29233D]">
-                  Knowledge Assistant
-                </h1>
-
-                <p className="mt-1 max-w-2xl text-sm text-[#756D82]">
-                  Ask your knowledge base anything — every answer is grounded,
-                  traceable and integrity-aware.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-
-            <div className="flex items-center gap-2 rounded-2xl border border-[#D9F99D] bg-white/75 px-4 py-2.5 shadow-sm backdrop-blur-xl">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#A3E635] opacity-60" />
-                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#84CC16]" />
-              </span>
-
-              <div>
-                <div className="text-[9px] font-bold uppercase tracking-widest text-[#A09AAA]">
-                  Integrity Engine
-                </div>
-                <div className="text-xs font-bold text-[#4D7C0F]">
-                  Grounded & Verified
-                </div>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setMessages([])}
-              className="rounded-2xl border border-[#E9E4DD] bg-white/80 px-4 py-3 text-xs font-semibold text-[#6F687C] shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#F9A8D4] hover:shadow-md"
-            >
-              Clear conversation
-            </button>
-          </div>
+      <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <h1 className="display text-[44px] leading-none text-ink">Knowledge assistant</h1>
+          <p className="mt-3 max-w-2xl text-[15px] text-ink-2">
+            Every answer cites the passage, version and hash it came from, and says so when that source has changed.
+          </p>
         </div>
-      </section>
+        <button type="button" onClick={() => setMessages([])} className="btn btn-ghost self-start lg:self-auto">
+          Clear conversation
+        </button>
+      </header>
 
       {/* MAIN WORKSPACE */}
       <div className="mt-6 grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
@@ -269,12 +215,12 @@ export const AssistantPage: React.FC = () => {
         <div className="flex min-w-0 flex-col gap-5 lg:col-span-8">
 
           {/* SCOPE */}
-          <section className="rounded-[24px] border border-white/80 bg-white/75 p-4 shadow-[0_15px_50px_rgba(73,55,94,0.08)] backdrop-blur-xl">
+          <section className="rounded-[10px] border border-line bg-panel p-4 ">
 
             <div className="flex flex-wrap items-center justify-between gap-4">
 
               <div className="flex flex-wrap items-center gap-2">
-                <span className="mr-1 text-[10px] font-bold uppercase tracking-[0.16em] text-[#938DA2]">
+                <span className="mr-1 text-xs font-bold text-muted">
                   Knowledge Scope
                 </span>
 
@@ -283,10 +229,10 @@ export const AssistantPage: React.FC = () => {
                     key={s}
                     type="button"
                     onClick={() => setActiveScope(s)}
-                    className={`rounded-xl px-3 py-1.5 text-[11px] font-semibold transition-all ${
+                    className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition-all ${
                       activeScope === s
-                        ? 'border border-[#D9F99D] bg-gradient-to-r from-[#ECFCCB] to-[#FCE7F3] text-[#4D7C0F] shadow-sm'
-                        : 'border border-[#EEE9F0] bg-white text-[#756D82] hover:border-[#F9A8D4] hover:bg-[#FFF8FC]'
+                        ? 'border border-line-strong bg-raised text-ice shadow-sm'
+                        : 'border border-line bg-panel text-muted hover:border-line-strong hover:bg-raised'
                     }`}
                   >
                     {s}
@@ -294,35 +240,35 @@ export const AssistantPage: React.FC = () => {
                 ))}
               </div>
 
-              <label className="flex cursor-pointer select-none items-center gap-2 rounded-xl border border-[#E9E4DD] bg-[#FFFDF9] px-3 py-2 text-[11px] text-[#756D82]">
-                <LockKeyhole className="h-3.5 w-3.5 text-[#84CC16]" />
+              <label className="flex cursor-pointer select-none items-center gap-2 rounded-xl border border-line bg-panel px-3 py-2 text-xs text-muted">
+                <LockKeyhole className="h-3.5 w-3.5 text-ice" />
                 <span>Current versions only</span>
 
                 <input
                   type="checkbox"
                   checked={useCurrentOnly}
                   onChange={(e) => setUseCurrentOnly(e.target.checked)}
-                  className="h-4 w-4 accent-[#84CC16]"
+                  className="h-4 w-4 accent-ice"
                 />
               </label>
             </div>
 
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-[#F1EDF2] pt-3 text-[10px] text-[#938DA2]">
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-line pt-3 text-xs text-muted">
 
               <div className="flex items-center gap-2">
-                <CheckCircle className="h-3.5 w-3.5 text-[#65A30D]" />
+                <CheckCircle className="h-3.5 w-3.5 text-ice" />
                 <span>
                   Index synchronized • Cryptographic grounding active
                 </span>
               </div>
 
               {isLiveMode ? (
-                <span className="flex items-center gap-1.5 font-mono font-bold text-[#65A30D]">
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#84CC16]" />
+                <span className="flex items-center gap-1.5 font-mono font-bold text-ice">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-ice" />
                   FASTAPI RAG LIVE
                 </span>
               ) : (
-                <span className="rounded-full bg-[#FFF7ED] px-2 py-1 font-mono font-bold text-[#D97706]">
+                <span className="rounded-full bg-amber/[0.07] px-2 py-1 font-mono font-bold text-amber">
                   DEMO DATA ACTIVE
                 </span>
               )}
@@ -344,10 +290,10 @@ export const AssistantPage: React.FC = () => {
 
                 {/* AVATAR */}
                 <div
-                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl text-xs font-black shadow-sm ${
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl text-xs font-semibold shadow-sm ${
                     msg.sender === 'user'
-                      ? 'border border-[#FBCFE8] bg-gradient-to-br from-[#FCE7F3] to-[#EDE9FE] text-[#9D174D]'
-                      : 'border border-[#D9F99D] bg-gradient-to-br from-[#ECFCCB] to-white text-[#4D7C0F]'
+                      ? 'border border-line-strong bg-raised text-ice'
+                      : 'border border-line-strong bg-raised text-ice'
                   }`}
                 >
                   {msg.sender === 'user' ? (
@@ -363,15 +309,15 @@ export const AssistantPage: React.FC = () => {
                   }`}
                 >
 
-                  <div className="flex flex-wrap items-center gap-2 text-[10px] text-[#938DA2]">
-                    <span className="font-bold text-[#655E72]">
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
+                    <span className="font-bold text-ink-2">
                       {msg.sender === 'user'
                         ? 'S. Vance (CISO)'
                         : 'Sovereign Black Ice'}
                     </span>
 
                     {msg.sender === 'assistant' && (
-                      <span className="flex items-center gap-1 font-semibold text-[#65A30D]">
+                      <span className="flex items-center gap-1 font-semibold text-ice">
                         <CheckCircle className="h-3 w-3" />
                         Grounded in Document
                       </span>
@@ -383,38 +329,38 @@ export const AssistantPage: React.FC = () => {
 
                   {msg.sender === 'user' ? (
 
-                    <div className="rounded-[20px] rounded-tr-md border border-[#FBCFE8] bg-gradient-to-br from-[#FDF2F8] via-white to-[#F5F3FF] px-5 py-3.5 text-sm font-medium text-[#3D354B] shadow-[0_10px_30px_rgba(219,39,119,0.08)]">
+                    <div className="rounded-[10px] rounded-tr-md border border-line-strong bg-raised px-5 py-3.5 text-sm font-medium text-ink-2 ">
                       {msg.content}
                     </div>
 
                   ) : (
 
-                    <div className="flex flex-col gap-4 rounded-[24px] rounded-tl-md border border-white/90 bg-white/80 p-5 text-sm leading-7 text-[#453D52] shadow-[0_18px_55px_rgba(73,55,94,0.10)] backdrop-blur-xl">
+                    <div className="flex flex-col gap-4 rounded-[10px] rounded-tl-md border border-line bg-panel p-5 text-sm leading-7 text-ink-2 ">
 
                       <div className="flex items-start gap-3">
-                        <div className="mt-1 h-6 w-1 rounded-full bg-gradient-to-b from-[#A3E635] via-[#F9A8D4] to-[#C4B5FD]" />
+                        <div className="mt-1 h-6 w-1 rounded-full bg-ice " />
                         <p className="font-medium">{msg.content}</p>
                       </div>
 
                       {/* WARNING */}
                       {msg.temporalWarning && (
-                        <div className="flex items-start gap-3 rounded-2xl border border-[#FDE68A] bg-gradient-to-r from-[#FFFBEB] to-[#FFF7ED] p-4">
+                        <div className="flex items-start gap-3 rounded-2xl border border-amber/30 bg-amber/[0.07] p-4">
 
-                          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[#D97706]" />
+                          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber" />
 
                           <div className="flex-1 text-xs">
-                            <span className="block font-bold text-[#92400E]">
+                            <span className="block font-bold text-amber">
                               {msg.temporalWarning.message}
                             </span>
 
-                            <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
-                              <span className="text-[#DC2626] line-through">
+                            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                              <span className="text-red line-through">
                                 {msg.temporalWarning.previousClaim}
                               </span>
 
-                              <ArrowRight className="h-3 w-3 text-[#A8A29E]" />
+                              <ArrowRight className="h-3 w-3 text-muted" />
 
-                              <span className="font-bold text-[#65A30D]">
+                              <span className="font-bold text-ice">
                                 {msg.temporalWarning.currentClaim}
                               </span>
                             </div>
@@ -423,9 +369,9 @@ export const AssistantPage: React.FC = () => {
                           <button
                             type="button"
                             onClick={() =>
-                              navigate('/documents/DOC-7704/compare')
+                              navigate('/dashboard/documents/DOC-7704/compare')
                             }
-                            className="rounded-xl border border-[#FDE68A] bg-white px-3 py-1.5 text-[10px] font-bold text-[#B45309] shadow-sm hover:bg-[#FFFBEB]"
+                            className="rounded-xl border border-amber/30 bg-panel px-3 py-1.5 text-xs font-bold text-amber shadow-sm hover:bg-amber/[0.07]"
                           >
                             View Diff
                           </button>
@@ -439,47 +385,47 @@ export const AssistantPage: React.FC = () => {
                           {msg.citations.map((c, i) => (
                             <div
                               key={i}
-                              className="rounded-2xl border border-[#E8E3EC] bg-gradient-to-br from-[#FFFDF9] via-white to-[#F7FEE7]/50 p-4"
+                              className="rounded-2xl border border-line bg-panel p-4"
                             >
 
                               <div className="flex flex-wrap items-center justify-between gap-2">
 
                                 <div className="flex flex-wrap items-center gap-2">
-                                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#ECFCCB]">
-                                    <FileText className="h-4 w-4 text-[#65A30D]" />
+                                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-raised">
+                                    <FileText className="h-4 w-4 text-ice" />
                                   </div>
 
-                                  <span className="text-xs font-bold text-[#342D40]">
+                                  <span className="text-xs font-bold text-ink">
                                     {c.documentTitle}
                                   </span>
 
-                                  <span className="rounded-lg border border-[#DDD6FE] bg-[#F5F3FF] px-2 py-0.5 font-mono text-[9px] font-bold text-[#7C3AED]">
+                                  <span className="rounded-lg border border-line-strong bg-raised px-2 py-0.5 font-mono text-xs font-bold text-ice">
                                     {c.version}
                                   </span>
                                 </div>
 
-                                <span className="rounded-full border border-[#D9F99D] bg-[#F7FEE7] px-2.5 py-1 font-mono text-[9px] font-bold text-[#4D7C0F]">
+                                <span className="rounded-full border border-line-strong bg-raised px-2.5 py-1 font-mono text-xs font-bold text-ice">
                                   {c.isCurrentVersion
                                     ? '✓ CURRENT SOURCE'
                                     : 'ARCHIVED VERSION'}
                                 </span>
                               </div>
 
-                              <div className="mt-3 rounded-xl border-l-[3px] border-[#A3E635] bg-white px-4 py-3 font-mono text-[11px] leading-relaxed text-[#655E72] shadow-sm">
+                              <div className="mt-3 rounded-xl border-l-[3px] border-ice bg-panel px-4 py-3 font-mono text-xs leading-relaxed text-ink-2 shadow-sm">
                                 “{c.excerpt}”
                               </div>
 
-                              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[10px] text-[#938DA2]">
+                              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted">
 
                                 <div className="flex items-center gap-2">
                                   <button
                                     type="button"
                                     onClick={() =>
                                       navigate(
-                                        `/documents/${c.documentId}`
+                                        `/dashboard/documents/${c.documentId}`
                                       )
                                     }
-                                    className="flex items-center gap-1 font-bold text-[#7C3AED] hover:text-[#DB2777]"
+                                    className="flex items-center gap-1 font-bold text-ice hover:text-ice"
                                   >
                                     View Source ({c.documentId})
                                     <ExternalLink className="h-3 w-3" />
@@ -505,10 +451,10 @@ export const AssistantPage: React.FC = () => {
           </div>
 
           {/* COMPOSER */}
-          <section className="relative overflow-hidden rounded-[26px] border border-white/90 bg-white/85 p-4 shadow-[0_22px_70px_rgba(73,55,94,0.12)] backdrop-blur-xl">
+          <section className="relative overflow-hidden rounded-[10px] border border-line bg-panel p-4 ">
 
-            <div className="pointer-events-none absolute -bottom-20 -right-16 h-48 w-48 rounded-full bg-[#F9A8D4]/25 blur-3xl" />
-            <div className="pointer-events-none absolute -left-12 -top-20 h-44 w-44 rounded-full bg-[#D9F99D]/35 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-20 -right-16 h-48 w-48 rounded-full bg-raised hidden" />
+            <div className="pointer-events-none absolute -left-12 -top-20 h-44 w-44 rounded-full bg-raised hidden" />
 
             <div className="relative">
 
@@ -526,7 +472,7 @@ export const AssistantPage: React.FC = () => {
                   }
                 }}
                 placeholder="Ask Sovereign Black Ice about your knowledge base..."
-                className="w-full resize-none rounded-2xl border border-[#E8E3EC] bg-[#FFFDFB]/90 p-4 text-sm leading-relaxed text-[#342D40] outline-none transition-all placeholder:text-[#B1AAB8] focus:border-[#C4B5FD] focus:ring-4 focus:ring-[#EDE9FE]/60"
+                className="w-full resize-none rounded-2xl border border-line bg-panel p-4 text-sm leading-relaxed text-ink outline-none transition-all placeholder:text-ink-2 focus:border-line-strong focus:ring-4 focus:ring-line-strong"
               />
 
               <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
@@ -543,15 +489,15 @@ export const AssistantPage: React.FC = () => {
                           'Choose a source document to constrain retrieval scope.',
                       });
                     }}
-                    className="flex items-center gap-1.5 rounded-xl border border-[#E9E4DD] bg-white px-3 py-2 text-[11px] font-semibold text-[#756D82] transition-all hover:border-[#F9A8D4] hover:bg-[#FFF8FC]"
+                    className="flex items-center gap-1.5 rounded-xl border border-line bg-panel px-3 py-2 text-xs font-semibold text-muted transition-all hover:border-line-strong hover:bg-raised"
                   >
                     <Paperclip className="h-3.5 w-3.5" />
                     Attach source
                   </button>
 
-                  <span className="text-[10px] text-[#938DA2]">
+                  <span className="text-xs text-muted">
                     Scope:{' '}
-                    <strong className="text-[#655E72]">
+                    <strong className="text-ink-2">
                       {activeScope}
                     </strong>
                   </span>
@@ -561,7 +507,7 @@ export const AssistantPage: React.FC = () => {
                   type="button"
                   onClick={handleSend}
                   disabled={!inputText.trim() || isSubmitting}
-                  className="group flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#A3E635] via-[#BEF264] to-[#F9A8D4] px-5 py-2.5 text-xs font-black text-[#29233D] shadow-[0_10px_25px_rgba(163,230,53,0.25)] transition-all hover:-translate-y-0.5 hover:shadow-[0_15px_35px_rgba(244,114,182,0.25)] disabled:cursor-not-allowed disabled:opacity-40"
+                  className="group flex items-center gap-2 rounded-xl bg-ice px-5 py-2.5 text-xs font-semibold text-void transition-all hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <span>
                     {isSubmitting ? 'Retrieving...' : 'Ask Black Ice'}
@@ -571,10 +517,10 @@ export const AssistantPage: React.FC = () => {
                 </button>
               </div>
 
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-[#F1EDF2] pt-3 text-[10px] text-[#938DA2]">
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-line pt-3 text-xs text-muted">
 
                 <div className="flex items-center gap-1.5">
-                  <Shield className="h-3.5 w-3.5 text-[#65A30D]" />
+                  <Shield className="h-3.5 w-3.5 text-ice" />
                   Grounding verified against cryptographic baseline.
                 </div>
 
@@ -590,28 +536,28 @@ export const AssistantPage: React.FC = () => {
         <aside className="flex flex-col gap-5 lg:sticky lg:top-24 lg:col-span-4">
 
           {/* EVIDENCE */}
-          <section className="overflow-hidden rounded-[24px] border border-white/90 bg-white/80 shadow-[0_18px_55px_rgba(73,55,94,0.10)] backdrop-blur-xl">
+          <section className="overflow-hidden rounded-[10px] border border-line bg-panel ">
 
-            <div className="bg-gradient-to-r from-[#F7FEE7] via-white to-[#FDF2F8] p-5">
+            <div className=" bg-raised p-5">
 
-              <div className="flex items-center justify-between border-b border-[#EDE8EF] pb-4">
+              <div className="flex items-center justify-between border-b border-line pb-4">
 
                 <div className="flex items-center gap-2">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#D9F99D] bg-white">
-                    <Shield className="h-4 w-4 text-[#65A30D]" />
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-line-strong bg-panel">
+                    <Shield className="h-4 w-4 text-ice" />
                   </div>
 
                   <div>
-                    <h3 className="text-sm font-black text-[#342D40]">
+                    <h3 className="text-sm font-semibold text-ink">
                       Grounding Evidence
                     </h3>
-                    <span className="text-[9px] text-[#938DA2]">
+                    <span className="text-xs text-muted">
                       Cryptographically anchored
                     </span>
                   </div>
                 </div>
 
-                <span className="rounded-full border border-[#D9F99D] bg-white px-2.5 py-1 text-[9px] font-black uppercase tracking-wide text-[#4D7C0F]">
+                <span className="rounded-full border border-line-strong bg-panel px-2.5 py-1 text-xs font-semibold text-ice">
                   Verified
                 </span>
               </div>
@@ -619,60 +565,60 @@ export const AssistantPage: React.FC = () => {
               <div className="mt-4 space-y-4 text-xs">
 
                 <div>
-                  <span className="text-[9px] font-bold uppercase tracking-widest text-[#AAA3B0]">
+                  <span className="text-xs font-bold text-ink-2">
                     Source Document
                   </span>
 
-                  <div className="mt-1 font-bold text-[#342D40]">
+                  <div className="mt-1 font-bold text-ink">
                     Employee Reimbursement Policy
                   </div>
 
-                  <span className="font-mono text-[10px] text-[#7C3AED]">
+                  <span className="font-mono text-xs text-ice">
                     DOC-7704
                   </span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
 
-                  <div className="rounded-xl border border-[#EEE9F0] bg-white/80 p-3">
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-[#AAA3B0]">
+                  <div className="rounded-xl border border-line bg-panel p-3">
+                    <span className="text-xs font-bold text-ink-2">
                       Department
                     </span>
-                    <div className="mt-1 font-semibold text-[#655E72]">
+                    <div className="mt-1 font-semibold text-ink-2">
                       Human Resources
                     </div>
                   </div>
 
-                  <div className="rounded-xl border border-[#D9F99D] bg-[#F7FEE7] p-3">
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-[#84A52A]">
+                  <div className="rounded-xl border border-line-strong bg-raised p-3">
+                    <span className="text-xs font-bold text-ice">
                       Version
                     </span>
-                    <div className="mt-1 font-mono font-bold text-[#4D7C0F]">
+                    <div className="mt-1 font-mono font-bold text-ice">
                       v2.0 Active
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <span className="text-[9px] font-bold uppercase tracking-widest text-[#AAA3B0]">
+                  <span className="text-xs font-bold text-ink-2">
                     Relevant Section
                   </span>
 
-                  <div className="mt-1 font-bold text-[#453D52]">
+                  <div className="mt-1 font-bold text-ink-2">
                     Clause 4.2 — Expense Submission Window
                   </div>
 
-                  <div className="font-mono text-[9px] text-[#AAA3B0]">
+                  <div className="font-mono text-xs text-ink-2">
                     chunk-erp-42-v2 • vector dim 1536
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-[#E9E4DD] bg-white p-3 shadow-sm">
-                  <span className="mb-2 block text-[9px] font-bold uppercase tracking-widest text-[#AAA3B0]">
+                <div className="rounded-2xl border border-line bg-panel p-3 shadow-sm">
+                  <span className="mb-2 block text-xs font-bold text-ink-2">
                     Supporting Evidence
                   </span>
 
-                  <div className="border-l-[3px] border-[#A3E635] pl-3 font-mono text-[11px] leading-relaxed text-[#655E72]">
+                  <div className="border-l-[3px] border-ice pl-3 font-mono text-xs leading-relaxed text-ink-2">
                     Employees must submit reimbursement claims
                     within 15 days of the expense.
                   </div>
@@ -683,9 +629,9 @@ export const AssistantPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() =>
-                      navigate('/documents/DOC-7704')
+                      navigate('/dashboard/documents/DOC-7704')
                     }
-                    className="flex-1 rounded-xl border border-[#DDD6FE] bg-[#F5F3FF] py-2 text-[11px] font-bold text-[#6D28D9] transition-colors hover:bg-[#EDE9FE]"
+                    className="flex-1 rounded-xl border border-line-strong bg-raised py-2 text-xs font-bold text-ice transition-colors hover:bg-raised"
                   >
                     Open Document Details
                   </button>
@@ -705,7 +651,7 @@ export const AssistantPage: React.FC = () => {
                           'Verbatim excerpt copied to clipboard.',
                       });
                     }}
-                    className="rounded-xl border border-[#E9E4DD] bg-white p-2.5 text-[#756D82] hover:border-[#F9A8D4]"
+                    className="rounded-xl border border-line bg-panel p-2.5 text-muted hover:border-line-strong"
                   >
                     <Copy className="h-4 w-4" />
                   </button>
@@ -715,60 +661,60 @@ export const AssistantPage: React.FC = () => {
           </section>
 
           {/* MUTATION */}
-          <section className="rounded-[24px] border border-[#FDE68A]/80 bg-gradient-to-br from-white via-[#FFFBEB] to-[#FFF7ED] p-5 shadow-[0_18px_50px_rgba(245,158,11,0.08)]">
+          <section className="rounded-[10px] border border-amber/30 bg-panel p-5 ">
 
-            <div className="flex items-center justify-between border-b border-[#FDE68A]/60 pb-3">
+            <div className="flex items-center justify-between border-b border-amber/30 pb-3">
 
               <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-[#D97706]" />
+                <Sparkles className="h-4 w-4 text-amber" />
 
-                <h3 className="text-sm font-black text-[#453D52]">
+                <h3 className="text-sm font-semibold text-ink-2">
                   Claim Mutation
                 </h3>
               </div>
 
-              <span className="rounded-full bg-[#FEF3C7] px-2 py-1 font-mono text-[9px] font-bold text-[#B45309]">
+              <span className="rounded-full bg-amber/[0.07] px-2 py-1 font-mono text-xs font-bold text-amber">
                 1 CHANGED
               </span>
             </div>
 
-            <div className="mt-4 rounded-2xl border border-[#FDE68A] bg-white/80 p-4 text-xs">
+            <div className="mt-4 rounded-2xl border border-amber/30 bg-panel p-4 text-xs">
 
               <div className="flex items-center justify-between">
-                <span className="font-bold text-[#65A30D]">
+                <span className="font-bold text-ice">
                   Current Claim · v2.0
                 </span>
-                <span className="font-mono text-[#938DA2]">
+                <span className="font-mono text-muted">
                   15-day window
                 </span>
               </div>
 
-              <p className="mt-2 font-semibold text-[#453D52]">
+              <p className="mt-2 font-semibold text-ink-2">
                 “Submission deadline is 15 days.”
               </p>
 
-              <div className="my-3 border-t border-[#F1E7D0]" />
+              <div className="my-3 border-t border-amber/30" />
 
               <div className="flex items-center justify-between">
-                <span className="font-bold text-[#DC2626]">
+                <span className="font-bold text-red">
                   Previous Claim · v1.0
                 </span>
 
-                <span className="font-mono text-[#938DA2]">
+                <span className="font-mono text-muted">
                   30-day window
                 </span>
               </div>
 
-              <p className="mt-2 text-[#938DA2] line-through">
+              <p className="mt-2 text-muted line-through">
                 “Submission deadline was 30 days.”
               </p>
 
               <div className="mt-4 flex items-center justify-between">
-                <span className="font-bold text-[#D97706]">
+                <span className="font-bold text-amber">
                   Mutation: −50%
                 </span>
 
-                <span className="rounded-lg bg-[#FEF2F2] px-2 py-1 font-mono text-[9px] font-bold text-[#DC2626]">
+                <span className="rounded-lg bg-red/[0.07] px-2 py-1 font-mono text-xs font-bold text-red">
                   3 ANSWERS FLAGGED
                 </span>
               </div>
@@ -777,9 +723,9 @@ export const AssistantPage: React.FC = () => {
             <button
               type="button"
               onClick={() =>
-                navigate('/documents/DOC-7704/compare')
+                navigate('/dashboard/documents/DOC-7704/compare')
               }
-              className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-[#FDE68A] bg-white py-2 text-[11px] font-bold text-[#B45309] transition-all hover:-translate-y-0.5 hover:shadow-sm"
+              className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-amber/30 bg-panel py-2 text-xs font-bold text-amber transition-all hover:-translate-y-0.5 hover:shadow-sm"
             >
               View Change in Diff Engine
               <ExternalLink className="h-3 w-3" />
@@ -787,12 +733,12 @@ export const AssistantPage: React.FC = () => {
           </section>
 
           {/* SUGGESTIONS */}
-          <section className="rounded-[24px] border border-white/90 bg-gradient-to-br from-white via-[#FDF2F8]/50 to-[#F5F3FF]/70 p-5 shadow-[0_16px_45px_rgba(73,55,94,0.08)]">
+          <section className="rounded-[10px] border border-line bg-panel p-5 ">
 
             <div className="mb-3 flex items-center gap-2">
-              <WandSparkles className="h-4 w-4 text-[#DB2777]" />
+              <WandSparkles className="h-4 w-4 text-ice" />
 
-              <span className="text-xs font-black text-[#453D52]">
+              <span className="text-xs font-semibold text-ink-2">
                 Explore this knowledge
               </span>
             </div>
@@ -808,76 +754,25 @@ export const AssistantPage: React.FC = () => {
                   key={idx}
                   type="button"
                   onClick={() => setInputText(q)}
-                  className="group flex w-full items-center justify-between rounded-xl border border-[#EDE8EF] bg-white/80 p-3 text-left text-[11px] font-medium text-[#655E72] transition-all hover:-translate-y-0.5 hover:border-[#F9A8D4] hover:bg-white hover:shadow-sm"
+                  className="group flex w-full items-center justify-between rounded-xl border border-line bg-panel p-3 text-left text-xs font-medium text-ink-2 transition-all hover:-translate-y-0.5 hover:border-line-strong hover:bg-raised hover:shadow-sm"
                 >
                   <span>{q}</span>
 
-                  <Plus className="h-3.5 w-3.5 shrink-0 text-[#C4B5FD] transition-colors group-hover:text-[#DB2777]" />
+                  <Plus className="h-3.5 w-3.5 shrink-0 text-ice transition-colors group-hover:text-ice" />
                 </button>
               ))}
             </div>
           </section>
 
-          {/* TRUST TELEMETRY */}
-          <section className="relative overflow-hidden rounded-[24px] border border-[#D9F99D] bg-gradient-to-br from-[#F7FEE7] via-white to-[#FDF2F8] p-5 shadow-[0_18px_50px_rgba(163,230,53,0.10)]">
-
-            <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-[#F9A8D4]/25 blur-2xl" />
-
-            <div className="relative">
-
-              <div className="flex items-center justify-between">
-
-                <div className="flex items-center gap-2">
-                  <Database className="h-4 w-4 text-[#65A30D]" />
-
-                  <span className="text-[10px] font-black uppercase tracking-[0.15em] text-[#655E72]">
-                    Trust Telemetry
-                  </span>
-                </div>
-
-                <span className="font-mono text-[10px] font-black text-[#65A30D]">
-                  99.4% CONF
-                </span>
-              </div>
-
-              <div className="mt-4 space-y-2 text-[10px]">
-
-                <div className="flex justify-between rounded-xl bg-white/70 px-3 py-2">
-                  <span className="text-[#938DA2]">
-                    Hallucination Guardrail
-                  </span>
-                  <span className="font-mono font-bold text-[#65A30D]">
-                    STRICT
-                  </span>
-                </div>
-
-                <div className="flex justify-between rounded-xl bg-white/70 px-3 py-2">
-                  <span className="text-[#938DA2]">
-                    Integrity Verification
-                  </span>
-                  <span className="font-mono font-bold text-[#7C3AED]">
-                    ACTIVE
-                  </span>
-                </div>
-
-                <div className="flex justify-between rounded-xl bg-white/70 px-3 py-2">
-                  <span className="text-[#938DA2]">
-                    Source Provenance
-                  </span>
-                  <span className="font-mono font-bold text-[#DB2777]">
-                    TRACEABLE
-                  </span>
-                </div>
-              </div>
-
-              <div className="mt-3 rounded-xl border border-white bg-white/60 p-3 text-[9px] leading-relaxed text-[#756D82]">
-                <strong className="text-[#453D52]">
-                  Sovereign rule:
-                </strong>{' '}
-                unsupported claims are suppressed instead of being
-                presented as verified knowledge.
-              </div>
+          {/* HOW ANSWERS ARE GROUNDED */}
+          <section className="rounded-[10px] border border-line p-5 text-sm leading-relaxed text-ink-2">
+            <div className="flex items-center gap-2 text-ink">
+              <Database className="h-4 w-4 text-ice" /> How answers are grounded
             </div>
+            <p className="mt-2">
+              Unsupported claims are suppressed instead of being presented as verified knowledge. Answers built on a
+              changed source carry a warning and a link to the diff.
+            </p>
           </section>
         </aside>
       </div>

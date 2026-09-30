@@ -1,1313 +1,567 @@
-import React, { useState } from 'react';
-
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
 import {
-
   FileText,
-
   GitCompare,
-
   Network,
-
   Clock,
-
   Upload,
-
   Activity,
-
   ArrowRight,
-
-  TrendingUp,
-
   AlertTriangle,
-
-  Shield,
-
   Download,
-
   Filter,
-
-  CheckCircle2,
-
 } from 'lucide-react';
-
 import { MetricCard } from '../components/ui/MetricCard';
-
 import { StatusBadge } from '../components/ui/StatusBadge';
-
+import { CountUp, EmptyState } from '../components/ui/primitives';
+import { AgentHero } from '../components/ui/AgentHero';
+import { AXIS_TICK, Bars, GlassTooltip, GRID_STROKE, SegmentTabs, SERIES, StatCard } from '../components/ui/ChartKit';
 import { useApp } from '../context/AppContext';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
-import { DEMO_ACTIVITY_CHART } from '../data/demoData';
+// Statuses that mean "nothing unresolved" for a document.
+const CLEAR = new Set(['Verified', 'No impact detected', 'No changes detected', 'Resolved']);
+const CRITICAL = /critical|conflict|outdated|escalated/i;
 
-import {
+const toneOf = (status: string) => (CLEAR.has(status) ? 'ice' : CRITICAL.test(status) ? 'red' : 'amber');
 
-  AreaChart,
-
-  Area,
-
-  XAxis,
-
-  YAxis,
-
-  Tooltip,
-
-  ResponsiveContainer,
-
-  CartesianGrid,
-
-} from 'recharts';
+/** Reveals are handled globally by usePopOnScroll in the layout. */
+const Rise: React.FC<{ children: React.ReactNode }> = ({ children }) => <>{children}</>;
 
 export const DashboardPage: React.FC = () => {
-
   const navigate = useNavigate();
-
-  const { documents, reviews, isLiveMode } = useApp();
-
-  const [timeRange, setTimeRange] = useState<'7D' | '14D' | '30D' | '90D'>('30D');
+  const { documents, reviews, auditEvents, isLiveMode, isLoading } = useApp();
 
   const [filterQuery, setFilterQuery] = useState('');
-
   const [filterType, setFilterType] = useState('All');
-
   const [filterStatus, setFilterStatus] = useState('All');
-
   const [currentPage, setCurrentPage] = useState(1);
+  const [series, setSeries] = useState<'all' | 'changes' | 'flagged'>('all');
 
   // Filter recent document changes table
-
   const filteredDocs = documents.filter((doc) => {
-
     const matchesQuery =
-
       doc.title.toLowerCase().includes(filterQuery.toLowerCase()) ||
-
       doc.id.toLowerCase().includes(filterQuery.toLowerCase());
-
-    const matchesStatus =
-
-      filterStatus === 'All' || doc.integrityStatus === filterStatus;
-
+    const matchesStatus = filterStatus === 'All' || doc.integrityStatus === filterStatus;
     const matchesType =
-
       filterType === 'All' ||
-
       (filterType === 'Deadline' && doc.activeDiffSummary?.includes('deadline')) ||
-
       (filterType === 'Requirement' && doc.activeDiffSummary?.includes('SLA')) ||
-
       (filterType === 'Retention' && doc.activeDiffSummary?.includes('retention'));
-
     return matchesQuery && matchesStatus && matchesType;
-
   });
 
   const pageSize = 5;
-
   const totalPages = Math.ceil(filteredDocs.length / pageSize) || 1;
+  const paginatedDocs = filteredDocs.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
-  const paginatedDocs = filteredDocs.slice(
-
-    (currentPage - 1) * pageSize,
-
-    currentPage * pageSize
-
+  // Values shown on this page, all derived from what the context already holds.
+  const changesDetected = documents.reduce(
+    (acc, d) => acc + (d.diffCount || (d.integrityStatus === 'Review required' ? 1 : 0)),
+    0
   );
+  const affectedAnswers = reviews.filter((r) => r.status !== 'Resolved').length;
+  const pending = reviews.filter((r) => r.status === 'Pending');
+  const clearDocs = documents.filter((d) => CLEAR.has(d.integrityStatus)).length;
+  const integrity = documents.length ? Math.round((clearDocs / documents.length) * 100) : null;
+  const heroTone = integrity === null ? 'muted' : integrity >= 90 ? 'ice' : integrity >= 60 ? 'amber' : 'red';
+
+  const verdict =
+    documents.length === 0
+      ? 'No documents are being monitored yet. Upload a source to seal its first fingerprint.'
+      : documents.length - clearDocs === 0 && pending.length === 0
+        ? `All ${documents.length} monitored documents match their fingerprints. No AI answers need review.`
+        : `${documents.length - clearDocs} of ${documents.length} documents have unresolved changes, ${affectedAnswers} AI answer${
+            affectedAnswers === 1 ? '' : 's'
+          } may be affected, and ${pending.length} review${pending.length === 1 ? ' is' : 's are'} waiting.`;
+
+  // Activity by day, from audit events (the same list the Audit Log shows).
+  const activity = useMemo(() => {
+    const days = new Map<string, { date: string; changes: number; impacted: number }>();
+    [...auditEvents].reverse().forEach((e) => {
+      const date = (e.timestamp || '').split(',')[0].split('•')[0].trim();
+      if (!date || date === 'Unknown') return;
+      const row = days.get(date) ?? { date, changes: 0, impacted: 0 };
+      if (e.eventType === 'Potential Impact Identified') row.impacted += 1;
+      else if (
+        e.eventType === 'Document Uploaded' ||
+        e.eventType === 'New Version Added' ||
+        e.eventType === 'Version Comparison Completed'
+      )
+        row.changes += 1;
+      days.set(date, row);
+    });
+    return [...days.values()];
+  }, [auditEvents]);
+  const totalChanges = activity.reduce((a, r) => a + r.changes, 0);
+  const totalImpacted = activity.reduce((a, r) => a + r.impacted, 0);
+
+  const readiness: [string, number][] = [
+    ['Sources clear', documents.length ? clearDocs / documents.length : 0],
+    ['Reviews resolved', reviews.length ? reviews.filter((r) => r.status === 'Resolved').length / reviews.length : 0],
+  ];
+
+  const btn =
+    'inline-flex h-9 items-center gap-2 rounded-md border border-line-strong bg-raised px-3.5 text-sm text-ink transition-colors hover:border-ice/40 hover:bg-raised-2';
 
   return (
-
-    <div className="relative flex flex-col gap-7 animate-in fade-in duration-200 text-[#29233D] before:pointer-events-none before:absolute before:-inset-7 before:-z-10 before:bg-[radial-gradient(circle_at_8%_6%,rgba(217,249,157,0.30),transparent_28%),radial-gradient(circle_at_92%_10%,rgba(249,168,212,0.25),transparent_27%),radial-gradient(circle_at_52%_46%,rgba(233,213,255,0.20),transparent_32%),linear-gradient(135deg,#FFFDF8_0%,#FFF8FC_52%,#FAFFF1_100%)]">
-
-      {/* Top Header & Action Toolbar */}
-
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-
-        <div>
-
-          <div className="flex items-center gap-2 mb-1.5">
-
-            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#FDF2F8] text-[#6F687C] text-[11px] font-medium uppercase tracking-wider border border-[#E8E2DC]">
-
-              <span className="w-1.5 h-1.5 rounded-full bg-[#14B8A6] animate-pulse" />
-
-              Telemetry Engine Active
-
-            </span>
-
-            <span className="text-[#64748B] text-[11px] font-mono">
-
-              SYS_ID: ICE-0941
-
-            </span>
-
-            {!isLiveMode && (
-
-              <span className="text-[11px] text-[#F59E0B] font-mono px-1.5 py-0.2 rounded bg-[#F59E0B]/10 border border-[#F59E0B]/30">
-
-                [DEMO DATA]
-
-              </span>
-
-            )}
-
-          </div>
-
-          <h1 className="text-2xl font-bold tracking-tight text-[#29233D]">
-
-            Knowledge Integrity Overview
-
-          </h1>
-
-          <p className="text-sm text-[#6F687C] mt-1">
-
-            Monitor document integrity, track knowledge changes, and review
-
-            potentially affected AI answers.
-
-          </p>
-
-        </div>
-
-        {/* Toolbar */}
-
-        <div className="flex items-center gap-2.5 shrink-0 self-start md:self-auto">
-
-          <div className="flex items-center bg-[#FFFFFF] border border-[#E8E2DC] rounded-lg p-0.5">
-
-            {(['7D', '14D', '30D', '90D'] as const).map((r) => (
-
-              <button
-
-                key={r}
-
-                type="button"
-
-                onClick={() => setTimeRange(r)}
-
-                className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
-
-                  timeRange === r
-
-                    ? 'bg-gradient-to-r from-[#BEF264] to-[#F9A8D4] text-[#29233D] shadow-sm'
-
-                    : 'text-[#6F687C] hover:text-[#29233D]'
-
-                }`}
-
-              >
-
-                {r}
-
-              </button>
-
-            ))}
-
-          </div>
-
-          <button
-
-            type="button"
-
-            onClick={() => navigate('/audit')}
-
-            className="h-9 px-3.5 rounded-xl bg-gradient-to-r from-white via-[#FFF7FB] to-[#FAF5FF] border border-[#E8E2DC] text-xs font-semibold text-[#29233D] hover:border-[#F9A8D4] transition-all flex items-center gap-2 shadow-sm hover:-translate-y-0.5"
-
-          >
-
-            <Activity className="w-4 h-4 text-[#6F687C]" />
-
-            <span>View activity</span>
-
-          </button>
-
-          <button
-
-            type="button"
-
-            onClick={() => navigate('/documents')}
-
-            className="h-9 px-4 rounded-xl border border-white/80 bg-gradient-to-r from-[#BEF264] via-[#D9F99D] to-[#F9A8D4] text-xs font-bold text-[#29233D] transition-all flex items-center gap-2 shadow-[0_10px_26px_rgba(244,114,182,0.16)] hover:-translate-y-0.5 hover:brightness-95"
-
-          >
-
-            <Upload className="w-4 h-4" />
-
-            <span>Upload document</span>
-
-          </button>
-
-        </div>
-
-      </div>
-
-      {/* 4 Metric Cards */}
-
-      <div>
-
-        <div className="flex items-center justify-between mb-2">
-
-          <span className="text-[11px] font-medium uppercase tracking-wider text-[#64748B]">
-
-            Operational Health Indicators
-
-          </span>
-
-          <span className="text-[11px] text-[#64748B] flex items-center gap-1 font-mono">
-
-            {isLiveMode
-
-              ? 'Live FastAPI Backend Sync • Real SQLite & ChromaDB Metrics'
-
-              : 'All sample metrics represent illustrative governance data'}
-
-          </span>
-
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-
-          <MetricCard
-
-            title="Monitored Documents"
-
-            value={isLiveMode ? documents.length : '128'}
-
-            subtext={isLiveMode ? 'Active documents in SQLite' : 'Documents currently tracked'}
-
-            icon={<FileText className="w-5 h-5" />}
-
-            accentColor="green"
-
-            trendText={isLiveMode ? 'Live' : '+4 mo'}
-
-            trendType="positive"
-
-            onClick={() => navigate('/documents')}
-
-          />
-
-          <MetricCard
-
-            title="Changes Detected"
-
-            value={
-
-              isLiveMode
-
-                ? documents.reduce(
-
-                    (acc, d) =>
-
-                      acc + (d.diffCount || (d.integrityStatus === 'Review required' ? 1 : 0)),
-
-                    0
-
-                  )
-
-                : '12'
-
-            }
-
-            subtext={isLiveMode ? 'Document version diffs' : 'In selected 30d period'}
-
-            icon={<GitCompare className="w-5 h-5" />}
-
-            accentColor="amber"
-
-            trendText={isLiveMode ? 'Tracked' : 'Changes found'}
-
-            trendType="warning"      
-
-            onClick={() => navigate('/documents')}
-
-          />
-
-          <MetricCard
-
-            title="Potentially Affected Answers"
-
-            value={
-
-              isLiveMode
-
-                ? reviews.filter((r) => r.status !== 'Resolved').length
-
-                : '7'
-
-            }
-
-            subtext={isLiveMode ? 'Flagged downstream answers' : 'Awaiting impact triage'}
-
-            icon={<Network className="w-5 h-5" />}
-
-accentColor="pink"
-
-trendText={isLiveMode ? 'Tracked' : 'AI impact'}
-
-trendType="impact"
-
-            onClick={() => navigate('/impact')}
-
-          />
-
-          <MetricCard
-
-            title="Pending Reviews"
-
-            value={reviews.filter((r) => r.status === 'Pending').length}
-
-            subtext={isLiveMode ? 'Awaiting auditor resolution' : 'Items awaiting human sign-off'}
-
-            icon={<Clock className="w-5 h-5" />}
-
-            accentColor="amber"
-
-            trendText={isLiveMode ? 'Queue' : 'Avg 4.2h'}
-
-            trendType="warning"
-
-            onClick={() => navigate('/reviews')}
-
-          />
-
-        </div>
-
-      </div>
-
-      {/* Middle Section: Integrity Activity Chart + Requires Attention Priority Queue */}
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
-
-        {/* Left Column: Integrity Activity Chart (7 cols) */}
-
-        <div className="lg:col-span-7 relative overflow-hidden rounded-[24px] bg-gradient-to-br from-white/96 via-[#FBFFF4]/94 to-[#FFF7FB]/92 border border-white/90 p-5 flex flex-col justify-between shadow-[0_18px_50px_rgba(73,55,94,0.08)] backdrop-blur-xl">
-
+    <div className="flex flex-col gap-10">
+      <AgentHero pending={pending.length} changed={documents.length - clearDocs} />
+
+      {/* Hero: knowledge integrity */}
+      <section className="ruler relative overflow-hidden rounded-[10px] border border-line bg-panel">
+        <div aria-hidden className="ice-glow pointer-events-none absolute -left-24 -top-24 h-[420px] w-[620px]" />
+        <div className="relative grid gap-10 p-8 pt-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-end">
           <div>
-
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E8E2DC]">
-
-              <div>
-
-                <div className="flex items-center gap-2">
-
-                  <h2 className="text-base font-semibold text-[#29233D]">
-
-                    Integrity Activity
-
-                  </h2>
-
-                  <span className="px-1.5 py-0.5 rounded bg-[#FDF2F8] text-[#6F687C] text-[10px] font-mono">
-
-                    Real-time sync
-
-                  </span>
-
-                </div>
-
-                <p className="text-xs text-[#64748B] mt-0.5">
-
-                  Document changes vs impacted AI answers across the last 30 days
-
-                </p>
-
-              </div>
-
-              {/* Legend */}
-
-              <div className="flex items-center gap-4 text-xs">
-
-                <div className="flex items-center gap-1.5">
-
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#A3E635]" />
-
-                  <span className="text-[#6F687C]">Document Changes (12)</span>
-
-                </div>
-
-                <div className="flex items-center gap-1.5">
-
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#F472B6]" />
-
-                  <span className="text-[#6F687C]">Impacted Answers (7)</span>
-
-                </div>
-
-              </div>
-
-            </div>
-
-            {/* Recharts Area Chart */}
-
-            <div className="w-full h-64 mt-4">
-
-              <ResponsiveContainer width="100%" height="100%">
-
-                <AreaChart
-
-                  data={DEMO_ACTIVITY_CHART}
-
-                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-
-                >
-
-                  <defs>
-
-                    <linearGradient id="colorChanges" x1="0" y1="0" x2="0" y2="1">
-
-                      <stop offset="5%" stopColor="#A3E635" stopOpacity={0.35} />
-
-                      <stop offset="95%" stopColor="#A3E635" stopOpacity={0} />
-
-                    </linearGradient>
-
-                    <linearGradient id="colorImpacted" x1="0" y1="0" x2="0" y2="1">
-
-                      <stop offset="5%" stopColor="#F9A8D4" stopOpacity={0.45} />
-
-                      <stop offset="95%" stopColor="#F472B6" stopOpacity={0} />
-
-                    </linearGradient>
-
-                  </defs>
-
-                  <CartesianGrid stroke="#E8E2DC" strokeDasharray="3 3" vertical={false} />
-
-                  <XAxis
-
-                    dataKey="date"
-
-                    stroke="#64748B"
-
-                    fontSize={11}
-
-                    tickLine={false}
-
-                  />
-
-                  <YAxis stroke="#64748B" fontSize={11} tickLine={false} />
-
-                  <Tooltip
-
-                    contentStyle={{
-
-                      backgroundColor: '#FDF2F8',
-
-                      borderColor: '#A3E635',
-
-                      borderRadius: '8px',
-
-                      color: '#29233D',
-
-                      fontSize: '12px',
-
-                    }}
-
-                  />
-
-                  <Area
-
-                    type="monotone"
-
-                    dataKey="changes"
-
-                    name="Document Changes"
-
-                    stroke="#A3E635"
-
-                    strokeWidth={2.5}
-
-                    fillOpacity={1}
-
-                    fill="url(#colorChanges)"
-
-                  />
-
-                  <Area
-
-                    type="monotone"
-
-                    dataKey="impacted"
-
-                    name="Impacted Answers"
-
-                    stroke="#F472B6"
-
-                    strokeWidth={2.5}
-
-                    fillOpacity={1}
-
-                    fill="url(#colorImpacted)"
-
-                  />
-
-                </AreaChart>
-
-              </ResponsiveContainer>
-
-            </div>
-
-          </div>
-
-          <div className="pt-3 border-t border-[#F1ECE7] flex items-center justify-between text-xs text-[#64748B]">
-
-            <span>Significant anomaly spike detected on Jun 10 (Reimbursement Policy v2)</span>
-
-            <span className="font-mono text-[#A3E635] cursor-pointer hover:underline" onClick={() => navigate('/impact')}>
-
-              Inspect Vector Cluster →
-
-            </span>
-
-          </div>
-
-        </div>
-
-        {/* Right Column: Requires Attention Panel (5 cols) */}
-
-        <div className="lg:col-span-5 relative overflow-hidden rounded-[24px] bg-gradient-to-br from-white/96 via-[#FFF9FC]/94 to-[#FAF5FF]/92 border border-white/90 p-5 flex flex-col justify-between shadow-[0_18px_50px_rgba(73,55,94,0.08)] backdrop-blur-xl">
-
-          <div>
-
-            <div className="flex items-center justify-between pb-3 border-b border-[#E8E2DC]">
-
-              <div className="flex items-center gap-2">
-
-                <h2 className="text-base font-semibold text-[#29233D]">
-
-                  Requires Attention
-
-                </h2>
-
-                <span className="px-2 py-0.5 rounded-full bg-[#F59E0B]/15 text-[#F59E0B] text-xs font-semibold border border-[#F59E0B]/30">
-
-                  {reviews.filter((r) => r.status === 'Pending').length} Pending
-
-                </span>
-
-              </div>
-
-              <button
-
-                onClick={() => navigate('/reviews')}
-
-                className="text-xs text-[#A3E635] hover:underline"
-
-              >
-
-                View all alerts
-
-              </button>
-
-            </div>
-
-            {/* List */}
-
-            <div className="flex flex-col divide-y divide-[#F1ECE7]">
-
-              {isLiveMode ? (
-
-                reviews.filter((r) => r.status === 'Pending').length === 0 ? (
-
-                  <div className="py-10 text-center text-xs text-[#64748B]">
-
-                    No pending policy drift alerts requiring human sign-off.
-
-                  </div>
-
-                ) : (
-
-                  reviews
-
-                    .filter((r) => r.status === 'Pending')
-
-                    .slice(0, 3)
-
-                    .map((item) => (
-
-                      <div key={item.id} className="py-3.5 flex items-start justify-between gap-3">
-
-                        <div className="flex items-start gap-3 min-w-0">
-
-                          <div className="w-8 h-8 rounded bg-[#F59E0B]/15 border border-[#F59E0B]/30 text-[#F59E0B] flex items-center justify-center shrink-0 mt-0.5">
-
-                            <AlertTriangle className="w-4 h-4" />
-
-                          </div>
-
-                          <div className="min-w-0">
-
-                            <div className="flex items-center gap-2 flex-wrap">
-
-                              <span className="text-xs font-semibold text-[#29233D] truncate">
-
-                                {item.documentTitle}
-
-                              </span>
-
-                              <StatusBadge status={item.status} size="sm" />
-
-                            </div>
-
-                            <p className="text-xs text-[#6F687C] mt-1 line-clamp-1">
-
-                              {item.issueSummary}
-
-                            </p>
-
-                            <div className="flex items-center gap-2 mt-1 text-[11px] text-[#64748B]">
-
-                              <span>{item.timestamp}</span>
-
-                              <span>•</span>
-
-                              <span className="text-[#F59E0B] font-medium">
-
-                                {item.affectedAgent}
-
-                              </span>
-
-                            </div>
-
-                          </div>
-
-                        </div>
-
-                        <button
-
-                          onClick={() => navigate('/reviews')}
-
-                          className="shrink-0 px-2.5 py-1 rounded bg-white/85 border border-[#E8E2DC] hover:border-[#A3E635] text-[#29233D] text-xs font-medium transition-colors"
-
-                        >
-
-                          Review
-
-                        </button>
-
-                      </div>
-
-                    ))
-
-                )
-
-              ) : (
-
-                <>
-
-                  {/* Demo Item 1 */}
-
-                  <div className="py-3.5 flex items-start justify-between gap-3">
-
-                    <div className="flex items-start gap-3 min-w-0">
-
-                      <div className="w-8 h-8 rounded bg-[#F59E0B]/15 border border-[#F59E0B]/30 text-[#F59E0B] flex items-center justify-center shrink-0 mt-0.5">
-
-                        <AlertTriangle className="w-4 h-4" />
-
-                      </div>
-
-                      <div className="min-w-0">
-
-                        <div className="flex items-center gap-2 flex-wrap">
-
-                          <span className="text-xs font-semibold text-[#29233D] truncate">
-
-                            Employee Reimbursement Policy
-
-                          </span>
-
-                          <StatusBadge status="Review required" size="sm" />
-
-                        </div>
-
-                        <p className="text-xs text-[#6F687C] mt-1">
-
-                          A deadline changed from 30 days to 15 days.
-
-                        </p>
-
-                        <div className="flex items-center gap-2 mt-1 text-[11px] text-[#64748B]">
-
-                          <span>Detected today, 10:42 AM</span>
-
-                          <span>•</span>
-
-                          <span className="text-[#F59E0B] font-medium">
-
-                            3 AI answers impacted
-
-                          </span>
-
-                        </div>
-
-                      </div>
-
-                    </div>
-
-                    <button
-
-                      onClick={() => navigate('/documents/DOC-7704/compare')}
-
-                      className="shrink-0 px-2.5 py-1 rounded bg-white/85 border border-[#E8E2DC] hover:border-[#A3E635] text-[#29233D] text-xs font-medium transition-colors"
-
-                    >
-
-                      Review Diff
-
-                    </button>
-
-                  </div>
-
-                  {/* Demo Item 2 */}
-
-                  <div className="py-3.5 flex items-start justify-between gap-3">
-
-                    <div className="flex items-start gap-3 min-w-0">
-
-                      <div className="w-8 h-8 rounded bg-[#A3E635]/15 border border-[#A3E635]/30 text-[#A3E635] flex items-center justify-center shrink-0 mt-0.5">
-
-                        <Shield className="w-4 h-4" />
-
-                      </div>
-
-                      <div className="min-w-0">
-
-                        <div className="flex items-center gap-2 flex-wrap">
-
-                          <span className="text-xs font-semibold text-[#29233D] truncate">
-
-                            Vendor Security Standard
-
-                          </span>
-
-                          <StatusBadge status="Impact analysis" size="sm" />
-
-                        </div>
-
-                        <p className="text-xs text-[#6F687C] mt-1">
-
-                          A requirement changed between document versions.
-
-                        </p>
-
-                        <div className="flex items-center gap-2 mt-1 text-[11px] text-[#64748B]">
-
-                          <span>Detected today, 9:18 AM</span>
-
-                          <span>•</span>
-
-                          <span className="text-[#A3E635] font-medium">
-
-                            2 AI answers impacted
-
-                          </span>
-
-                        </div>
-
-                      </div>
-
-                    </div>
-
-                    <button
-
-                      onClick={() => navigate('/impact')}
-
-                      className="shrink-0 px-2.5 py-1 rounded bg-white/85 border border-[#E8E2DC] hover:border-[#A3E635] text-[#29233D] text-xs font-medium transition-colors"
-
-                    >
-
-                      Analyze
-
-                    </button>
-
-                  </div>
-
-                  {/* Demo Item 3 */}
-
-                  <div className="py-3.5 flex items-start justify-between gap-3">
-
-                    <div className="flex items-start gap-3 min-w-0">
-
-                      <div className="w-8 h-8 rounded bg-[#F59E0B]/15 border border-[#F59E0B]/30 text-[#F59E0B] flex items-center justify-center shrink-0 mt-0.5">
-
-                        <Clock className="w-4 h-4" />
-
-                      </div>
-
-                      <div className="min-w-0">
-
-                        <div className="flex items-center gap-2 flex-wrap">
-
-                          <span className="text-xs font-semibold text-[#29233D] truncate">
-
-                            Data Retention Policy
-
-                          </span>
-
-                          <StatusBadge status="Pending review" size="sm" />
-
-                        </div>
-
-                        <p className="text-xs text-[#6F687C] mt-1">
-
-                          A potentially affected answer was identified.
-
-                        </p>
-
-                        <div className="flex items-center gap-2 mt-1 text-[11px] text-[#64748B]">
-
-                          <span>Detected yesterday, 4:15 PM</span>
-
-                          <span>•</span>
-
-                          <span className="text-[#F59E0B] font-medium">
-
-                            1 AI answer impacted
-
-                          </span>
-
-                        </div>
-
-                      </div>
-
-                    </div>
-
-                    <button
-
-                      onClick={() => navigate('/reviews')}
-
-                      className="shrink-0 px-2.5 py-1 rounded bg-white/85 border border-[#E8E2DC] hover:border-[#A3E635] text-[#29233D] text-xs font-medium transition-colors"
-
-                    >
-
-                      Assess
-
-                    </button>
-
-                  </div>
-
-                </>
-
+            <div className="flex items-center gap-3 text-sm text-ink-2">
+              Knowledge integrity
+              {!isLiveMode && (
+                <span className="rounded-full border border-amber/30 px-2 py-0.5 text-xs text-amber">Demo data</span>
               )}
-
             </div>
-
-          </div>
-
-          <div className="pt-3 border-t border-[#E8E2DC] flex items-center justify-between text-xs text-[#64748B]">
-
-            <span>
-
-              {isLiveMode
-
-                ? `${reviews.filter((r) => r.status === 'Pending').length} pending items in governance queue`
-
-                : '3 items require senior CISO sign-off'}
-
-            </span>
-
-            <button
-
-              onClick={() => navigate('/reviews')}
-
-              className="text-[#A3E635] hover:underline flex items-center gap-1"
-
-            >
-
-              <span>Open Human Review Center</span>
-
-              <ArrowRight className="w-3.5 h-3.5" />
-
-            </button>
-
-          </div>
-
-        </div>
-
-      </div>
-
-      {/* Bottom Section: Recent Document Changes Table */}
-
-      <div className="rounded-[26px] bg-white/94 border border-white/90 overflow-hidden flex flex-col shadow-[0_20px_58px_rgba(73,55,94,0.09)] backdrop-blur-xl">
-
-        {/* Table Header & Controls */}
-
-        <div className="p-5 border-b border-[#EEE7E1] bg-gradient-to-r from-[#F7FEE7]/75 via-white to-[#FDF2F8]/80 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-
-          <div>
-
-            <div className="flex items-center gap-2">
-
-              <h2 className="text-base font-semibold text-[#29233D]">
-
-                Recent Document Changes
-
-              </h2>
-
-              <span className="px-2 py-0.5 rounded bg-[#FDF2F8] text-[#6F687C] text-xs font-mono">
-
-                {documents.length} Events
-
+            <div className="mt-4 flex items-end gap-3">
+              <span
+                className={`display text-[112px] leading-[0.85] ${
+                  heroTone === 'ice'
+                    ? 'text-ice'
+                    : heroTone === 'amber'
+                      ? 'text-amber'
+                      : heroTone === 'red'
+                        ? 'text-red'
+                        : 'text-muted'
+                }`}
+              >
+                {integrity === null ? '—' : <CountUp value={integrity} />}
               </span>
-
+              {integrity !== null && <span className="display pb-2 text-5xl text-muted">%</span>}
             </div>
-
-            <p className="text-xs text-[#64748B] mt-0.5">
-
-              Audit trail of document revisions and automated AI answer reconciliation.
-
+            <p className="mt-5 max-w-[46ch] text-[17px] leading-relaxed text-ink">
+              {isLoading && documents.length === 0 ? 'Reading the knowledge base…' : verdict}
             </p>
-
-          </div>
-
-          {/* Search & Filters */}
-
-          <div className="flex items-center gap-2.5 flex-wrap">
-
-            <div className="relative w-60">
-
-              <Filter className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[#64748B]" />
-
-              <input
-
-                type="text"
-
-                value={filterQuery}
-
-                onChange={(e) => {
-
-                  setFilterQuery(e.target.value);
-
-                  setCurrentPage(1);
-
-                }}
-
-                placeholder="Filter document changes..."
-
-                className="w-full h-8 pl-8 pr-3 rounded-lg bg-white/85 border border-[#E8E2DC] text-xs text-[#29233D] placeholder:text-[#64748B] focus:outline-none focus:border-[#A3E635]"
-
-              />
-
+            <div className="mt-6 flex flex-wrap gap-2">
+              <button type="button" onClick={() => navigate('/dashboard/documents')} className="btn btn-primary">
+                <Upload className="h-4 w-4" /> Upload document
+              </button>
+              <button type="button" onClick={() => navigate('/dashboard/impact')} className={btn}>
+                <Network className="h-4 w-4 text-muted" /> Trace impact
+              </button>
+              <button type="button" onClick={() => navigate('/dashboard/audit')} className="btn btn-ghost">
+                <Activity className="h-4 w-4" /> View activity
+              </button>
             </div>
-
-            <select
-
-              value={filterType}
-
-              onChange={(e) => {
-
-                setFilterType(e.target.value);
-
-                setCurrentPage(1);
-
-              }}
-
-              className="h-8 px-2.5 rounded-lg bg-white/85 border border-[#E8E2DC] text-xs text-[#6F687C] focus:outline-none focus:border-[#A3E635] cursor-pointer"
-
-            >
-
-              <option value="All">All types</option>
-
-              <option value="Deadline">Deadline changed</option>
-
-              <option value="Requirement">Requirement changed</option>
-
-              <option value="Retention">Retention period</option>
-
-            </select>
-
-            <select
-
-              value={filterStatus}
-
-              onChange={(e) => {
-
-                setFilterStatus(e.target.value);
-
-                setCurrentPage(1);
-
-              }}
-
-              className="h-8 px-2.5 rounded-lg bg-white/85 border border-[#E8E2DC] text-xs text-[#6F687C] focus:outline-none focus:border-[#A3E635] cursor-pointer"
-
-            >
-
-              <option value="All">All statuses</option>
-
-              <option value="Review required">Review required</option>
-
-              <option value="Impact analysis">Impact analysis</option>
-
-              <option value="Pending review">Pending review</option>
-
-              <option value="No impact detected">No impact detected</option>
-
-              <option value="Verified">Verified</option>
-
-            </select>
-
-            <button
-
-              onClick={() => {
-
-                const csvData = documents.map(d => `${d.id},"${d.title}",${d.currentVersion},"${d.integrityStatus}",${d.affectedAnswerCount}`).join('\n');
-
-                const blob = new Blob([`ID,Title,Version,Status,AffectedAnswers\n${csvData}`], { type: 'text/csv' });
-
-                const url = URL.createObjectURL(blob);
-
-                const a = document.createElement('a');
-
-                a.href = url;
-
-                a.download = `document_changes_${new Date().toISOString().slice(0,10)}.csv`;
-
-                a.click();
-
-              }}
-
-              className="h-8 px-2.5 rounded-lg bg-white/85 border border-[#E8E2DC] text-[#6F687C] hover:text-[#29233D] flex items-center gap-1.5 text-xs transition-colors"
-
-              title="Export changes to CSV"
-
-            >
-
-              <Download className="w-3.5 h-3.5" />
-
-              <span>Export</span>
-
-            </button>
-
           </div>
 
-        </div>
-
-        {/* Table */}
-
-        <div className="w-full overflow-x-auto">
-
-          <table className="w-full text-left border-collapse min-w-[800px]">
-
-            <thead>
-
-              <tr className="h-10 bg-gradient-to-r from-[#F7FEE7]/70 via-[#FFFDF8] to-[#FDF2F8]/75 border-b border-[#E8E2DC] text-[11px] font-medium uppercase tracking-wider text-[#6F687C]">
-
-                <th className="px-5">Document Name</th>
-
-                <th className="px-4">Change Type</th>
-
-                <th className="px-4">Version</th>
-
-                <th className="px-4">Affected Answers</th>
-
-                <th className="px-4">Last Updated</th>
-
-                <th className="px-4">Status</th>
-
-                <th className="px-5 text-right">Action</th>
-
-              </tr>
-
-            </thead>
-
-            <tbody className="divide-y divide-[#F1ECE7] text-xs">
-
-              {paginatedDocs.map((doc) => {
-
-                let changeLabel = 'Wording updated';
-
-                if (doc.activeDiffSummary?.includes('deadline')) changeLabel = 'Deadline changed';
-
-                else if (doc.activeDiffSummary?.includes('SLA')) changeLabel = 'Requirement changed';
-
-                else if (doc.activeDiffSummary?.includes('retention')) changeLabel = 'Retention period';
-
-                else if (doc.integrityStatus === 'Verified') changeLabel = 'Clause updated';
-
-                return (
-
-                  <tr
-
-                    key={doc.id}
-
-                    className="h-14 hover:bg-gradient-to-r hover:from-[#F7FEE7]/45 hover:to-[#FDF2F8]/45 transition-colors"
-
-                  >
-
-                    <td className="px-5">
-
-                      <div className="flex items-center gap-3">
-
-                        <div className="w-8 h-8 rounded-lg bg-white/85 border border-[#E8E2DC] flex items-center justify-center text-[#A3E635] shrink-0">
-
-                          <FileText className="w-4 h-4" />
-
-                        </div>
-
-                        <div>
-
-                          <div
-
-                            onClick={() => navigate(`/documents/${doc.id}`)}
-
-                            className="font-medium text-[#29233D] hover:text-[#A3E635] cursor-pointer"
-
-                          >
-
-                            {doc.title}
-
-                          </div>
-
-                          <div className="text-[11px] text-[#64748B]">
-
-                            {doc.department} • {doc.id}
-
-                          </div>
-
-                        </div>
-
-                      </div>
-
-                    </td>
-
-                    <td className="px-4">
-
-                      <span className="px-2 py-0.5 rounded bg-[#FDF2F8] text-[#6F687C] text-[11px] border border-[#E8E2DC]">
-
-                        {changeLabel}
-
-                      </span>
-
-                    </td>
-
-                    <td className="px-4 font-mono text-[11px] text-[#29233D]">
-
-                      {doc.currentVersion}
-
-                    </td>
-
-                    <td className="px-4">
-
-                      {doc.affectedAnswerCount > 0 ? (
-
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#F59E0B]/15 text-[#F59E0B] font-medium text-[11px] border border-[#F59E0B]/30">
-
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#F59E0B]" />
-
-                          {doc.affectedAnswerCount} answers
-
-                        </span>
-
-                      ) : (
-
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#FDF2F8] text-[#64748B] text-[11px]">
-
-                          0 answers
-
-                        </span>
-
-                      )}
-
-                    </td>
-
-                    <td className="px-4 text-[#6F687C] whitespace-nowrap">
-
-                      {doc.lastModified}
-
-                    </td>
-
-                    <td className="px-4">
-
-                      <StatusBadge status={doc.integrityStatus} size="sm" />
-
-                    </td>
-
-                    <td className="px-5 text-right">
-
-                      <button
-
-                        onClick={() => navigate(`/documents/${doc.id}`)}
-
-                        className="h-7 px-2.5 rounded bg-white/85 border border-[#E8E2DC] hover:border-[#A3E635] text-[#29233D] text-xs font-medium inline-flex items-center gap-1 transition-colors"
-
-                      >
-
-                        <span>View details</span>
-
-                        <ArrowRight className="w-3 h-3" />
-
-                      </button>
-
-                    </td>
-
-                  </tr>
-
-                );
-
-              })}
-
-            </tbody>
-
-          </table>
-
-        </div>
-
-        {/* Pagination Footer */}
-
-        <div className="px-5 py-3 border-t border-[#EEE7E1] bg-gradient-to-r from-[#F7FEE7]/60 via-white to-[#FDF2F8]/65 flex items-center justify-between text-xs text-[#6F687C]">
-
+          {/* One mark per document, coloured by its status */}
           <div>
-
-            Showing <strong className="text-[#29233D]">{(currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, filteredDocs.length)}</strong> of{' '}
-
-            <strong className="text-[#29233D]">{filteredDocs.length}</strong> document changes
-
+            <div className="flex items-baseline justify-between text-xs text-muted">
+              <span>Each mark is a monitored document</span>
+              <span className="tabular-nums">
+                {clearDocs} clear · {documents.length - clearDocs} changed
+              </span>
+            </div>
+            <div className="mt-3 flex h-24 items-end gap-[3px] border-b border-line-strong pb-px">
+              {documents.length === 0 ? (
+                <div className="w-full self-center text-center text-sm text-muted">No documents yet</div>
+              ) : (
+                documents.map((d) => {
+                  const t = toneOf(d.integrityStatus);
+                  return (
+                    <button
+                      key={d.id}
+                      type="button"
+                      onClick={() => navigate(`/dashboard/documents/${d.id}`)}
+                      title={`${d.title} · ${d.integrityStatus}`}
+                      aria-label={`${d.title}, ${d.integrityStatus}`}
+                      className={`min-w-[3px] max-w-4 flex-1 rounded-t-[2px] opacity-80 transition-opacity duration-200 hover:opacity-100 ${
+                        t === 'ice' ? 'h-[45%] bg-ice/60' : t === 'amber' ? 'h-full bg-amber/85' : 'h-full bg-red/85'
+                      }`}
+                    />
+                  );
+                })
+              )}
+            </div>
+            <div className="mt-2 flex gap-4 text-xs text-muted">
+              <span className="flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-ice" /> Clear
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber" /> Needs review
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-red" /> Conflict
+              </span>
+            </div>
           </div>
-
-          <div className="flex items-center gap-2">
-
-            <button
-
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-
-              disabled={currentPage === 1}
-
-              className="h-7 px-2.5 rounded bg-white/85 border border-[#E8E2DC] text-[#6F687C] hover:text-[#29233D] disabled:opacity-40 transition-colors"
-
-            >
-
-              Previous
-
-            </button>
-
-            <span className="text-[11px] font-mono px-1">
-
-              Page {currentPage} of {totalPages}
-
-            </span>
-
-            <button
-
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-
-              disabled={currentPage === totalPages}
-
-              className="h-7 px-2.5 rounded bg-white/85 border border-[#E8E2DC] text-[#6F687C] hover:text-[#29233D] disabled:opacity-40 transition-colors"
-
-            >
-
-              Next
-
-            </button>
-
-          </div>
-
         </div>
 
-      </div>
+        {/* KPIs */}
+        <div className="grid grid-cols-2 gap-4 border-t border-line p-4 lg:grid-cols-4">
+          <MetricCard
+            title="Monitored documents"
+            value={documents.length}
+            subtext={isLiveMode ? 'Active documents in SQLite' : 'Documents currently tracked'}
+            icon={<FileText />}
+            accentColor="green"
+            onClick={() => navigate('/dashboard/documents')}
+          />
+          <MetricCard
+            title="Changes detected"
+            value={changesDetected}
+            subtext="Document version diffs"
+            icon={<GitCompare />}
+            accentColor="amber"
+            onClick={() => navigate('/dashboard/documents')}
+          />
+          <MetricCard
+            title="Potentially affected answers"
+            value={affectedAnswers}
+            subtext="Flagged downstream answers"
+            icon={<Network />}
+            accentColor="pink"
+            onClick={() => navigate('/dashboard/impact')}
+          />
+          <MetricCard
+            title="Pending reviews"
+            value={pending.length}
+            subtext="Awaiting human sign-off"
+            icon={<Clock />}
+            accentColor="amber"
+            onClick={() => navigate('/dashboard/reviews')}
+          />
+        </div>
+      </section>
 
+      {/* Activity: chart card + stat stack */}
+      <Rise>
+        <section className="grid gap-5 lg:grid-cols-12">
+          <div className="chart-card lg:col-span-8">
+            <SegmentTabs
+              value={series}
+              onChange={setSeries}
+              options={[
+                { value: 'all', label: 'All' },
+                { value: 'changes', label: 'Changes' },
+                { value: 'flagged', label: 'Flagged' },
+              ]}
+            />
+            <div className="p-6">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <div className="label-mono">
+                    {series === 'all' ? 'Integrity activity (events / day)' : series === 'changes' ? 'Document changes (per day)' : 'Flagged answers (per day)'}
+                  </div>
+                  <div className="mt-1 text-sm text-muted">From the audit log</div>
+                </div>
+                <div className="flex items-center gap-5 font-mono text-xs uppercase tracking-[0.12em] text-ink-2">
+                  {series !== 'flagged' && (
+                    <span className="flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full" style={{ background: series === 'all' ? SERIES.changes.stroke : SERIES.solo.stroke }} /> Changes {totalChanges}
+                    </span>
+                  )}
+                  {series !== 'changes' && (
+                    <span className="flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full" style={{ background: series === 'all' ? SERIES.flagged.stroke : SERIES.solo.stroke }} /> Flagged {totalImpacted}
+                    </span>
+                  )}
+                </div>
+              </div>
+              {activity.length === 0 ? (
+                <EmptyState
+                  title="No activity recorded yet."
+                  body="Uploads, version comparisons and flagged answers will chart here."
+                />
+              ) : (
+                <div className="mt-6 h-72 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={activity} margin={{ top: 12, right: 8, left: -18, bottom: 0 }}>
+                      <defs>
+                        {(['solo', 'changes', 'flagged'] as const).map((k) => (
+                          <linearGradient key={k} id={`bi-${k}`} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor={SERIES[k].fill} stopOpacity={k === 'flagged' ? 0.16 : k === 'solo' ? 0.5 : 0.34} />
+                            <stop offset="100%" stopColor={SERIES[k].fill} stopOpacity={0} />
+                          </linearGradient>
+                        ))}
+                      </defs>
+                      <CartesianGrid stroke={GRID_STROKE} strokeDasharray="2 6" vertical={false} />
+                      <XAxis dataKey="date" tick={AXIS_TICK} tickLine={false} axisLine={false} dy={8} />
+                      <YAxis tick={AXIS_TICK} tickLine={false} axisLine={false} allowDecimals={false} />
+                      <Tooltip content={<GlassTooltip />} cursor={{ stroke: 'rgb(160 175 255 / 0.3)', strokeDasharray: '3 4' }} />
+                      {series !== 'flagged' && (
+                        <Area
+                          key={`c-${series}`}
+                          type="linear"
+                          dataKey="changes"
+                          name="Changes"
+                          stroke={series === 'all' ? SERIES.changes.stroke : SERIES.solo.stroke}
+                          strokeWidth={1.75}
+                          fill={`url(#bi-${series === 'all' ? 'changes' : 'solo'})`}
+                          dot={false}
+                          activeDot={{ r: 5, fill: '#0b1230', stroke: series === 'all' ? '#7FE3FF' : '#8B9BFF', strokeWidth: 2 }}
+                          animationDuration={900}
+                        />
+                      )}
+                      {series !== 'changes' && (
+                        <Area
+                          key={`f-${series}`}
+                          type="linear"
+                          dataKey="impacted"
+                          name="Flagged"
+                          stroke={series === 'all' ? SERIES.flagged.stroke : SERIES.solo.stroke}
+                          strokeWidth={1.5}
+                          fill={`url(#bi-${series === 'all' ? 'flagged' : 'solo'})`}
+                          dot={false}
+                          activeDot={{ r: 5, fill: '#0b1230', stroke: series === 'all' ? '#FFB547' : '#8B9BFF', strokeWidth: 2 }}
+                          animationDuration={1100}
+                        />
+                      )}
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-5 lg:col-span-4">
+            <StatCard
+              label="Flagged answers"
+              value={<CountUp value={affectedAnswers} />}
+              chip={`${pending.length} pending`}
+              tone="amber"
+              note="Answers built on sources that have since changed."
+            />
+            <Bars label="Knowledge readiness" items={readiness} className="flex-1" />
+          </div>
+        </section>
+      </Rise>
+
+      {/* Requires attention */}
+      <Rise>
+        <section>
+          <div className="flex items-end justify-between border-b border-line pb-3">
+            <div>
+              <h2 className="text-[17px] font-medium text-ink">Requires attention</h2>
+              <p className="mt-0.5 text-sm text-muted">{pending.length} pending in the review queue</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/dashboard/reviews')}
+              className="text-sm text-ice transition-colors hover:text-ink"
+            >
+              View all
+            </button>
+          </div>
+          {pending.length === 0 ? (
+            <EmptyState
+              title="Nothing is waiting for sign-off."
+              body="New changes that touch AI answers will appear here."
+            />
+          ) : (
+            <ol className="grid gap-x-10 md:grid-cols-2">
+              {pending.slice(0, 4).map((item) => (
+                <li key={item.id} className="border-b border-line">
+                  <button
+                    type="button"
+                    onClick={() => navigate('/dashboard/reviews')}
+                    className="group grid w-full grid-cols-[auto_1fr_auto] items-start gap-3 py-3.5 text-left"
+                  >
+                    <AlertTriangle className="mt-0.5 h-4 w-4 text-amber" />
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm text-ink group-hover:text-ice">{item.documentTitle}</span>
+                      <span className="mt-0.5 line-clamp-2 block text-[13px] text-ink-2">{item.issueSummary}</span>
+                      <span className="mt-1 flex gap-2 font-mono text-xs text-muted">
+                        <span>{item.timestamp || item.createdAt}</span>
+                        {item.affectedAgent && <span className="text-amber/90">{item.affectedAgent}</span>}
+                      </span>
+                    </span>
+                    <ArrowRight className="mt-0.5 h-4 w-4 text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-ink" />
+                  </button>
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
+      </Rise>
+
+      {/* Recent document changes */}
+      <Rise>
+      <section>
+        <div className="flex flex-col justify-between gap-4 border-b border-line pb-3 lg:flex-row lg:items-end">
+          <div>
+            <h2 className="text-[17px] font-medium text-ink">Recent document changes</h2>
+            <p className="mt-0.5 text-sm text-muted">
+              {documents.length} documents · revisions and the answers they touch
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative w-60">
+              <Filter className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
+              <input
+                type="text"
+                value={filterQuery}
+                onChange={(e) => {
+                  setFilterQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
+                placeholder="Filter by name or ID"
+                aria-label="Filter document changes"
+                className="h-9 w-full rounded-md border border-line bg-panel pl-8 pr-3 text-sm text-ink"
+              />
+            </div>
+            <select
+              value={filterType}
+              onChange={(e) => {
+                setFilterType(e.target.value);
+                setCurrentPage(1);
+              }}
+              aria-label="Change type"
+              className="h-9 cursor-pointer rounded-md border border-line bg-panel px-2.5 text-sm text-ink-2"
+            >
+              <option value="All">All types</option>
+              <option value="Deadline">Deadline changed</option>
+              <option value="Requirement">Requirement changed</option>
+              <option value="Retention">Retention period</option>
+            </select>
+            <select
+              value={filterStatus}
+              onChange={(e) => {
+                setFilterStatus(e.target.value);
+                setCurrentPage(1);
+              }}
+              aria-label="Status"
+              className="h-9 cursor-pointer rounded-md border border-line bg-panel px-2.5 text-sm text-ink-2"
+            >
+              <option value="All">All statuses</option>
+              <option value="Review required">Review required</option>
+              <option value="Impact analysis">Impact analysis</option>
+              <option value="Pending review">Pending review</option>
+              <option value="No impact detected">No impact detected</option>
+              <option value="Verified">Verified</option>
+            </select>
+            <button
+              type="button"
+              onClick={() => {
+                const csvData = documents
+                  .map((d) => `${d.id},"${d.title}",${d.currentVersion},"${d.integrityStatus}",${d.affectedAnswerCount}`)
+                  .join('\n');
+                const blob = new Blob([`ID,Title,Version,Status,AffectedAnswers\n${csvData}`], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `document_changes_${new Date().toISOString().slice(0, 10)}.csv`;
+                a.click();
+              }}
+              className="btn btn-ghost h-9"
+              title="Export changes to CSV"
+            >
+              <Download className="h-4 w-4" /> Export
+            </button>
+          </div>
+        </div>
+
+        {filteredDocs.length === 0 ? (
+          <EmptyState
+            title={documents.length === 0 ? 'No documents yet.' : 'No documents match these filters.'}
+            action={
+              documents.length === 0 ? (
+                <button type="button" onClick={() => navigate('/dashboard/documents')} className="btn btn-primary">
+                  <Upload className="h-4 w-4" /> Upload a document
+                </button>
+              ) : undefined
+            }
+          />
+        ) : (
+          <div className="w-full overflow-x-auto">
+            <table className="w-full min-w-[820px] border-collapse text-left">
+              <thead>
+                <tr className="h-10 border-b border-line text-xs text-muted">
+                  <th className="px-3 font-normal">Document</th>
+                  <th className="px-3 font-normal">Change</th>
+                  <th className="px-3 font-normal">Version</th>
+                  <th className="px-3 font-normal">Affected answers</th>
+                  <th className="px-3 font-normal">Last updated</th>
+                  <th className="px-3 font-normal">Status</th>
+                  <th className="px-3" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-line text-sm">
+                {paginatedDocs.map((doc) => {
+                  let changeLabel = 'Wording updated';
+                  if (doc.activeDiffSummary?.includes('deadline')) changeLabel = 'Deadline changed';
+                  else if (doc.activeDiffSummary?.includes('SLA')) changeLabel = 'Requirement changed';
+                  else if (doc.activeDiffSummary?.includes('retention')) changeLabel = 'Retention period';
+                  else if (doc.integrityStatus === 'Verified') changeLabel = 'Clause updated';
+
+                  return (
+                    <tr
+                      key={doc.id}
+                      onClick={() => navigate(`/dashboard/documents/${doc.id}`)}
+                      className="group h-14 cursor-pointer transition-colors hover:bg-panel"
+                    >
+                      <td className="px-3">
+                        <div className="text-ink group-hover:text-ice">{doc.title}</div>
+                        <div className="mt-0.5 text-xs text-muted">
+                          {doc.department} · <span className="font-mono">{doc.id}</span>
+                        </div>
+                      </td>
+                      <td className="px-3 text-ink-2">{changeLabel}</td>
+                      <td className="px-3 font-mono text-xs text-ink">{doc.currentVersion}</td>
+                      <td className="px-3 tabular-nums">
+                        {doc.affectedAnswerCount > 0 ? (
+                          <span className="text-amber">{doc.affectedAnswerCount} answers</span>
+                        ) : (
+                          <span className="text-muted">0</span>
+                        )}
+                      </td>
+                      <td className="whitespace-nowrap px-3 font-mono text-xs text-muted">{doc.lastModified}</td>
+                      <td className="px-3">
+                        <StatusBadge status={doc.integrityStatus} size="sm" />
+                      </td>
+                      <td className="px-3 text-right">
+                        <ArrowRight className="ml-auto h-4 w-4 text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-ink" />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {filteredDocs.length > 0 && (
+          <div className="flex items-center justify-between border-t border-line py-3 text-sm text-muted">
+            <div>
+              <span className="tabular-nums text-ink">
+                {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, filteredDocs.length)}
+              </span>{' '}
+              of <span className="tabular-nums text-ink">{filteredDocs.length}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="btn btn-ghost h-8"
+              >
+                Previous
+              </button>
+              <span className="tabular-nums">
+                {currentPage} / {totalPages}
+              </span>
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="btn btn-ghost h-8"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
+      </section>
+      </Rise>
     </div>
-
   );
-
 };
