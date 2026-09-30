@@ -190,3 +190,11 @@ export interface BackendConnectionStatus {
   chromaStatus?: 'connected' | 'offline' | 'unknown';
   error?: string;
 }
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  name: string | null;
+  picture: string | null;
+}
+

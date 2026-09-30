@@ -17,6 +17,7 @@ import {
   IntegrityStatus,
   GraphNodeData,
   GraphEdgeData,
+  AuthUser,
 } from '../types';
 
 export const API_BASE_URL =
@@ -46,8 +47,9 @@ async function fetchWithTimeout<T>(
   const id = setTimeout(() => controller.abort(), timeoutMs);
 
   const cleanBase = API_BASE_URL.replace(/\/$/, '');
-  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  const url = `${cleanBase}${cleanEndpoint}`;
+  const url = endpoint.startsWith('http://') || endpoint.startsWith('https://')
+    ? endpoint
+    : `${cleanBase}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
 
   try {
     const isFormData = options.body instanceof FormData;
@@ -471,20 +473,20 @@ export function transformBackendAlertToReviewItem(
     },
     affectedAnswers: alert.affected_answer_id
       ? [
-          {
-            id: alert.affected_answer_id,
-            agentName: 'Enterprise Knowledge Assistant',
-            queryPrompt: alert.affected_question || 'Historical user query',
-            cachedAnswer: 'Answer grounded on previous document version.',
-            citedChunkId: 'cited-chunk',
-            citedPassage: alert.explanation,
-            potentialIssue: alert.explanation,
-            impactStatus: 'Potentially outdated',
-            lastUpdated: formatDate(alert.created_at),
-            severity: sevMap[alert.severity] || 'Medium',
-            directConflict: alert.severity === 'critical' || alert.severity === 'high',
-          },
-        ]
+        {
+          id: alert.affected_answer_id,
+          agentName: 'Enterprise Knowledge Assistant',
+          queryPrompt: alert.affected_question || 'Historical user query',
+          cachedAnswer: 'Answer grounded on previous document version.',
+          citedChunkId: 'cited-chunk',
+          citedPassage: alert.explanation,
+          potentialIssue: alert.explanation,
+          impactStatus: 'Potentially outdated',
+          lastUpdated: formatDate(alert.created_at),
+          severity: sevMap[alert.severity] || 'Medium',
+          directConflict: alert.severity === 'critical' || alert.severity === 'high',
+        },
+      ]
       : [],
     auditorNotes:
       alert.status === 'resolved'
@@ -499,13 +501,13 @@ export function transformBackendAlertToReviewItem(
       },
       ...(alert.resolved_at
         ? [
-            {
-              timestamp: formatDate(alert.resolved_at),
-              actor: 'Compliance Auditor',
-              action: 'Status Marked Resolved',
-              details: 'Actioned in compliance center.',
-            },
-          ]
+          {
+            timestamp: formatDate(alert.resolved_at),
+            actor: 'Compliance Auditor',
+            action: 'Status Marked Resolved',
+            details: 'Actioned in compliance center.',
+          },
+        ]
         : []),
     ],
   };
@@ -835,8 +837,8 @@ export const apiService = {
         e.relation === 'MODIFIES'
           ? 'drift'
           : e.relation === 'GROUNDS'
-          ? 'normal'
-          : 'normal',
+            ? 'normal'
+            : 'normal',
     }));
 
     return {
@@ -862,10 +864,10 @@ export const apiService = {
         status === 'Pending'
           ? 'unreviewed'
           : status === 'In Progress'
-          ? 'reviewed'
-          : status === 'Resolved'
-          ? 'resolved'
-          : status.toLowerCase();
+            ? 'reviewed'
+            : status === 'Resolved'
+              ? 'resolved'
+              : status.toLowerCase();
       query.set('status', backendStatus);
     }
     if (severity && severity !== 'All') {
@@ -987,5 +989,31 @@ export const apiService = {
       events: events.slice(0, params?.limit || 50),
       total: events.length,
     };
+  },
+};
+
+export interface GoogleLoginResponse {
+  message: string;
+  user: AuthUser;
+}
+
+export const authService = {
+  async googleLogin(credential: string): Promise<GoogleLoginResponse> {
+    return fetchWithTimeout<GoogleLoginResponse>('/api/v1/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({
+        credential,
+      }),
+    });
+  },
+
+  async logout(): Promise<{ message: string }> {
+    try {
+      return await fetchWithTimeout<{ message: string }>('/api/v1/auth/logout', {
+        method: 'POST',
+      });
+    } catch {
+      return { message: 'Logged out successfully' };
+    }
   },
 };

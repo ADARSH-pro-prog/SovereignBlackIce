@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     OLLAMA_BASE_URL: str = "http://localhost:11434"
     OLLAMA_MODEL: str = "llama3.2:3b"
     EMBEDDING_MODEL: str = "all-minilm"
+
+    # Google Sign-In
+    GOOGLE_CLIENT_ID: str = ""
     
     # CORS Origins for Android/Expo & Web
     CORS_ORIGINS: Union[List[str], str] = [
@@ -36,7 +39,6 @@ class Settings(BaseSettings):
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://localhost:8081",
-        "*",
     ]
 
     @field_validator("CORS_ORIGINS", mode="before")

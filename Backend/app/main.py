@@ -6,7 +6,7 @@ from app.core.config import settings
 from app.core.logging_config import logger
 from app.core.exceptions import AppException, app_exception_handler, generic_exception_handler
 from app.database.database import init_db
-from app.api.routes import health, documents, claims, rag, impact
+from app.api.routes import health, documents, claims, rag, impact, auth
 
 
 @asynccontextmanager
@@ -43,9 +43,10 @@ app = FastAPI(
 )
 
 # CORS middleware for local frontend (React Native / Expo / Web)
+cors_origins = [o for o in settings.CORS_ORIGINS if o != "*"] if isinstance(settings.CORS_ORIGINS, list) else settings.CORS_ORIGINS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS if isinstance(settings.CORS_ORIGINS, list) else ["*"],
+    allow_origins=cors_origins if cors_origins else ["http://localhost:3000", "http://127.0.0.1:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -85,3 +86,4 @@ app.include_router(documents.router, prefix="/api/v1")
 app.include_router(claims.router, prefix="/api/v1")
 app.include_router(rag.router, prefix="/api/v1")
 app.include_router(impact.router, prefix="/api/v1")
+app.include_router(auth.router, prefix="/api/v1")

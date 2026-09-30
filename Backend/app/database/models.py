@@ -194,3 +194,20 @@ class Alert(Base):
     document = relationship("Document", back_populates="alerts")
     affected_answer = relationship("Answer", back_populates="alerts")
     related_claim = relationship("Claim")
+
+
+
+
+
+
+class User(Base):
+    """Application user authenticated through Google Sign-In."""
+    __tablename__ = "users"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    google_sub = Column(String(255), nullable=False, unique=True, index=True)
+    email = Column(String(255), nullable=False, index=True)
+    name = Column(String(255), nullable=True)
+    picture = Column(String(1024), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+    last_login = Column(DateTime(timezone=True), default=utc_now, nullable=False)

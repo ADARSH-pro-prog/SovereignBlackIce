@@ -23,20 +23,28 @@ import {
   MoreVertical,
 
   Sparkles,
-
   Activity,
-
   LockKeyhole,
-
+  LogOut,
 } from 'lucide-react';
-
 import { useApp } from '../../context/AppContext';
 
-
-
 export const Sidebar: React.FC = () => {
+  const { isLiveMode, backendStatus, user, logout } = useApp();
 
-  const { isLiveMode, backendStatus } = useApp();
+  const userInitials = user?.name
+    ? user.name
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .substring(0, 2)
+        .toUpperCase()
+    : user?.email
+      ? user.email.substring(0, 2).toUpperCase()
+      : 'SB';
+
+  const userName = user?.name || user?.email?.split('@')[0] || 'Sovereign Operator';
+  const userSubtext = user?.email || 'Security Directorate';
 
 
 
@@ -579,83 +587,50 @@ export const Sidebar: React.FC = () => {
 
 
         {/* PROFILE */}
-
         <div className="group flex items-center justify-between rounded-[16px] border border-[#343238] bg-[#202024]/96 p-2.5 shadow-[0_5px_18px_rgba(73,55,94,0.04)] transition-all duration-300 hover:border-[#F472B6]/45 hover:shadow-[0_8px_25px_rgba(244,114,182,0.08)]">
-
-
-
           <div className="flex min-w-0 items-center gap-2.5">
-
-
-
             <div className="relative">
-
-
-
               <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[#F9A8D4] to-[#A3E635] opacity-30 blur-md" />
 
-
-
-              <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[#3A393F] bg-gradient-to-br from-[#F472B6] via-[#BFA8FF] to-[#B7F34A] text-xs font-black text-[#171719] shadow-sm">
-
-                SV
-
-              </div>
-
-
+              {user?.picture ? (
+                <img
+                  src={user.picture}
+                  alt={userName}
+                  className="relative h-9 w-9 shrink-0 rounded-xl border border-[#3A393F] object-cover shadow-sm"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[#3A393F] bg-gradient-to-br from-[#F472B6] via-[#BFA8FF] to-[#B7F34A] text-xs font-black text-[#171719] shadow-sm">
+                  {userInitials}
+                </div>
+              )}
 
               <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#202024] bg-[#A3E635]" />
-
             </div>
-
-
 
             <div className="flex min-w-0 flex-col">
-
-
-
               <div className="flex items-center gap-1.5">
-
-                <span className="truncate text-[10.5px] font-black text-[#F8F7F4]">
-
-                  S. Vance
-
+                <span className="truncate text-[10.5px] font-black text-[#F8F7F4]" title={userName}>
+                  {userName}
                 </span>
 
-
-
                 <ShieldCheck className="h-3 w-3 shrink-0 text-[#B7F34A]" />
-
               </div>
 
-
-
-              <span className="truncate text-[8.5px] text-[#8D8992]">
-
-                Security Directorate
-
+              <span className="truncate text-[8.5px] text-[#8D8992]" title={userSubtext}>
+                {userSubtext}
               </span>
-
             </div>
-
           </div>
 
-
-
           <button
-
             type="button"
-
-            className="flex h-7 w-7 items-center justify-center rounded-lg text-[#8D8992] transition-all hover:bg-[#242327] hover:text-[#F472B6]"
-
-            title="User Options"
-
+            onClick={logout}
+            className="flex h-7 w-7 items-center justify-center rounded-lg text-[#8D8992] transition-all hover:bg-[#FB7185]/20 hover:text-[#FB7185]"
+            title="Sign Out"
           >
-
-            <MoreVertical className="h-4 w-4" />
-
+            <LogOut className="h-3.5 w-3.5" />
           </button>
-
         </div>
 
 

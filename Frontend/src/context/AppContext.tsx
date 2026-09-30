@@ -5,13 +5,14 @@ import {
   AuditEvent,
   BackendConnectionStatus,
   ReviewStatus,
+  AuthUser,
 } from '../types';
 import {
   DEMO_DOCUMENTS,
   DEMO_REVIEWS,
   DEMO_AUDIT_EVENTS,
 } from '../data/demoData';
-import { apiService, API_BASE_URL } from '../services/api';
+import { apiService, authService, API_BASE_URL } from '../services/api';
 
 export interface ToastMessage {
   id: string;
@@ -21,6 +22,12 @@ export interface ToastMessage {
 }
 
 interface AppContextType {
+  // Authentication State
+  user: AuthUser | null;
+  isAuthenticated: boolean;
+  loginWithGoogle: (credential: string) => Promise<AuthUser>;
+  logout: () => void;
+
   isLiveMode: boolean;
   setIsLiveMode: (live: boolean) => void;
   backendStatus: BackendConnectionStatus;
@@ -57,6 +64,21 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  // Persisted authenticated user state (key: blackice_user)
+  const [user, setUser] = useState<AuthUser | null>(() => {
+    try {
+      const saved = localStorage.getItem('blackice_user');
+      if (saved) {
+        return JSON.parse(saved) as AuthUser;
+      }
+    } catch {
+      localStorage.removeItem('blackice_user');
+    }
+    return null;
+  });
+
+  const isAuthenticated = Boolean(user && user.id);
+
   // Default to live mode if localStorage has it or if no setting yet
   const [isLiveMode, setIsLiveModeState] = useState<boolean>(() => {
     const saved = localStorage.getItem('sbi_live_mode');
@@ -91,6 +113,37 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   const removeToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
+
+  // Google Sign-In backend verification handler
+  const loginWithGoogle = async (credential: string): Promise<AuthUser> => {
+    if (!credential || !credential.trim()) {
+      throw new Error('Google credential is required.');
+    }
+    const response = await authService.googleLogin(credential);
+    if (!response || !response.user) {
+      throw new Error('Invalid response received from authentication server.');
+    }
+    setUser(response.user);
+    localStorage.setItem('blackice_user', JSON.stringify(response.user));
+    addToast({
+      type: 'success',
+      title: 'Authenticated',
+      message: `Signed in as ${response.user.name || response.user.email}.`,
+    });
+    return response.user;
+  };
+
+  // Sign out handler
+  const logout = useCallback(() => {
+    setUser(null);
+    localStorage.removeItem('blackice_user');
+    authService.logout().catch(() => {});
+    addToast({
+      type: 'info',
+      title: 'Signed Out',
+      message: 'You have been signed out of Sovereign Black Ice.',
+    });
+  }, [addToast]);
 
   // Fetch real data from backend
   const loadBackendData = useCallback(async () => {
@@ -374,6 +427,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   return (
     <AppContext.Provider
       value={{
+        user,
+        isAuthenticated,
+        loginWithGoogle,
+        logout,
         isLiveMode,
         setIsLiveMode,
         backendStatus,

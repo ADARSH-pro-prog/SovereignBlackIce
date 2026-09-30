@@ -23,9 +23,8 @@ import {
   Info,
 
   ExternalLink,
-
   Save,
-
+  LogOut,
 } from 'lucide-react';
 
 import { useApp } from '../context/AppContext';
@@ -34,8 +33,7 @@ import { API_BASE_URL } from '../services/api';
 
 export const SettingsPage: React.FC = () => {
 
-  const { isLiveMode, setIsLiveMode, backendStatus, checkBackendConnection, addToast } =
-
+  const { isLiveMode, setIsLiveMode, backendStatus, checkBackendConnection, addToast, user, logout } =
     useApp();
 
   const [apiUrl, setApiUrl] = useState(API_BASE_URL);
@@ -67,14 +65,58 @@ export const SettingsPage: React.FC = () => {
         </h1>
 
         <p className="text-sm text-[#756D82] mt-1">
-
           Configure API endpoints, inspect local Ollama model states, and monitor
-
           knowledge base retrieval telemetry.
-
         </p>
-
       </div>
+
+      {/* Authenticated Identity Card */}
+      {user && (
+        <div className="bg-gradient-to-br from-white/95 via-[#FFF9FC]/92 to-[#F7FEE7]/88 border border-white/90 rounded-[22px] p-6 flex items-center justify-between shadow-[0_16px_45px_rgba(73,55,94,0.07)] backdrop-blur-xl">
+          <div className="flex items-center gap-4">
+            {user.picture ? (
+              <img
+                src={user.picture}
+                alt={user.name || user.email}
+                className="w-14 h-14 rounded-2xl border-2 border-white shadow-md object-cover"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#F472B6] via-[#BFA8FF] to-[#B7F34A] text-[#171719] font-black text-lg flex items-center justify-center shadow-md">
+                {user.name
+                  ? user.name
+                      .split(' ')
+                      .map((n) => n[0])
+                      .join('')
+                      .substring(0, 2)
+                      .toUpperCase()
+                  : user.email.substring(0, 2).toUpperCase()}
+              </div>
+            )}
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-bold text-[#29233D]">
+                  {user.name || 'Sovereign Operator'}
+                </h2>
+                <span className="inline-flex items-center gap-1 rounded-full bg-[#ECFCCB] px-2.5 py-0.5 text-[10px] font-semibold text-[#4D7C0F]">
+                  <CheckCircle2 className="w-3 h-3 text-[#65A30D]" />
+                  Google Verified
+                </span>
+              </div>
+              <p className="text-xs text-[#756D82] mt-0.5">{user.email}</p>
+              <p className="text-[10px] font-mono text-[#A8A29E] mt-0.5">Session ID: {user.id}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={logout}
+            className="flex items-center gap-2 rounded-xl border border-[#FDA4AF] bg-[#FFF1F2] px-4 py-2 text-xs font-semibold text-[#E11D48] transition-all hover:bg-[#FFE4E6] hover:shadow-sm"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            Sign Out
+          </button>
+        </div>
+      )}
 
       {/* Mode Selection Card */}
 
