@@ -27,6 +27,12 @@ class VectorStoreService:
 
     @property
     def collection(self):
+        if self._collection is not None:
+            try:
+                self._collection.count()
+            except Exception:
+                self._collection = None
+
         if self._collection is None:
             # Create or get collection using ChromaDB's default local embedding function
             self._collection = self.client.get_or_create_collection(
