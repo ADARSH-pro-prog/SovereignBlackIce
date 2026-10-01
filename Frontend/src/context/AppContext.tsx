@@ -12,7 +12,7 @@ import {
   DEMO_REVIEWS,
   DEMO_AUDIT_EVENTS,
 } from '../data/demoData';
-import { apiService, authService, API_BASE_URL } from '../services/api';
+import { apiService, authService, API_BASE_URL, BackendImpactAnalysisResult } from '../services/api';
 
 export interface ToastMessage {
   id: string;
@@ -25,7 +25,9 @@ interface AppContextType {
   // Authentication State
   user: AuthUser | null;
   isAuthenticated: boolean;
+  isAuthChecking: boolean;
   loginWithGoogle: (credential: string) => Promise<AuthUser>;
+  loginWithDevAccount: () => Promise<AuthUser>;
   logout: () => void;
 
   isLiveMode: boolean;
@@ -56,7 +58,7 @@ interface AppContextType {
     notes: string,
     assignee?: string
   ) => Promise<void>;
-  recalculateImpact: (docId?: string) => Promise<void>;
+  recalculateImpact: (docId?: string, oldVersionId?: string, newVersionId?: string) => Promise<BackendImpactAnalysisResult | null>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -64,20 +66,52 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  // Persisted authenticated user state (key: blackice_user)
+  // Persisted authenticated user state (key: blackice_user and blackice_token)
   const [user, setUser] = useState<AuthUser | null>(() => {
     try {
       const saved = localStorage.getItem('blackice_user');
-      if (saved) {
+      const token = localStorage.getItem('blackice_token');
+      if (saved && token) {
         return JSON.parse(saved) as AuthUser;
       }
     } catch {
       localStorage.removeItem('blackice_user');
+      localStorage.removeItem('blackice_token');
     }
     return null;
   });
 
-  const isAuthenticated = Boolean(user && user.id);
+  const [isAuthChecking, setIsAuthChecking] = useState<boolean>(() => {
+    return Boolean(typeof window !== 'undefined' && localStorage.getItem('blackice_token'));
+  });
+
+  // Verify active session with backend on mount
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('blackice_token') : null;
+    if (!token) {
+      setIsAuthChecking(false);
+      return;
+    }
+
+    authService
+      .getMe()
+      .then((verifiedUser) => {
+        setUser(verifiedUser);
+        localStorage.setItem('blackice_user', JSON.stringify(verifiedUser));
+      })
+      .catch((err) => {
+        if (err && typeof err === 'object' && 'status' in err && (err as { status: number }).status === 401) {
+          localStorage.removeItem('blackice_token');
+          localStorage.removeItem('blackice_user');
+          setUser(null);
+        }
+      })
+      .finally(() => {
+        setIsAuthChecking(false);
+      });
+  }, []);
+
+  const isAuthenticated = Boolean(user && user.id && typeof window !== 'undefined' && localStorage.getItem('blackice_token'));
 
   // Default to live mode if localStorage has it or if no setting yet
   const [isLiveMode, setIsLiveModeState] = useState<boolean>(() => {
@@ -123,6 +157,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!response || !response.user) {
       throw new Error('Invalid response received from authentication server.');
     }
+    if (response.access_token) {
+      localStorage.setItem('blackice_token', response.access_token);
+    }
     setUser(response.user);
     localStorage.setItem('blackice_user', JSON.stringify(response.user));
     addToast({
@@ -133,9 +170,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     return response.user;
   };
 
+  // Dev account login handler for local development and automated workflows
+  const loginWithDevAccount = async (): Promise<AuthUser> => {
+    const response = await authService.devLogin();
+    if (!response || !response.user) {
+      throw new Error('Invalid response received from authentication server.');
+    }
+    if (response.access_token) {
+      localStorage.setItem('blackice_token', response.access_token);
+    }
+    setUser(response.user);
+    localStorage.setItem('blackice_user', JSON.stringify(response.user));
+    addToast({
+      type: 'success',
+      title: 'Dev Operator Authenticated',
+      message: `Signed in as ${response.user.name || response.user.email} (Local Testing Mode).`,
+    });
+    return response.user;
+  };
+
   // Sign out handler
   const logout = useCallback(() => {
     setUser(null);
+    localStorage.removeItem('blackice_token');
     localStorage.removeItem('blackice_user');
     authService.logout().catch(() => {});
     addToast({
@@ -246,11 +303,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         );
         // Refresh full dataset to update document versions, review items, and audit trail
         await loadBackendData();
-        addToast({
-          type: 'success',
-          title: 'Document Uploaded & Processed',
-          message: `${res.document.title} (${res.document.currentVersion}) analyzed.`,
-        });
+
+        if (res.is_duplicate || res.status === 'unchanged') {
+          addToast({
+            type: 'warning',
+            title: 'Document Unchanged (Duplicate Detected)',
+            message: res.message || 'The uploaded file is identical to the current version. No duplicate was created.',
+          });
+        } else if (baselineId) {
+          addToast({
+            type: 'success',
+            title: 'New Version Created & Processed',
+            message: res.message || `Version ${res.document.currentVersion} created and claim diffs indexed.`,
+          });
+        } else {
+          addToast({
+            type: 'success',
+            title: 'Document Uploaded & Processed',
+            message: res.message || `${res.document.title} (${res.document.currentVersion}) analyzed.`,
+          });
+        }
         return res.document;
       } catch (err: unknown) {
         const msg =
@@ -391,7 +463,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   // Recalculate Impact
-  const recalculateImpact = async (docId?: string) => {
+  const recalculateImpact = async (docId?: string, oldVersionId?: string, newVersionId?: string): Promise<BackendImpactAnalysisResult | null> => {
     addToast({
       type: 'info',
       title: 'Calculating Impact Graph',
@@ -400,18 +472,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
 
     if (isLiveMode && docId) {
       try {
-        await apiService.analyzeDocument(docId);
+        const result = await apiService.analyzeDocument(docId, oldVersionId, newVersionId);
         await loadBackendData();
         addToast({
           type: 'success',
           title: 'Impact Analysis Complete',
-          message: 'Graph topology refreshed and answer statuses updated.',
+          message: `${result.affected_answers_count} affected answer(s) flagged, ${result.alerts_generated} alert(s) generated.`,
         });
-        return;
+        return result;
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : 'Impact analysis failed';
         addToast({ type: 'error', title: 'Impact Analysis Failed', message: msg });
-        return;
+        return null;
       }
     }
 
@@ -422,6 +494,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         message: 'Graph topology refreshed with 0 circular dependencies.',
       });
     }, 800);
+    return null;
   };
 
   return (
@@ -429,7 +502,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
       value={{
         user,
         isAuthenticated,
+        isAuthChecking,
         loginWithGoogle,
+        loginWithDevAccount,
         logout,
         isLiveMode,
         setIsLiveMode,

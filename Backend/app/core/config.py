@@ -29,8 +29,11 @@ class Settings(BaseSettings):
     OLLAMA_MODEL: str = "llama3.2:3b"
     EMBEDDING_MODEL: str = "all-minilm"
 
-    # Google Sign-In
+    # Google Sign-In & JWT Authentication
     GOOGLE_CLIENT_ID: str = ""
+    JWT_SECRET_KEY: str = "sovereign-black-ice-local-secret-change-in-production-2026"
+    JWT_ALGORITHM: str = "HS256"
+    JWT_EXPIRE_MINUTES: int = 1440
     
     # CORS Origins for Android/Expo & Web
     CORS_ORIGINS: Union[List[str], str] = [

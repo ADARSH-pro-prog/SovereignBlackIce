@@ -6,9 +6,10 @@ from google.auth.transport import requests
 from google.oauth2 import id_token
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_db
+from app.api.dependencies import get_db, get_current_user
 from app.core.config import settings
 from app.core.logging_config import logger
+from app.core.security import create_access_token
 from app.database.models import User
 
 class GoogleLoginRequest(BaseModel):
@@ -27,6 +28,7 @@ def google_login(
 ):
     """
     Verify a Google Sign-In ID token and create/find the local user.
+    Issues a local application JWT session token.
     """
     # 0. Validate credential input
     if not payload.credential or not payload.credential.strip():
@@ -123,9 +125,16 @@ def google_login(
             detail="Failed to persist user profile.",
         )
 
-    # 5. Return safe user information (google_sub is kept internal)
+    # 5. Issue local application JWT session token
+    access_token = create_access_token(
+        data={"sub": user.id, "email": user.email}
+    )
+
+    # 6. Return safe user information and token (google_sub is kept internal)
     return {
         "message": "Google login successful",
+        "access_token": access_token,
+        "token_type": "bearer",
         "user": {
             "id": user.id,
             "email": user.email,
@@ -135,7 +144,71 @@ def google_login(
     }
 
 
+@router.get("/me")
+def get_current_user_profile(
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Validate the caller's JWT session and return current user profile.
+    """
+    return {
+        "id": current_user.id,
+        "email": current_user.email,
+        "name": current_user.name,
+        "picture": current_user.picture,
+    }
+
+
 @router.post("/logout")
 def logout():
     """Client-side session invalidation acknowledgment."""
-    return {"message": "Logged out successfully"}
+    return {"message": "Logged out successfully"}
+
+
+@router.post("/dev-login")
+def dev_login(db: Session = Depends(get_db)):
+    """
+    Local development and testing login endpoint.
+    Issues a valid JWT session for testing without requiring interactive Google Sign-In.
+    """
+    if not settings.DEBUG and settings.APP_ENV != "development":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Dev login is only permitted in development mode.",
+        )
+
+    now = datetime.now(timezone.utc)
+    dev_sub = "dev-operator-sub-0001"
+    user = db.query(User).filter(User.google_sub == dev_sub).first()
+    if not user:
+        user = User(
+            google_sub=dev_sub,
+            email="analyst@sovereignblackice.internal",
+            name="Compliance Analyst",
+            picture="https://api.dicebear.com/7.x/identicon/svg?seed=SBI",
+            created_at=now,
+            last_login=now,
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    else:
+        user.last_login = now
+        db.commit()
+
+    access_token = create_access_token(
+        data={"sub": user.id, "email": user.email}
+    )
+
+    return {
+        "message": "Dev login successful",
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "name": user.name,
+            "picture": user.picture,
+        },
+    }
+

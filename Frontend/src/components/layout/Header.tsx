@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { useLocation, Link } from 'react-router-dom';
-import { Search, Bell, HelpCircle, Server, AlertTriangle, ChevronRight, Command, Sparkles } from 'lucide-react';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { Search, Bell, HelpCircle, Server, AlertTriangle, ChevronRight, Command, Sparkles, LogOut } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
 export const Header: React.FC = () => {
   const location = useLocation();
-  const { isLiveMode, setIsLiveMode, setIsSearchModalOpen, backendStatus, reviews } = useApp();
+  const navigate = useNavigate();
+  const { isLiveMode, setIsLiveMode, setIsSearchModalOpen, backendStatus, reviews, user, logout } = useApp();
 
   const [showNotifications, setShowNotifications] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
@@ -200,6 +201,44 @@ export const Header: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* User Profile & Sign Out */}
+        {user && (
+          <div className="flex items-center gap-2 pl-2 border-l border-line-strong ml-0.5">
+            {user.picture ? (
+              <img
+                src={user.picture}
+                alt={user.name || user.email}
+                className="h-7 w-7 rounded-full border border-line-strong object-cover"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div className="h-7 w-7 rounded-full bg-ice/15 text-ice flex items-center justify-center text-xs font-semibold border border-ice/30">
+                {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+              </div>
+            )}
+            <div className="hidden xl:flex flex-col text-left">
+              <span className="text-xs font-medium text-ink leading-tight truncate max-w-[120px]">
+                {user.name || user.email.split('@')[0]}
+              </span>
+              <span className="text-[10px] text-muted leading-tight truncate max-w-[120px]">
+                {user.email}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                logout();
+                navigate('/login', { replace: true });
+              }}
+              className="flex h-8 items-center gap-1.5 rounded-md px-2 text-xs text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-400"
+              title="Sign Out"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Sign Out</span>
+            </button>
+          </div>
+        )}
       </div>
     </header>
   );

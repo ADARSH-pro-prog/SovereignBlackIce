@@ -56,8 +56,9 @@ class AnswerRepository:
         skip: int = 0,
         limit: int = 50,
         status: Optional[str] = None,
+        document_id: Optional[str] = None,
     ) -> List[Answer]:
-        """Fetch paginated list of answers."""
+        """Fetch paginated list of answers, optionally filtered by status or document_id."""
         stmt = (
             select(Answer)
             .options(joinedload(Answer.evidence_items))
@@ -67,6 +68,19 @@ class AnswerRepository:
         )
         if status:
             stmt = stmt.where(Answer.status == status)
+        if document_id:
+            stmt = (
+                select(Answer)
+                .options(joinedload(Answer.evidence_items))
+                .join(AnswerEvidence, Answer.id == AnswerEvidence.answer_id)
+                .where(AnswerEvidence.document_id == document_id)
+                .distinct()
+                .order_by(desc(Answer.created_at))
+                .offset(skip)
+                .limit(limit)
+            )
+            if status:
+                stmt = stmt.where(Answer.status == status)
         return list(db.execute(stmt).unique().scalars().all())
 
     def get_answers_for_version(self, db: Session, version_id: str) -> List[Answer]:

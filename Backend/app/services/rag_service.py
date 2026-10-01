@@ -227,10 +227,27 @@ class RAGService:
         evidence_entities: List[AnswerEvidence] = []
         for ch in retrieved_chunks:
             citation_excerpt = ch["content"][:250].strip()
-            # Try to match with claim if available
+            # Try to match with claim relevant to this question/answer if available
             matched_claim_id = None
             if related_claims:
+                q_lower = question.lower()
+                ans_lower = generated_answer.lower()
                 for cl in related_claims:
+                    subj_lower = cl.subject.lower() if cl.subject else ""
+                    # 1. Subject match in question or generated answer
+                    if subj_lower:
+                        meaningful_words = [w for w in re.findall(r"\w+", subj_lower) if len(w) > 3 and w not in {"policy", "rule", "guideline", "standard"}]
+                        if meaningful_words and all(w in q_lower for w in meaningful_words):
+                            matched_claim_id = cl.id
+                            break
+                        if meaningful_words and any(w in q_lower for w in meaningful_words) and any(w in ans_lower for w in meaningful_words):
+                            matched_claim_id = cl.id
+                            break
+                    # 2. Value + unit match in generated answer
+                    if cl.value and cl.unit and f"{cl.value} {cl.unit}".lower() in ans_lower:
+                        matched_claim_id = cl.id
+                        break
+                    # 3. Subject in chunk content (original fallback)
                     if cl.subject and cl.subject.lower() in ch["content"].lower():
                         matched_claim_id = cl.id
                         break
@@ -252,13 +269,26 @@ class RAGService:
         evidence_responses: List[AnswerEvidenceResponse] = []
         for e in saved_evidence:
             chunk_rec = chunk_repository.get_chunk_by_id(db, e.chunk_id) if e.chunk_id else None
+            ev_doc_name = doc.name if doc else None
+            ev_ver_num = ver.version_number if ver else None
+            if not ev_doc_name and e.document_id:
+                target_d = document_repository.get_document_by_id(db, e.document_id)
+                if target_d:
+                    ev_doc_name = target_d.name
+            if not ev_ver_num and e.document_id and e.version_id:
+                target_v = document_repository.get_version_by_id(db, e.document_id, e.version_id)
+                if target_v:
+                    ev_ver_num = target_v.version_number
+            elif not ev_ver_num and chunk_rec and chunk_rec.version:
+                ev_ver_num = chunk_rec.version.version_number
+
             evidence_responses.append(
                 AnswerEvidenceResponse(
                     id=e.id,
                     document_id=e.document_id,
-                    document_name=doc.name if doc else None,
+                    document_name=ev_doc_name,
                     version_id=e.version_id,
-                    version_number=ver.version_number if ver else None,
+                    version_number=ev_ver_num,
                     chunk_id=e.chunk_id,
                     page_number=chunk_rec.page_number if chunk_rec else 1,
                     claim_id=e.claim_id,

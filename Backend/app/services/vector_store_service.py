@@ -88,20 +88,36 @@ class VectorStoreService:
             return []
 
         # Construct filter clause
+        # Since version_id is globally unique to a specific version of a document, filtering on version_id
+        # strictly isolates retrieval to that exact version. If only document_id is provided, it scopes to that document.
         where_filter: Optional[Dict[str, Any]] = None
-        if document_id and version_id:
-            where_filter = {
-                "$and": [
-                    {"document_id": str(document_id)},
-                    {"version_id": str(version_id)},
-                ]
-            }
+        if version_id:
+            where_filter = {"version_id": str(version_id)}
         elif document_id:
             where_filter = {"document_id": str(document_id)}
-        elif version_id:
-            where_filter = {"version_id": str(version_id)}
 
-        safe_k = min(n_results, total_in_coll)
+        # If where_filter is specified, determine the count of matching items in the filtered scope
+        matching_count = total_in_coll
+        logger.info(f"query_similar: query='{query_text[:50]}', where_filter={where_filter}, total_in_coll={total_in_coll}")
+        if where_filter:
+            try:
+                matching_items = self.collection.get(where=where_filter)
+                matching_count = len(matching_items["ids"]) if matching_items and matching_items.get("ids") else 0
+            except Exception as e:
+                logger.warning(f"Failed to check matching items for filter {where_filter}: {e}")
+                matching_count = 0
+
+            # If no items match this document/version, NEVER fall back to other documents
+            if matching_count == 0:
+                logger.info(f"No vector chunks found matching filter {where_filter}. Returning 0 results.")
+                return []
+
+        safe_k = min(n_results, matching_count)
+        if safe_k == 0:
+            logger.info(f"safe_k is 0 (matching_count={matching_count})")
+            return []
+
+        results = None
         try:
             results = self.collection.query(
                 query_texts=[query_text],
@@ -110,14 +126,47 @@ class VectorStoreService:
             )
         except Exception as e:
             logger.warning(f"ChromaDB query failed with filter {where_filter}: {e}")
-            # Try without filter if filter had no matches or failed
-            results = self.collection.query(
-                query_texts=[query_text],
-                n_results=safe_k,
-            )
+            # Do NOT fall back to unfiltered retrieval; return empty list to protect context integrity
+            return []
+
+        logger.info(f"ChromaDB query returned: ids={results.get('ids') if results else None}")
 
         output: List[Dict[str, Any]] = []
         if not results or not results.get("ids") or len(results["ids"][0]) == 0:
+            if where_filter and matching_items and matching_items.get("ids"):
+                logger.info(f"HNSW query returned 0 items but {len(matching_items['ids'])} items exist in scope. Ranking via embeddings directly.")
+                try:
+                    import numpy as np
+                    emb_fn = self.collection._embedding_function
+                    q_emb = np.array(emb_fn([query_text])[0], dtype=float)
+                    q_norm = np.linalg.norm(q_emb)
+                    doc_embs = np.array(emb_fn(matching_items["documents"]), dtype=float)
+                    doc_norms = np.linalg.norm(doc_embs, axis=1)
+                    sims = np.dot(doc_embs, q_emb) / (doc_norms * q_norm + 1e-9)
+                    ranked_indices = np.argsort(-sims)[:safe_k]
+
+                    for idx in ranked_indices:
+                        meta = matching_items["metadatas"][idx] or {}
+                        # Cosine distance = 1 - cosine_similarity
+                        sim_val = max(-1.0, min(1.0, float(sims[idx])))
+                        dist_val = max(0.0, 1.0 - sim_val)
+                        similarity = max(0.0, min(1.0, 1.0 - (dist_val / 2.0)))
+                        output.append(
+                            {
+                                "chunk_id": meta.get("chunk_id", matching_items["ids"][idx]),
+                                "document_id": meta.get("document_id", ""),
+                                "version_id": meta.get("version_id", ""),
+                                "version_number": meta.get("version_number", 1),
+                                "chunk_index": meta.get("chunk_index", 0),
+                                "page_number": meta.get("page_number", 1),
+                                "content": matching_items["documents"][idx],
+                                "similarity_score": round(similarity, 4),
+                                "distance": round(dist_val, 4),
+                            }
+                        )
+                    return output
+                except Exception as rank_err:
+                    logger.warning(f"Direct ranking fallback failed: {rank_err}")
             return output
 
         res_ids = results["ids"][0]

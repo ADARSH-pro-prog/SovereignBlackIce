@@ -1,60 +1,52 @@
-import React, { useRef, useState } from 'react';
-
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
 import {
-
   AlertTriangle,
-
   ArrowRight,
-
   CheckCircle,
-
   ChevronUp,
-
   Download,
-
   Eye,
-
   FileText,
-
   FolderOpen,
-
   GitCompare,
-
   History,
-
   MoreVertical,
-
+  RefreshCw,
   Search,
-
   ShieldCheck,
-
   Sparkles,
-
   Upload,
-
   X,
-
 } from 'lucide-react';
-
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { MetricCard } from '../components/ui/MetricCard';
 import { EmptyState, Hash } from '../components/ui/primitives';
-
 import { useApp } from '../context/AppContext';
 
 export const DocumentsPage: React.FC = () => {
-
   const navigate = useNavigate();
-
-  const { documents, uploadDocument, addToast } = useApp();
+  const { documents, uploadDocument, addToast, refreshData, isLoading, isLiveMode } = useApp();
 
   const [isUploadPanelOpen, setIsUploadPanelOpen] = useState(true);
+  const [compareBaseline, setCompareBaseline] = useState(false);
+  const [selectedBaselineId, setSelectedBaselineId] = useState('');
 
-  const [compareBaseline, setCompareBaseline] = useState(true);
+  // Synchronize baseline selection safely when documents load asynchronously
+  useEffect(() => {
+    if (documents.length === 0) {
+      if (selectedBaselineId !== '') {
+        setSelectedBaselineId('');
+      }
+      setCompareBaseline(false);
+      return;
+    }
 
-  const [selectedBaselineId, setSelectedBaselineId] = useState('DOC-7704');
+    const exists = documents.some((doc) => doc.id === selectedBaselineId);
+    if (!selectedBaselineId || !exists) {
+      setSelectedBaselineId(documents[0].id);
+    }
+  }, [documents, selectedBaselineId]);
 
   const [stagedFile, setStagedFile] = useState<File | null>(null);
 
@@ -87,11 +79,36 @@ export const DocumentsPage: React.FC = () => {
   };
 
   const handleFileSelected = (file: File) => {
+    if (file.size === 0) {
+      addToast({
+        type: 'error',
+        title: 'Empty File',
+        message: 'The selected file is empty (0 bytes). Please upload a valid document.',
+      });
+      return;
+    }
+
+    const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+    if (!['.txt', '.pdf'].includes(ext)) {
+      addToast({
+        type: 'error',
+        title: 'Unsupported File Format',
+        message: `File format '${ext}' is not supported. Please upload a .txt or .pdf document.`,
+      });
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      addToast({
+        type: 'error',
+        title: 'File Too Large',
+        message: 'Maximum allowed upload size is 10 MB.',
+      });
+      return;
+    }
 
     setStagedFile(file);
-
     setUploadProgress(100);
-
   };
 
   const handleExecuteUpload = async () => {
@@ -112,6 +129,38 @@ export const DocumentsPage: React.FC = () => {
 
     }
 
+    if (compareBaseline && documents.length === 0) {
+
+      addToast({
+
+        type: 'warning',
+
+        title: 'No Baseline Document',
+
+        message: 'No baseline documents available to compare against. Please disable comparison to upload as a new document.',
+
+      });
+
+      return;
+
+    }
+
+    if (compareBaseline && !selectedBaselineId) {
+
+      addToast({
+
+        type: 'warning',
+
+        title: 'No Baseline Selected',
+
+        message: 'Please select a baseline document to compare against.',
+
+      });
+
+      return;
+
+    }
+
     setIsAnalyzing(true);
 
     try {
@@ -120,7 +169,7 @@ export const DocumentsPage: React.FC = () => {
 
         stagedFile,
 
-        compareBaseline ? selectedBaselineId : undefined,
+        compareBaseline && selectedBaselineId ? selectedBaselineId : undefined,
 
       );
 
@@ -219,16 +268,12 @@ export const DocumentsPage: React.FC = () => {
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
-            onClick={() =>
-              addToast({
-                type: 'info',
-                title: 'Bulk Import',
-                message: 'Connecting to Corporate SharePoint / Google Drive sync...',
-              })
-            }
-            className="btn btn-ghost"
+            onClick={() => refreshData()}
+            disabled={isLoading}
+            className="btn btn-ghost h-9"
+            title="Refresh repository from backend"
           >
-            <Download className="h-4 w-4" /> Import documents
+            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} /> Refresh
           </button>
           <button type="button" onClick={() => setIsUploadPanelOpen(true)} className="btn btn-primary">
             <Upload className="h-4 w-4" /> Upload document
@@ -297,7 +342,7 @@ export const DocumentsPage: React.FC = () => {
                 ref={fileInputRef}
                 type="file"
                 className="hidden"
-                accept=".pdf,.docx,.txt,.md"
+                accept=".txt,.pdf"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) handleFileSelected(file);
@@ -305,7 +350,7 @@ export const DocumentsPage: React.FC = () => {
               />
               <Upload className="h-7 w-7 text-ice transition-transform duration-300 group-hover:-translate-y-0.5" />
               <div className="display mt-5 text-[28px] text-ink">Drop a document to fingerprint it</div>
-              <p className="mt-2 text-sm text-muted">PDF, DOCX, TXT or MD · up to 50 MB</p>
+              <p className="mt-2 text-sm text-muted">Supported formats: .TXT or .PDF · up to 10 MB</p>
               <span className="btn mt-5 h-9">
                 <FolderOpen className="h-4 w-4 text-ice" /> Choose file
               </span>
@@ -331,11 +376,18 @@ export const DocumentsPage: React.FC = () => {
                       id="baseline"
                       value={selectedBaselineId}
                       onChange={(e) => setSelectedBaselineId(e.target.value)}
-                      className={`${field} w-full`}
+                      disabled={documents.length === 0}
+                      className={`${field} w-full disabled:cursor-not-allowed disabled:opacity-50`}
                     >
-                      <option value="DOC-7704">Employee Reimbursement Policy (v1.0) — DOC-7704</option>
-                      <option value="DOC-8912">Vendor Security Standard (v3.0) — DOC-8912</option>
-                      <option value="DOC-5120">Data Retention Policy (v2.3) — DOC-5120</option>
+                      {documents.length === 0 ? (
+                        <option value="">No baseline documents available</option>
+                      ) : (
+                        documents.map((doc) => (
+                          <option key={doc.id} value={doc.id}>
+                            {doc.title} ({doc.currentVersion || 'v1.0'}) — {doc.id}
+                          </option>
+                        ))
+                      )}
                     </select>
                   </div>
                 )}
@@ -479,7 +531,13 @@ export const DocumentsPage: React.FC = () => {
           </div>
         </div>
 
-        {filteredDocuments.length === 0 ? (
+        {isLoading && documents.length === 0 ? (
+          <div className="py-16 text-center text-muted flex flex-col items-center justify-center gap-3">
+            <RefreshCw className="w-8 h-8 text-ice animate-spin" />
+            <p className="text-sm font-medium text-ink">Loading knowledge repository...</p>
+            <p className="text-xs text-muted">Fetching verified document fingerprints from backend database.</p>
+          </div>
+        ) : filteredDocuments.length === 0 ? (
           <EmptyState
             title={documents.length === 0 ? 'No documents yet.' : 'No documents match these filters.'}
             body={documents.length === 0 ? 'Upload a source to seal its first fingerprint.' : undefined}

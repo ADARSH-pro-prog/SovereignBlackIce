@@ -160,7 +160,7 @@ def test_grounded_qa_version_specific_citations(client: TestClient):
     ans_v1_resp = client.post("/api/v1/qa/ask", json=ask_v1_payload)
     assert ans_v1_resp.status_code == 200
     v1_answer = ans_v1_resp.json()
-    assert "Version: 1" in v1_answer["generated_answer"]
+    assert "version 1" in v1_answer["generated_answer"].lower() or "version: 1" in v1_answer["generated_answer"].lower()
     assert "30 days" in v1_answer["generated_answer"]
     assert v1_answer["evidence_items"][0]["version_id"] == v1_id
     assert v1_answer["evidence_items"][0]["version_number"] == 1
@@ -174,7 +174,7 @@ def test_grounded_qa_version_specific_citations(client: TestClient):
     ans_v2_resp = client.post("/api/v1/qa/ask", json=ask_v2_payload)
     assert ans_v2_resp.status_code == 200
     v2_answer = ans_v2_resp.json()
-    assert "Version: 2" in v2_answer["generated_answer"]
+    assert "version 2" in v2_answer["generated_answer"].lower() or "version: 2" in v2_answer["generated_answer"].lower()
     assert "15 days" in v2_answer["generated_answer"]
     assert v2_answer["evidence_items"][0]["version_id"] == v2_id
     assert v2_answer["evidence_items"][0]["version_number"] == 2

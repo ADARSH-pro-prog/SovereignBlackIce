@@ -6,7 +6,7 @@ import { useApp } from '../context/AppContext';
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const { isAuthenticated, loginWithGoogle } = useApp();
+  const { isAuthenticated, loginWithGoogle, loginWithDevAccount } = useApp();
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -14,7 +14,7 @@ export function LoginPage() {
   // If already authenticated, redirect to dashboard
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/', { replace: true });
+      navigate('/dashboard', { replace: true });
     }
   }, [isAuthenticated, navigate]);
 
@@ -32,7 +32,7 @@ export function LoginPage() {
       // Send Google credential to FastAPI backend for verification
       await loginWithGoogle(credential);
       // Backend verified and stored user session; redirect to dashboard
-      navigate('/', { replace: true });
+      navigate('/dashboard', { replace: true });
     } catch (err: unknown) {
       const displayMsg =
         err instanceof Error
@@ -47,6 +47,23 @@ export function LoginPage() {
   const handleGoogleError = () => {
     setIsLoading(false);
     setErrorMessage('Google Sign-In failed. Please try again.');
+  };
+
+  const handleDevLogin = async () => {
+    setErrorMessage(null);
+    setIsLoading(true);
+    try {
+      await loginWithDevAccount();
+      navigate('/dashboard', { replace: true });
+    } catch (err: unknown) {
+      const displayMsg =
+        err instanceof Error
+          ? err.message
+          : 'Dev authentication failed. Please ensure backend is running.';
+      setErrorMessage(displayMsg);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -93,11 +110,11 @@ export function LoginPage() {
               Signing in...
             </p>
             <p className="text-[11px] text-[#8D8992]">
-              Verifying Google credentials with Sovereign Black Ice engine
+              Verifying credentials with Sovereign Black Ice engine
             </p>
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center gap-4">
+          <div className="flex flex-col items-center justify-center gap-4 w-full">
             <div className="flex justify-center w-full">
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}
@@ -109,6 +126,23 @@ export function LoginPage() {
                 text="signin_with"
               />
             </div>
+
+            <div className="relative flex items-center justify-center w-full my-1">
+              <div className="border-t border-[#302F34] w-full" />
+              <span className="bg-[#171719] px-3 text-[11px] font-mono text-[#8D8992] uppercase tracking-wider absolute">
+                Or Local Dev
+              </span>
+            </div>
+
+            <button
+              type="button"
+              id="dev-login-btn"
+              onClick={handleDevLogin}
+              className="w-[280px] h-10 rounded-lg bg-[#242328] hover:bg-[#302F34] border border-[#3A393F] text-xs font-semibold text-[#F8F7F4] transition-colors flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Shield className="h-4 w-4 text-[#A3E635]" />
+              <span>Sign in as Dev Operator</span>
+            </button>
           </div>
         )}
 

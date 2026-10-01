@@ -121,9 +121,10 @@ def list_answers(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
     status: Optional[str] = Query(None, description="Optional status filter ('current', 'potentially_outdated')"),
+    document_id: Optional[str] = Query(None, description="Optional document ID filter"),
     db: Session = Depends(get_db),
 ) -> AnswerListResponse:
-    answers = answer_repository.list_answers(db, skip=skip, limit=limit, status=status)
+    answers = answer_repository.list_answers(db, skip=skip, limit=limit, status=status, document_id=document_id)
     items = []
     for a in answers:
         ev_items = [

@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 
 class HealthResponse(BaseModel):
@@ -300,10 +300,17 @@ class SemanticSearchResponse(BaseModel):
 
 class AskQuestionRequest(BaseModel):
     """Payload to ask a grounded question using local RAG."""
-    question: str = Field(description="The question to answer against documents")
+    question: str = Field(min_length=1, description="The question to answer against documents")
     document_id: Optional[str] = Field(default=None, description="Restrict retrieval to a specific document ID")
     version_id: Optional[str] = Field(default=None, description="Restrict retrieval to an exact document version ID")
     top_k: int = Field(default=4, ge=1, le=10, description="Number of evidence chunks to retrieve for grounding")
+
+    @field_validator("question")
+    @classmethod
+    def validate_question_non_empty(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("Question cannot be empty or solely whitespace.")
+        return v.strip()
 
 
 class AnswerEvidenceResponse(BaseModel):

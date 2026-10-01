@@ -38,12 +38,25 @@ class DocumentRepository:
     def get_version_by_id(
         self, db: Session, document_id: str, version_id: str
     ) -> Optional[DocumentVersion]:
-        """Fetch a specific version by its version ID and document ID."""
+        """Fetch a specific version by its version ID (UUID) or version number, scoped to document ID."""
         stmt = select(DocumentVersion).where(
             DocumentVersion.document_id == document_id,
             DocumentVersion.id == version_id,
         )
-        return db.execute(stmt).scalar_one_or_none()
+        ver = db.execute(stmt).scalar_one_or_none()
+        if ver:
+            return ver
+
+        # Try matching by version_number (e.g. '1', '2', 'v1', 'v1.0')
+        clean = version_id.lower().lstrip("v").split(".")[0]
+        if clean.isdigit():
+            stmt = select(DocumentVersion).where(
+                DocumentVersion.document_id == document_id,
+                DocumentVersion.version_number == int(clean),
+            )
+            return db.execute(stmt).scalar_one_or_none()
+
+        return None
 
     def list_versions_by_document(
         self, db: Session, document_id: str

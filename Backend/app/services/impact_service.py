@@ -123,17 +123,20 @@ class ImpactService:
             if old_ver and subj:
                 ver_answers = answer_repository.get_answers_for_version(db, old_ver.id)
                 clean_subj = subj.lower()
-                generic_stopwords = {"policy", "rule", "company", "corporate", "employee", "guideline", "terms", "general", "section"}
+                generic_stopwords = {"policy", "rule", "company", "corporate", "employee", "guideline", "terms", "general", "section", "deadline", "limit", "window"}
                 meaningful_subj_words = [w for w in re.findall(r"\w+", clean_subj) if w not in generic_stopwords and len(w) > 3]
                 
-                if meaningful_subj_words:
+                if meaningful_subj_words or (old_claim and old_claim.value):
                     for a in ver_answers:
                         q_lower = a.question.lower()
                         # Match if all meaningful subject words are in question or specific non-trivial value is in answer
-                        matched = all(w in q_lower for w in meaningful_subj_words)
-                        if not matched and old_claim and old_claim.value and len(old_claim.value.strip()) > 3:
+                        matched = bool(meaningful_subj_words and all(w in q_lower for w in meaningful_subj_words))
+                        if not matched and old_claim and old_claim.value:
                             val_lower = old_claim.value.lower().strip()
-                            if val_lower not in {"true", "false", "none", "null", "allowed", "approved"}:
+                            val_phrase = f"{val_lower} {old_claim.unit.lower().strip()}" if old_claim.unit else val_lower
+                            if val_phrase in a.generated_answer.lower():
+                                matched = True
+                            elif len(val_lower) >= 2 and val_lower not in {"true", "false", "none", "null", "allowed", "approved"}:
                                 matched = val_lower in a.generated_answer.lower()
                         if matched:
                             ans_ids.add(a.id)

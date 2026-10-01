@@ -23,13 +23,33 @@ export interface DocumentVersion {
   summary: string;
   isGenesis?: boolean;
   id?: string;
+  version_id?: string;
   version_number?: string;
   versionNumber?: string;
+  raw_version_number?: number;
   uploadedAt?: string;
   created_at?: string;
   file_path?: string;
+  file_name?: string;
+  file_size_bytes?: number;
+  page_count?: number;
   raw_text?: string;
   claims_count?: number;
+}
+
+export interface StructuredClaim {
+  id: string;
+  document_id: string;
+  version_id: string;
+  subject: string;
+  predicate: string;
+  value?: string;
+  unit?: string;
+  claim_text: string;
+  category: string;
+  confidence: number;
+  source_location?: string;
+  created_at: string;
 }
 
 export interface DocumentItem {

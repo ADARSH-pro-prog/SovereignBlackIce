@@ -301,7 +301,7 @@ class GraphService:
         # 2. Check answers connected to chunks on the same version that mention the subject
         if claim_subject:
             clean_sub = claim_subject.lower().strip()
-            generic_stopwords = {"policy", "rule", "company", "corporate", "employee", "guideline", "terms", "general", "section"}
+            generic_stopwords = {"policy", "rule", "company", "corporate", "employee", "guideline", "terms", "general", "section", "deadline", "limit", "window"}
             meaningful_words = [w for w in re.findall(r"\w+", clean_sub) if w not in generic_stopwords and len(w) > 3]
 
             if meaningful_words:

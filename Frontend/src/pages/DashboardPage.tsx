@@ -31,7 +31,7 @@ const Rise: React.FC<{ children: React.ReactNode }> = ({ children }) => <>{child
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  const { documents, reviews, auditEvents, isLiveMode, isLoading } = useApp();
+  const { documents, reviews, auditEvents, isLiveMode, isLoading, backendStatus, checkBackendConnection } = useApp();
 
   const [filterQuery, setFilterQuery] = useState('');
   const [filterType, setFilterType] = useState('All');
@@ -108,6 +108,23 @@ export const DashboardPage: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-10">
+      {/* Backend connection warning banner in Live Mode */}
+      {isLiveMode && !backendStatus.isConnected && (
+        <div className="bg-red/10 border border-red/30 rounded-xl p-4 flex items-center justify-between text-xs text-red">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span>FastAPI backend is offline at <code className="font-mono text-ink font-semibold">{backendStatus.baseUrl}</code>. Ensure the server is running on port 8000.</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => checkBackendConnection()}
+            className="px-3 py-1.5 rounded-lg bg-raised border border-line-strong hover:border-red text-ink font-medium transition-colors"
+          >
+            Retry Connection
+          </button>
+        </div>
+      )}
+
       <AgentHero pending={pending.length} changed={documents.length - clearDocs} />
 
       {/* Hero: knowledge integrity */}
@@ -117,7 +134,16 @@ export const DashboardPage: React.FC = () => {
           <div>
             <div className="flex items-center gap-3 text-sm text-ink-2">
               Knowledge integrity
-              {!isLiveMode && (
+              {isLiveMode ? (
+                <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-mono border ${
+                  backendStatus.isConnected
+                    ? 'border-ice/30 bg-ice/10 text-ice'
+                    : 'border-red/30 bg-red/10 text-red'
+                }`}>
+                  <span className={`h-1.5 w-1.5 rounded-full ${backendStatus.isConnected ? 'bg-ice' : 'bg-red'}`} />
+                  {backendStatus.isConnected ? `FastAPI connected (${backendStatus.latencyMs ?? 0}ms)` : 'Backend offline'}
+                </span>
+              ) : (
                 <span className="rounded-full border border-amber/30 px-2 py-0.5 text-xs text-amber">Demo data</span>
               )}
             </div>

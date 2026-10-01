@@ -15,9 +15,7 @@ export default defineConfig(() => {
     server: {
       host: '0.0.0.0',
       port: 3000,
-      allowedHosts: [
-        'heavy-cartoons-involves-ivory.trycloudflare.com',
-      ],
+      allowedHosts: ['localhost', '127.0.0.1'],
 
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
       hmr: process.env.DISABLE_HMR !== 'true',

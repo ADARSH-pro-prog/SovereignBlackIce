@@ -40,7 +40,7 @@ import { StatusBadge } from '../components/ui/StatusBadge';
 
 import { useApp } from '../context/AppContext';
 
-import { apiService, ImpactGraphResult } from '../services/api';
+import { apiService, ImpactGraphResult, BackendImpactAnalysisResult } from '../services/api';
 
 import { DEMO_AFFECTED_ANSWERS } from '../data/demoData';
 
@@ -51,6 +51,9 @@ export const ImpactAnalysisPage: React.FC = () => {
   const { documents, reviews, isLiveMode, recalculateImpact, addToast } = useApp();
 
   const [selectedDocId, setSelectedDocId] = useState<string>('all');
+  const [selectedOldVerId, setSelectedOldVerId] = useState<string>('');
+  const [selectedNewVerId, setSelectedNewVerId] = useState<string>('');
+  const [impactResult, setImpactResult] = useState<BackendImpactAnalysisResult | null>(null);
 
   const [graphData, setGraphData] = useState<ImpactGraphResult | null>(null);
 
@@ -63,6 +66,25 @@ export const ImpactAnalysisPage: React.FC = () => {
   const [activeFilterTab, setActiveFilterTab] = useState<'all' | 'critical' | 'review'>('all');
 
   const [zoomLevel, setZoomLevel] = useState(100);
+
+  // When document changes, reset version selectors to first two versions
+  useEffect(() => {
+    if (selectedDocId !== 'all') {
+      const doc = documents.find((d) => d.id === selectedDocId);
+      const versions = doc?.versions || [];
+      if (versions.length >= 2) {
+        // oldest first = last in array (newest is index 0)
+        setSelectedOldVerId(versions[versions.length - 1]?.id || '');
+        setSelectedNewVerId(versions[0]?.id || '');
+      } else if (versions.length === 1) {
+        setSelectedOldVerId(versions[0]?.id || '');
+        setSelectedNewVerId(versions[0]?.id || '');
+      } else {
+        setSelectedOldVerId('');
+        setSelectedNewVerId('');
+      }
+    }
+  }, [selectedDocId, documents]);
 
   // Fetch real dependency graph when in live mode
 
@@ -132,52 +154,58 @@ export const ImpactAnalysisPage: React.FC = () => {
 
     }
 
+    setIsLoadingGraph(true);
     if (isLiveMode && targetDocId) {
-
-      await recalculateImpact(targetDocId);
-
+      const result = await recalculateImpact(
+        targetDocId,
+        selectedOldVerId || undefined,
+        selectedNewVerId || undefined,
+      );
+      if (result) setImpactResult(result);
       await fetchGraph(selectedDocId);
-
     } else {
-
       recalculateImpact('DOC-7704');
-
     }
 
   };
 
-  const filteredAnswers = isLiveMode
-
-    ? reviews.map((r) => ({
-
-        id: r.id,
-
-        queryPrompt: r.issueSummary,
-
-        agentName: r.affectedAgent,
-
-        cachedAnswer: r.claimMutation?.previousClaim || 'Copilot answer grounded on older baseline',
-
-        potentialIssue: r.explanation,
-
-        impactStatus: r.status as any,
-
-        directConflict: r.severity === 'High',
-
-        citedChunkId: r.lineageHash,
-
-        lastUpdated: r.timestamp,
-
+  // Affected answers: prefer live impact result, fallback to reviews-derived list
+  const liveAffectedAnswers = isLiveMode && impactResult
+    ? impactResult.affected_answers.map((a) => ({
+        id: a.id,
+        queryPrompt: a.question,
+        agentName: 'Enterprise Knowledge Assistant',
+        cachedAnswer: a.generated_answer,
+        potentialIssue: a.review_notes || 'Answer may reference outdated policy claims.',
+        impactStatus: 'Potentially outdated',
+        directConflict: a.human_review_required,
+        citedChunkId: a.evidence_items[0]?.chunk_id || '',
+        lastUpdated: a.updated_at,
       }))
+    : null;
 
-    : DEMO_AFFECTED_ANSWERS.filter((ans) => {
-
+  const filteredAnswers = liveAffectedAnswers
+    ? liveAffectedAnswers.filter((ans) => {
         if (activeFilterTab === 'critical') return ans.directConflict;
-
         if (activeFilterTab === 'review') return !ans.directConflict;
-
         return true;
-
+      })
+    : isLiveMode
+    ? reviews.map((r) => ({
+        id: r.id,
+        queryPrompt: r.issueSummary,
+        agentName: r.affectedAgent,
+        cachedAnswer: r.claimMutation?.previousClaim || 'Copilot answer grounded on older baseline',
+        potentialIssue: r.explanation,
+        impactStatus: r.status as any,
+        directConflict: r.severity === 'High',
+        citedChunkId: r.lineageHash,
+        lastUpdated: r.timestamp,
+      }))
+    : DEMO_AFFECTED_ANSWERS.filter((ans) => {
+        if (activeFilterTab === 'critical') return ans.directConflict;
+        if (activeFilterTab === 'review') return !ans.directConflict;
+        return true;
       });
 
   return (
@@ -259,11 +287,15 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                 <>
 
-                  <option value="DOC-7704" className="bg-raised">Employee Reimbursement Policy (DOC-7704)</option>
+                  <option value="" className="bg-raised">— Select a document —</option>
 
-                  <option value="DOC-8912" className="bg-raised">Vendor Security Standard (DOC-8912)</option>
-
-                  <option value="DOC-5120" className="bg-raised">Data Retention Policy (DOC-5120)</option>
+                  {documents.length === 0 ? (
+                    <option value="demo" className="bg-raised" disabled>No demo documents loaded</option>
+                  ) : (
+                    documents.map((d) => (
+                      <option key={d.id} value={d.id} className="bg-raised">{d.title} ({d.id})</option>
+                    ))
+                  )}
 
                 </>
 
@@ -273,23 +305,62 @@ export const ImpactAnalysisPage: React.FC = () => {
 
           </div>
 
-          {/* Lineage Selector */}
+          {/* Version Selectors (live mode only) */}
 
-          <div className="flex items-center bg-raised border border-line rounded-lg px-3 h-9 gap-2">
+          {isLiveMode && selectedDocId !== 'all' && (() => {
+            const doc = documents.find((d) => d.id === selectedDocId);
+            const versions = doc?.versions || [];
+            return versions.length >= 2 ? (
+              <>
+                <div className="flex items-center bg-raised border border-line rounded-lg px-3 h-9 gap-2">
+                  <History className="w-4 h-4 text-muted" />
+                  <span className="text-xs text-muted">Base:</span>
+                  <select
+                    value={selectedOldVerId}
+                    onChange={(e) => setSelectedOldVerId(e.target.value)}
+                    className="bg-transparent text-xs font-medium text-ink focus:outline-none cursor-pointer"
+                  >
+                    {versions.map((v) => (
+                      <option key={v.id} value={v.id} className="bg-raised">
+                        {v.versionNumber || v.version}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex items-center bg-raised border border-line rounded-lg px-3 h-9 gap-2">
+                  <ArrowRight className="w-4 h-4 text-muted" />
+                  <span className="text-xs text-muted">Target:</span>
+                  <select
+                    value={selectedNewVerId}
+                    onChange={(e) => setSelectedNewVerId(e.target.value)}
+                    className="bg-transparent text-xs font-medium text-ink focus:outline-none cursor-pointer"
+                  >
+                    {versions.map((v) => (
+                      <option key={v.id} value={v.id} className="bg-raised">
+                        {v.versionNumber || v.version}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center bg-raised border border-line rounded-lg px-3 h-9 gap-2">
+                <History className="w-4 h-4 text-muted" />
+                <span className="text-xs text-muted">Lineage: Active Knowledge State (Latest)</span>
+              </div>
+            );
+          })()}
 
-            <History className="w-4 h-4 text-muted" />
-
-            <span className="text-xs text-muted">Lineage:</span>
-
-            <select className="bg-transparent text-xs font-medium text-ink focus:outline-none cursor-pointer">
-
-              <option className="bg-raised">Active Knowledge State (Latest)</option>
-
-              <option className="bg-raised">All Monitored Versions</option>
-
-            </select>
-
-          </div>
+          {(!isLiveMode || selectedDocId === 'all') && (
+            <div className="flex items-center bg-raised border border-line rounded-lg px-3 h-9 gap-2">
+              <History className="w-4 h-4 text-muted" />
+              <span className="text-xs text-muted">Lineage:</span>
+              <select className="bg-transparent text-xs font-medium text-ink focus:outline-none cursor-pointer">
+                <option className="bg-raised">Active Knowledge State (Latest)</option>
+                <option className="bg-raised">All Monitored Versions</option>
+              </select>
+            </div>
+          )}
 
           {/* Impact Level Filter */}
 
@@ -385,7 +456,7 @@ export const ImpactAnalysisPage: React.FC = () => {
 
             <span className="label-mono">
 
-              {isLiveMode ? 'Knowledge Entities' : 'Changed Claims'}
+              {isLiveMode && impactResult ? 'Changed Claims' : isLiveMode ? 'Knowledge Entities' : 'Changed Claims'}
 
             </span>
 
@@ -401,16 +472,18 @@ export const ImpactAnalysisPage: React.FC = () => {
 
             <div className="font-mono text-[34px] font-medium leading-none tracking-tight tabular-nums text-ink">
 
-              {isLiveMode && graphData ? graphData.total_nodes : '1'}
+              {isLiveMode && impactResult
+                ? impactResult.changed_claims_count
+                : isLiveMode && graphData ? graphData.total_nodes : '1'}
 
             </div>
 
             <div className="text-xs text-ice mt-0.5">
 
-              {isLiveMode && graphData
-
+              {isLiveMode && impactResult
+                ? `of ${impactResult.total_claims_analyzed} analyzed`
+                : isLiveMode && graphData
                 ? `${graphData.node_counts_by_type?.claim || 0} claims • ${graphData.node_counts_by_type?.document || 0} docs`
-
                 : '§4.2 Temporal Contraction'}
 
             </div>
@@ -425,7 +498,7 @@ export const ImpactAnalysisPage: React.FC = () => {
 
             <span className="label-mono">
 
-              {isLiveMode ? 'Graph Dependencies' : 'Potentially Affected Answers'}
+              {isLiveMode && impactResult ? 'Affected Answers' : isLiveMode ? 'Graph Dependencies' : 'Potentially Affected Answers'}
 
             </span>
 
@@ -441,13 +514,17 @@ export const ImpactAnalysisPage: React.FC = () => {
 
             <div className="font-mono text-[34px] font-medium leading-none tracking-tight tabular-nums text-ink">
 
-              {isLiveMode && graphData ? graphData.total_edges : '3'}
+              {isLiveMode && impactResult
+                ? impactResult.affected_answers_count
+                : isLiveMode && graphData ? graphData.total_edges : '3'}
 
             </div>
 
             <div className="text-xs text-amber mt-0.5">
 
-              {isLiveMode ? 'Directed DAG Edges' : 'Drift Alert across 3 agents'}
+              {isLiveMode && impactResult
+                ? `${impactResult.unaffected_answers_count} unaffected preserved`
+                : isLiveMode ? 'Directed DAG Edges' : 'Drift Alert across 3 agents'}
 
             </div>
 
@@ -461,7 +538,7 @@ export const ImpactAnalysisPage: React.FC = () => {
 
             <span className="label-mono">
 
-              {isLiveMode ? 'Unresolved Alerts' : 'High-Priority Reviews'}
+              {isLiveMode ? 'Alerts Generated' : 'High-Priority Reviews'}
 
             </span>
 
@@ -477,16 +554,18 @@ export const ImpactAnalysisPage: React.FC = () => {
 
             <div className="font-mono text-[34px] font-medium leading-none tracking-tight tabular-nums text-red">
 
-              {isLiveMode ? reviews.filter((r) => r.status !== 'Resolved').length : '2'}
+              {isLiveMode && impactResult
+                ? impactResult.alerts_generated
+                : isLiveMode ? reviews.filter((r) => r.status !== 'Resolved').length : '2'}
 
             </div>
 
             <div className="text-xs text-red/80 mt-0.5">
 
-              {isLiveMode
-
+              {isLiveMode && impactResult
+                ? `${reviews.filter((r) => r.status !== 'Resolved').length} unresolved total`
+                : isLiveMode
                 ? `${reviews.filter((r) => r.severity === 'High' && r.status !== 'Resolved').length} high severity`
-
                 : '1 critical contradiction, 1 stale'}
 
             </div>
@@ -1874,7 +1953,7 @@ export const ImpactAnalysisPage: React.FC = () => {
 
           <button
 
-            onClick={() => navigate('/dashboard/documents/DOC-7704')}
+            onClick={() => navigate(selectedDocId && selectedDocId !== 'all' ? `/dashboard/documents/${selectedDocId}` : '/dashboard/documents')}
 
             className="h-9 px-3.5 rounded-lg bg-panel border border-line text-xs text-ink hover:bg-raised flex items-center gap-1.5 transition-colors"
 
@@ -1888,7 +1967,7 @@ export const ImpactAnalysisPage: React.FC = () => {
 
           <button
 
-            onClick={() => navigate('/dashboard/documents/DOC-7704/compare')}
+            onClick={() => navigate(selectedDocId && selectedDocId !== 'all' ? `/dashboard/documents/${selectedDocId}/compare` : '/dashboard/compare')}
 
             className="h-9 px-3.5 rounded-lg bg-panel border border-line text-xs text-ink hover:bg-raised flex items-center gap-1.5 transition-colors"
 

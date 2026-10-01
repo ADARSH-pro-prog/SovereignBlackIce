@@ -52,10 +52,12 @@ async function fetchWithTimeout<T>(
     : `${cleanBase}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
 
   try {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('blackice_token') : null;
     const isFormData = options.body instanceof FormData;
     const headers: Record<string, string> = {
       Accept: 'application/json',
       ...(!isFormData ? { 'Content-Type': 'application/json' } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options.headers as Record<string, string> | undefined),
     };
 
@@ -215,7 +217,8 @@ export interface BackendClaimChange {
   old_value?: string;
   new_value?: string;
   confidence: number;
-  requires_human_review: boolean;
+  human_review_required?: boolean;
+  requires_human_review?: boolean;
   explanation: string;
   old_claim_id?: string;
   new_claim_id?: string;
@@ -223,6 +226,22 @@ export interface BackendClaimChange {
   source_reference_new?: string;
   old_claim?: BackendClaim;
   new_claim?: BackendClaim;
+}
+
+export interface BackendClaimListResponse {
+  total: number;
+  document_id: string;
+  version_id?: string;
+  claims: BackendClaim[];
+}
+
+export interface BackendClaimExtractionResponse {
+  document_id: string;
+  version_id: string;
+  version_number: number;
+  extraction_method: string;
+  claims_count: number;
+  claims: BackendClaim[];
 }
 
 export interface BackendVersionComparisonResponse {
@@ -322,6 +341,21 @@ export type DependencyGraphResponse = BackendDependencyGraphResponse;
 export type VersionComparisonResponse = BackendVersionComparisonResponse;
 export type ClaimChangeDetail = BackendClaimChange;
 
+export interface BackendImpactAnalysisResult {
+  document_id: string;
+  document_name: string;
+  old_version_id?: string;
+  new_version_id: string;
+  total_claims_analyzed: number;
+  changed_claims_count: number;
+  affected_answers_count: number;
+  unaffected_answers_count: number;
+  alerts_generated: number;
+  affected_answers: BackendAnswerResponse[];
+  unaffected_answers: BackendAnswerResponse[];
+  alerts: BackendAlert[];
+}
+
 export interface ImpactGraphResult {
   totalNodes: number;
   totalEdges: number;
@@ -383,13 +417,23 @@ export function transformBackendDocToItem(
   }
 
   const versions: DocumentVersion[] = (doc.versions || []).map((v, idx) => ({
+    id: v.id,
     version: `v${v.version_number}.0`,
+    versionNumber: `v${v.version_number}.0`,
+    version_number: String(v.version_number),
+    raw_version_number: v.version_number,
     releaseDate: formatDate(v.created_at),
+    uploadedAt: formatDate(v.created_at),
+    created_at: v.created_at,
     sha256: v.file_hash,
     status: idx === 0 ? 'Active' : 'Archived',
     author: 'Internal Knowledge System',
     summary: `Version ${v.version_number} snapshot (${v.page_count} page${v.page_count !== 1 ? 's' : ''}, ${v.chunk_count || 0} chunks, ${v.claim_count || 0} claims).`,
     isGenesis: v.version_number === 1,
+    file_name: v.file_name,
+    file_size_bytes: v.file_size_bytes,
+    page_count: v.page_count,
+    claims_count: v.claim_count,
   }));
 
   const currentVerStr = doc.latest_version
@@ -592,14 +636,22 @@ export const apiService = {
       ).catch(() => ({ total: 0, answers: [] })),
     ]);
 
-    // Fetch details for each document to populate complete version list
-    const detailPromises = docsResp.documents.map((d) =>
-      this.getDocumentDetails(d.id).catch(() =>
-        transformBackendDocToItem(d, alertsResp.alerts, answersResp.answers)
-      )
+    // Fetch versions for each document in parallel
+    const items = await Promise.all(
+      docsResp.documents.map(async (d) => {
+        try {
+          const versions = await fetchWithTimeout<BackendDocumentVersionDetail[]>(
+            `/api/v1/documents/${encodeURIComponent(d.id)}/versions`
+          );
+          d.versions = versions;
+        } catch {
+          d.versions = [];
+        }
+        return transformBackendDocToItem(d, alertsResp.alerts, answersResp.answers);
+      })
     );
 
-    return Promise.all(detailPromises);
+    return items;
   },
 
   /**
@@ -609,7 +661,15 @@ export const apiService = {
     file: File,
     baselineId?: string,
     documentName?: string
-  ): Promise<{ document: DocumentItem; analysisPending: boolean }> {
+  ): Promise<{
+    document: DocumentItem;
+    analysisPending: boolean;
+    status: string;
+    message: string;
+    is_duplicate: boolean;
+    is_reversion?: boolean;
+    version_id?: string;
+  }> {
     const formData = new FormData();
     formData.append('file', file);
     if (documentName) {
@@ -636,6 +696,11 @@ export const apiService = {
     return {
       document: docItem,
       analysisPending: false,
+      status: uploadRes.status,
+      message: uploadRes.message,
+      is_duplicate: uploadRes.is_duplicate,
+      is_reversion: uploadRes.is_reversion,
+      version_id: uploadRes.version?.id,
     };
   },
 
@@ -707,22 +772,83 @@ export const apiService = {
   },
 
   /**
+   * Get Structured Claims for a Specific Document Version
+   */
+  async getVersionClaims(documentId: string, versionId: string): Promise<BackendClaim[]> {
+    return fetchWithTimeout<BackendClaim[]>(
+      `/api/v1/documents/${encodeURIComponent(documentId)}/versions/${encodeURIComponent(versionId)}/claims`
+    );
+  },
+
+  /**
+   * List Claims for a Document, optionally filtered by version ID
+   */
+  async getDocumentClaims(documentId: string, versionId?: string): Promise<BackendClaimListResponse> {
+    const q = versionId ? `?version_id=${encodeURIComponent(versionId)}` : '';
+    return fetchWithTimeout<BackendClaimListResponse>(
+      `/api/v1/documents/${encodeURIComponent(documentId)}/claims${q}`
+    );
+  },
+
+  /**
+   * Trigger Claim Extraction for a Document Version
+   */
+  async extractClaims(
+    documentId: string,
+    versionId: string,
+    force = false
+  ): Promise<BackendClaimExtractionResponse> {
+    return fetchWithTimeout<BackendClaimExtractionResponse>(
+      `/api/v1/documents/${encodeURIComponent(documentId)}/versions/${encodeURIComponent(versionId)}/claims/extract?force=${force}`,
+      { method: 'POST' }
+    );
+  },
+
+  /**
+   * Get Extracted Text for a Specific Document Version
+   */
+  async getVersionText(
+    documentId: string,
+    versionId: string
+  ): Promise<{
+    document_id: string;
+    version_id: string;
+    version_number: number;
+    page_count: number;
+    full_text: string;
+  }> {
+    return fetchWithTimeout<{
+      document_id: string;
+      version_id: string;
+      version_number: number;
+      page_count: number;
+      full_text: string;
+    }>(
+      `/api/v1/documents/${encodeURIComponent(documentId)}/versions/${encodeURIComponent(versionId)}/text`
+    );
+  },
+
+  /**
    * Trigger Integrity / Impact Recalculation
+   * Returns full impact analysis result with affected answers, alerts, and graph data.
    */
   async analyzeDocument(
     documentId: string,
     oldVersionId?: string,
     newVersionId?: string
-  ): Promise<{ status: string }> {
-    await fetchWithTimeout('/api/v1/impact/analyze', {
-      method: 'POST',
-      body: JSON.stringify({
-        document_id: documentId,
-        old_version_id: oldVersionId,
-        new_version_id: newVersionId,
-      }),
-    });
-    return { status: 'recalculated' };
+  ): Promise<BackendImpactAnalysisResult> {
+    return fetchWithTimeout<BackendImpactAnalysisResult>(
+      '/api/v1/impact/analyze',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          document_id: documentId,
+          old_version_id: oldVersionId,
+          new_version_id: newVersionId,
+        }),
+      },
+      60000 // Impact analysis can be slow with LLM
+    );
   },
 
   /**
@@ -994,6 +1120,8 @@ export const apiService = {
 
 export interface GoogleLoginResponse {
   message: string;
+  access_token?: string;
+  token_type?: string;
   user: AuthUser;
 }
 
@@ -1005,6 +1133,16 @@ export const authService = {
         credential,
       }),
     });
+  },
+
+  async devLogin(): Promise<GoogleLoginResponse> {
+    return fetchWithTimeout<GoogleLoginResponse>('/api/v1/auth/dev-login', {
+      method: 'POST',
+    });
+  },
+
+  async getMe(): Promise<AuthUser> {
+    return fetchWithTimeout<AuthUser>('/api/v1/auth/me');
   },
 
   async logout(): Promise<{ message: string }> {

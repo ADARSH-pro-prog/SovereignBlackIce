@@ -1,11 +1,12 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, status
+from fastapi import FastAPI, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from app import __version__
 from app.core.config import settings
 from app.core.logging_config import logger
 from app.core.exceptions import AppException, app_exception_handler, generic_exception_handler
 from app.database.database import init_db
+from app.api.dependencies import get_current_user
 from app.api.routes import health, documents, claims, rag, impact, auth
 
 
@@ -78,12 +79,31 @@ def root():
 
 
 # Route Registration
-# Direct /health endpoint as required by Section 13
+# Direct /health endpoint as required by Section 13 (public)
 app.include_router(health.router)
-# Versioned prefix /api/v1
+# Versioned prefix /api/v1 (health is public)
 app.include_router(health.router, prefix="/api/v1")
-app.include_router(documents.router, prefix="/api/v1")
-app.include_router(claims.router, prefix="/api/v1")
-app.include_router(rag.router, prefix="/api/v1")
-app.include_router(impact.router, prefix="/api/v1")
+# Public Auth endpoints (/api/v1/auth/google, /api/v1/auth/logout, and internal /me)
 app.include_router(auth.router, prefix="/api/v1")
+
+# Protected business routers (require authenticated user session)
+app.include_router(
+    documents.router,
+    prefix="/api/v1",
+    dependencies=[Depends(get_current_user)],
+)
+app.include_router(
+    claims.router,
+    prefix="/api/v1",
+    dependencies=[Depends(get_current_user)],
+)
+app.include_router(
+    rag.router,
+    prefix="/api/v1",
+    dependencies=[Depends(get_current_user)],
+)
+app.include_router(
+    impact.router,
+    prefix="/api/v1",
+    dependencies=[Depends(get_current_user)],
+)
