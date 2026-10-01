@@ -1,417 +1,1050 @@
 # Sovereign Black Ice
 
-> **A local-first AI knowledge integrity and impact-tracking system that
-> helps teams detect changes in trusted documents and identify AI
-> answers that may need review.**
+> **A local-first AI knowledge integrity and impact-tracking system that detects document changes, compares policy claims, traces their downstream impact on AI answers, and routes potentially affected outputs for human review.**
 
-Sovereign Black Ice is designed to reduce the risk of relying on
-outdated or altered knowledge. It maintains document versions, extracts
-and compares claims, connects evidence to generated answers, and helps
-users understand which prior outputs may be affected when a source
-changes.
+Sovereign Black Ice is a document-aware AI integrity layer built around a simple problem: **an AI answer can remain correct at the moment it is generated, but become outdated when the source document changes later.**
 
-This repository contains the backend API and frontend application.
+The system maintains document versions, computes cryptographic fingerprints, extracts structured claims, indexes document evidence for retrieval, stores grounded AI answers, builds a dependency graph, detects claim changes between versions, and traces potentially affected answers. Instead of silently rewriting historical outputs, the system surfaces the change and sends it through a human-review workflow.
 
-------------------------------------------------------------------------
+The project is designed as a **local-first** system. The current backend uses SQLite, ChromaDB, NetworkX, and Ollama, while the frontend is a React + TypeScript + Vite application.
+
+---
 
 ## Table of Contents
 
--   [Project Overview](#project-overview)
--   [Problem Statement](#problem-statement)
--   [Key Features](#key-features)
--   [How It Works](#how-it-works)
--   [System Architecture](#system-architecture)
--   [Technology Stack](#technology-stack)
--   [Repository Structure](#repository-structure)
--   [Getting Started](#getting-started)
--   [Configuration](#configuration)
--   [Running the Application](#running-the-application)
--   [Using the Application](#using-the-application)
--   [API Documentation](#api-documentation)
--   [Data and Privacy](#data-and-privacy)
--   [Limitations](#limitations)
--   [Roadmap](#roadmap)
--   [Contributing](#contributing)
--   [License](#license)
+- [1. Project Overview](#1-project-overview)
+- [2. Problem Statement](#2-problem-statement)
+- [3. Core Idea](#3-core-idea)
+- [4. Key Features](#4-key-features)
+- [5. End-to-End Workflow](#5-end-to-end-workflow)
+- [6. System Architecture](#6-system-architecture)
+- [7. Knowledge Integrity Pipeline](#7-knowledge-integrity-pipeline)
+- [8. Impact Analysis](#8-impact-analysis)
+- [9. Human Review Workflow](#9-human-review-workflow)
+- [10. Live Mode and Demo Mode](#10-live-mode-and-demo-mode)
+- [11. Authentication](#11-authentication)
+- [12. Technology Stack](#12-technology-stack)
+- [13. Repository Structure](#13-repository-structure)
+- [14. Backend Architecture](#14-backend-architecture)
+- [15. Frontend Architecture](#15-frontend-architecture)
+- [16. Data Model](#16-data-model)
+- [17. Getting Started](#17-getting-started)
+- [18. Backend Configuration](#18-backend-configuration)
+- [19. Frontend Configuration](#19-frontend-configuration)
+- [20. Running the Application](#20-running-the-application)
+- [21. Using the Application](#21-using-the-application)
+- [22. Recommended Demonstration](#22-recommended-demonstration)
+- [23. API Overview](#23-api-overview)
+- [24. Local Data Reset](#24-local-data-reset)
+- [25. Testing](#25-testing)
+- [26. Security and Privacy](#26-security-and-privacy)
+- [27. Limitations](#27-limitations)
+- [28. Troubleshooting](#28-troubleshooting)
+- [29. Project Status](#29-project-status)
+- [30. Future Improvements](#30-future-improvements)
+- [31. Contributing](#31-contributing)
+- [32. License](#32-license)
 
-------------------------------------------------------------------------
+---
 
-## Project Overview
+# 1. Project Overview
 
-Organizations rely on policies, manuals, standard operating procedures,
-and other internal documents to make decisions. When those documents
-change, AI-generated answers based on older versions can become
-inaccurate---even if the answer was correct when it was created.
+Sovereign Black Ice treats an AI knowledge base as a system that can **drift**.
 
-Sovereign Black Ice introduces a knowledge-integrity layer around
-document-based AI workflows. It tracks source versions, compares
-extracted claims, preserves relationships between evidence and outputs,
-and surfaces potentially impacted answers for review.
+Traditional RAG systems generally answer a question using whatever documents are currently retrievable. That is useful for generating new answers, but it does not by itself answer another important question:
 
-### Core idea
+> **Which previously generated AI answers were based on information that has since changed?**
 
-**Document → Version tracking → Claim extraction and comparison →
-Evidence-linked AI answer → Impact analysis → Human review**
+Sovereign Black Ice adds a provenance and impact layer around document-based AI workflows.
 
-The system is intended for workflows such as internal policy assistance,
-operational documentation, and knowledge management. It is designed with
-local-first components so that document processing and AI inference can
-be run on infrastructure controlled by the operator, subject to the
-configured models and services.
+The system tracks relationships such as:
 
-------------------------------------------------------------------------
+```text
+Document
+   ↓
+Document Version
+   ↓
+Claims / Chunks
+   ↓
+Evidence
+   ↓
+AI Answer
+```
 
-## Problem Statement
+When a new version changes a claim, the system can traverse these relationships and identify answers that may have become outdated.
 
-A document-based AI assistant can continue using old information after a
-source document is updated. Conventional retrieval systems may retrieve
-the latest content for new questions, but they do not necessarily
-identify previously generated answers that depended on a superseded
-rule.
+The core design principle is:
+
+```text
+Detect → Trace → Surface → Review
+```
+
+rather than:
+
+```text
+Detect → Silently Rewrite
+```
+
+---
+
+# 2. Problem Statement
+
+Organizations depend on documents such as:
+
+- Internal policies
+- Standard operating procedures
+- Employee guidelines
+- Security standards
+- Compliance documents
+- Operational manuals
+- Rules containing deadlines, limits, thresholds, or requirements
+
+An AI assistant may generate an answer using one version of such a document.
+
+Later, the document may change.
 
 For example:
 
-1.  A policy says that an expense report must be submitted within **30
-    days**.
-2.  An AI assistant answers a user's question using that policy.
-3.  A newer policy changes the deadline to **15 days**.
-4.  The earlier answer may now be outdated.
-5.  The system should identify the change and surface the earlier answer
-    for review.
+### Version 1
 
-Sovereign Black Ice aims to make this dependency and change visible
-instead of treating each AI answer as an isolated response.
-
-------------------------------------------------------------------------
-
-## Key Features
-
-### 1. Document management and versioning
-
--   Upload and manage source documents.
--   Maintain document versions and source metadata.
--   Use document integrity information to help identify changes.
--   Keep source material available for later comparison and review.
-
-### 2. Claim extraction and comparison
-
--   Extract factual claims or policy statements from document content.
--   Compare claims across document versions.
--   Surface additions, removals, and potential changes in meaning for
-    inspection.
--   Treat automated comparisons as signals for review, not as guaranteed
-    legal or factual judgments.
-
-### 3. Retrieval-augmented question answering
-
--   Ask questions against indexed document content.
--   Retrieve relevant document passages to support answers.
--   Generate responses using the configured language model.
--   Preserve evidence references where supported by the backend.
-
-### 4. Impact analysis
-
--   Connect documents, claims, and generated answers through
-    relationships in the knowledge graph.
--   Trace which stored outputs may depend on a changed claim or source.
--   Surface potentially affected answers so a reviewer can determine
-    whether they need updating.
-
-### 5. Review and audit support
-
--   Help reviewers inspect detected changes and affected outputs.
--   Provide a basis for tracking decisions and reviewing document
-    history, depending on the enabled application features.
-
-### 6. Local-first architecture
-
--   Supports local services and storage components, including a locally
-    hosted language model when configured.
--   Reduces reliance on external AI APIs when all required services are
-    run locally.
--   Actual privacy and offline behavior depend on configuration, model
-    availability, and any external integrations.
-
-------------------------------------------------------------------------
-
-## How It Works
-
-### End-to-end workflow
-
-``` text
-Source document uploaded
-        |
-        v
-Text extraction and normalization
-        |
-        v
-Document version and integrity metadata recorded
-        |
-        v
-Text split into searchable chunks
-        |
-        +----------------------------+
-        |                            |
-        v                            v
-Vector indexing                 Claim extraction
-        |                            |
-        v                            v
-Question answering              Claim/version comparison
-        |                            |
-        v                            v
-Answer with evidence            Changed claims identified
-        |                            |
-        +--------------+-------------+
-                       |
-                       v
-          Dependency / impact analysis
-                       |
-                       v
-        Potentially affected answers surfaced
-                       |
-                       v
-                Human review
+```text
+Employees must submit expense claims within 30 days.
 ```
 
-### Step-by-step
+The AI answers:
 
-1.  **Ingest:** A user uploads a document through the application or
-    API.
-2.  **Extract:** The backend extracts text from supported file types and
-    prepares it for processing.
-3.  **Version:** The system records document/version information and
-    integrity metadata.
-4.  **Index:** Text is divided into chunks and added to the retrieval
-    index.
-5.  **Extract claims:** The claim extraction service identifies
-    statements that can be compared across versions.
-6.  **Compare:** When a new version is processed, the comparison service
-    detects potentially changed claims.
-7.  **Answer questions:** The retrieval-augmented generation (RAG) flow
-    finds relevant indexed passages and uses the configured language
-    model to formulate an answer.
-8.  **Track dependencies:** Relationships among source documents,
-    claims, and stored answers support impact tracing.
-9.  **Review:** The system surfaces potential impacts for a human to
-    verify before relying on an updated answer.
+```text
+Employees have 30 days to submit an expense claim.
+```
 
-> **Important:** Automated claim extraction, semantic comparison, and
-> impact tracing can produce false positives or miss subtle changes.
-> Human verification is essential for high-impact decisions.
+### Version 2
 
-------------------------------------------------------------------------
+The policy is changed to:
 
-## System Architecture
+```text
+Employees must submit expense claims within 15 days.
+```
 
-``` text
-┌───────────────────────────────────────────────┐
-│                  Frontend                     │
-│          React web application                │
-│  Dashboard · Documents · Assistant · Review   │
-└───────────────────────┬───────────────────────┘
-                        │ HTTP / JSON
-                        v
-┌───────────────────────────────────────────────┐
-│                FastAPI Backend                │
-│                                               │
-│  API routes                                   │
-│   ├── Document operations                     │
-│   ├── Claim operations                        │
-│   ├── Retrieval / Q&A                         │
-│   ├── Impact analysis                         │
-│   └── Health checks                           │
-│                                               │
-│  Services                                     │
-│   ├── Text extraction and chunking            │
-│   ├── Claim extraction and comparison         │
-│   ├── Vector-store operations                 │
-│   ├── RAG question answering                  │
-│   └── Graph-based impact analysis             │
-└───────────────┬─────────────────┬─────────────┘
-                │                 │
-                v                 v
-        ┌──────────────┐  ┌───────────────────┐
-        │   SQLite     │  │  ChromaDB /       │
-        │ metadata,    │  │  vector index     │
-        │ versions,    │  │  semantic search  │
-        │ records      │  └───────────────────┘
-        └──────────────┘
+A new question can retrieve the new 15-day rule. However, an answer generated earlier may still contain the old 30-day rule.
+
+Sovereign Black Ice identifies the document change and traces the changed knowledge to the historical answer so that a human reviewer can determine what should happen next.
+
+---
+
+# 3. Core Idea
+
+The complete conceptual flow is:
+
+```text
+                 SOURCE DOCUMENT
+                       │
+                       ▼
+                SHA-256 HASHING
+                       │
+                       ▼
+               VERSION TRACKING
+                       │
+          ┌────────────┴────────────┐
+          ▼                         ▼
+   CLAIM EXTRACTION            TEXT CHUNKING
+          │                         │
+          ▼                         ▼
+   CLAIM COMPARISON             CHROMADB
+          │                         │
+          │                         ▼
+          │                    RAG RETRIEVAL
+          │                         │
+          │                         ▼
+          │                  GROUNDED ANSWER
+          │                         │
+          └──────────┬──────────────┘
+                     ▼
+              NETWORKX GRAPH
+                     │
+                     ▼
+              IMPACT ANALYSIS
+                     │
+                     ▼
+             ALERT / REVIEW GATE
+                     │
+                     ▼
+              HUMAN DECISION
+```
+
+---
+
+# 4. Key Features
+
+## 4.1 Document Management
+
+The application supports source-document ingestion and management.
+
+Current backend-supported upload formats are:
+
+- `.txt`
+- `.pdf`
+
+The configured maximum upload size is **10 MB**.
+
+For each new document, the backend:
+
+1. Validates the file.
+2. Sanitizes the filename.
+3. Computes a SHA-256 hash of the uploaded bytes.
+4. Extracts readable text.
+5. Creates the document record.
+6. Creates version 1.
+7. Extracts claims.
+8. Indexes the version for retrieval.
+
+---
+
+## 4.2 Immutable Version History
+
+A document is represented as a sequence of versions.
+
+Example:
+
+```text
+Policy.pdf
+   ├── v1
+   ├── v2
+   └── v3
+```
+
+When a new version is uploaded, the system:
+
+- Compares its SHA-256 hash with the current version.
+- Avoids creating a duplicate version when the content is unchanged.
+- Creates the next version number when content changes.
+- Preserves historical versions.
+- Extracts claims from the new version.
+- Compares claims with the previous version.
+- Indexes the new version.
+- Runs impact analysis.
+
+If new content matches an older version, the backend also detects the reversion while preserving the version history.
+
+---
+
+## 4.3 Cryptographic Fingerprinting
+
+Each uploaded version receives a SHA-256 fingerprint based on its raw file bytes.
+
+Conceptually:
+
+```text
+Raw document bytes
+       │
+       ▼
+   SHA-256
+       │
+       ▼
+Unique content fingerprint
+```
+
+This allows the application to distinguish identical content from changed content.
+
+---
+
+## 4.4 Claim Extraction
+
+The claim extraction layer attempts to identify structured, verifiable statements from a document, including:
+
+- Policy rules
+- Numerical thresholds
+- Deadlines
+- Allowances
+- Quotas
+- Operational requirements
+- Other factual or policy statements
+
+The preferred extraction path uses the configured local Ollama model.
+
+If Ollama is unreachable, the backend contains a deterministic heuristic fallback path.
+
+The stored claim structure includes information such as:
+
+```text
+Subject
+Predicate
+Value
+Unit
+Category
+Confidence
+Source location
+Version
+```
+
+This allows later versions to be compared at the claim level instead of relying only on raw text differences.
+
+---
+
+## 4.5 Claim Comparison
+
+When a new version is processed, claims from the old and new versions can be compared.
+
+The comparison system can identify categories such as:
+
+- Added
+- Removed
+- Modified
+- Unchanged
+- Uncertain
+
+Example:
+
+```text
+Previous:
+Employees must submit within 30 days.
+
+Current:
+Employees must submit within 15 days.
+
+Result:
+MODIFIED
+```
+
+The comparison also records information such as the changed field, confidence, explanation, and whether human review is required.
+
+---
+
+## 4.6 Retrieval-Augmented Generation
+
+Sovereign Black Ice contains a local RAG pipeline for document-grounded question answering.
+
+The process is:
+
+```text
+User question
+     │
+     ▼
+Semantic retrieval
+     │
+     ▼
+Relevant ChromaDB chunks
+     │
+     ▼
+Relevant claims/evidence
+     │
+     ▼
+Ollama grounded generation
+     │
+     ▼
+Answer + evidence
+```
+
+The RAG system is designed to ground responses in retrieved evidence rather than allowing the language model to answer from unrestricted general knowledge.
+
+Stored answers retain links to their evidence so they can later participate in impact analysis.
+
+---
+
+## 4.7 Evidence Tracking
+
+Evidence is retained as part of the answer record.
+
+An answer can be associated with:
+
+- Document
+- Version
+- Chunk
+- Claim
+- Page number
+- Similarity score
+- Citation text
+
+This creates a provenance chain between the answer and the source material used to produce it.
+
+---
+
+## 4.8 NetworkX Dependency Graph
+
+The graph layer represents relationships between knowledge entities.
+
+The graph includes entities such as:
+
+```text
+Document
+Version
+Chunk
+Claim
+Answer
+Claim Change
+```
+
+Important relationships include:
+
+```text
+Document ──HAS_VERSION──> Version
+Version ──CONTAINS_CHUNK──> Chunk
+Version ──CONTAINS_CLAIM──> Claim
+Claim ──GROUNDS──> Answer
+Chunk ──GROUNDS──> Answer
+Version ──GROUNDS──> Answer
+Claim Change ──MODIFIES──> Old Claim
+Claim Change ──RESULTS_IN──> New Claim
+```
+
+The graph allows downstream relationships to be traversed when a claim changes.
+
+---
+
+# 5. End-to-End Workflow
+
+The complete runtime pipeline is:
+
+```text
+┌─────────────────────┐
+│  Upload Document    │
+└──────────┬──────────┘
+           ▼
+┌─────────────────────┐
+│ Validate File       │
+│ TXT/PDF, size       │
+└──────────┬──────────┘
+           ▼
+┌─────────────────────┐
+│ SHA-256 Fingerprint │
+└──────────┬──────────┘
+           ▼
+┌─────────────────────┐
+│ Extract Text        │
+└──────────┬──────────┘
+           ▼
+┌─────────────────────┐
+│ Create Version      │
+└──────────┬──────────┘
+           ├───────────────────┐
+           ▼                   ▼
+┌─────────────────────┐  ┌─────────────────────┐
+│ Extract Claims      │  │ Chunk + Index       │
+│ Ollama / Fallback   │  │ ChromaDB            │
+└──────────┬──────────┘  └──────────┬──────────┘
+           │                        │
+           │                        ▼
+           │                ┌───────────────────┐
+           │                │ RAG Question      │
+           │                │ Answer + Evidence │
+           │                └─────────┬─────────┘
+           │                          │
+           └────────────┬─────────────┘
+                        ▼
+              ┌────────────────────┐
+              │ Version Comparison │
+              └─────────┬──────────┘
+                        ▼
+              ┌────────────────────┐
+              │ Claim Changes      │
+              └─────────┬──────────┘
+                        ▼
+              ┌────────────────────┐
+              │ Impact Analysis    │
+              │ NetworkX traversal │
+              └─────────┬──────────┘
+                        ▼
+              ┌────────────────────┐
+              │ Alerts / Reviews   │
+              └─────────┬──────────┘
+                        ▼
+              ┌────────────────────┐
+              │ Human Review       │
+              └────────────────────┘
+```
+
+---
+
+# 6. System Architecture
+
+```text
+┌────────────────────────────────────────────────────────────┐
+│                         FRONTEND                           │
+│                                                            │
+│ React 19 + TypeScript + Vite + Tailwind CSS                │
+│                                                            │
+│ Login · Overview · Documents · AI Assistant                │
+│ Impact Analysis · Review Center · Audit Log · Settings     │
+└───────────────────────────┬────────────────────────────────┘
+                            │ HTTP / JSON
+                            │ Bearer JWT
+                            ▼
+┌────────────────────────────────────────────────────────────┐
+│                      FASTAPI BACKEND                       │
+│                                                            │
+│ Authentication                                             │
+│ Document APIs                                              │
+│ Claims & Comparison APIs                                   │
+│ RAG APIs                                                   │
+│ Impact & Alert APIs                                        │
+│ Health & System Status                                     │
+│                                                            │
+│                  Service Layer                             │
+│ ┌────────────┐ ┌─────────────┐ ┌────────────────────────┐ │
+│ │ Documents  │ │ Claims      │ │ RAG / Retrieval        │ │
+│ └────────────┘ └─────────────┘ └────────────────────────┘ │
+│ ┌────────────┐ ┌─────────────┐ ┌────────────────────────┐ │
+│ │ Hashing    │ │ Comparison  │ │ Impact / Graph         │ │
+│ └────────────┘ └─────────────┘ └────────────────────────┘ │
+└───────────────┬───────────────┬──────────────┬─────────────┘
+                │               │              │
+                ▼               ▼              ▼
+        ┌──────────────┐ ┌─────────────┐ ┌───────────────┐
+        │   SQLite     │ │  ChromaDB   │ │    Ollama     │
+        │ Metadata &   │ │ Vector      │ │ Local LLM     │
+        │ relationships│ │ Retrieval   │ │               │
+        └──────────────┘ └─────────────┘ └───────────────┘
                 │
-                v
-        ┌───────────────────────┐
-        │ NetworkX graph        │
-        │ evidence/dependency   │
-        │ relationships         │
-        └───────────────────────┘
-
-        ┌───────────────────────┐
-        │ Ollama (configured)   │
-        │ Local language model  │
-        └───────────────────────┘
+                ▼
+        ┌──────────────────┐
+        │ NetworkX         │
+        │ Dependency Graph │
+        └──────────────────┘
 ```
 
-The exact runtime path depends on the backend configuration and enabled
-features. SQLite stores structured application records; ChromaDB
-supports vector-based retrieval; NetworkX supports graph relationships
-and traversal; and Ollama can provide local language-model inference.
+---
 
-------------------------------------------------------------------------
+# 7. Knowledge Integrity Pipeline
 
-## Technology Stack
+Sovereign Black Ice maintains multiple layers of information rather than treating a document as one opaque object.
 
-  -----------------------------------------------------------------------
-  Layer                   Technology              Role
-  ----------------------- ----------------------- -----------------------
-  Frontend                React                   Builds the interactive
-                                                  web interface and
-                                                  application screens.
+## Layer 1 — Source
 
-  Frontend tooling        Vite (if configured in  Local development
-                          the frontend project)   server and frontend
-                                                  build tooling.
+The original uploaded file.
 
-  Styling                 Tailwind CSS (if        Utility-based styling
-                          configured in the       and responsive UI
-                          frontend project)       design.
+## Layer 2 — Version
 
-  Backend API             Python, FastAPI         Exposes HTTP endpoints
-                                                  and coordinates
-                                                  application services.
+A historical snapshot of that source, identified by version number and SHA-256 hash.
 
-  API server              Uvicorn                 Runs the ASGI
-                                                  application.
+## Layer 3 — Text
 
-  Relational database     SQLite                  Stores structured
-                                                  application data and
-                                                  metadata.
+Extracted text and page information.
 
-  Vector database         ChromaDB                Stores embeddings and
-                                                  supports semantic
-                                                  retrieval.
+## Layer 4 — Chunks
 
-  Graph processing        NetworkX                Represents and
-                                                  traverses relationships
-                                                  for impact analysis.
+Searchable sections used by semantic retrieval.
 
-  Local model runtime     Ollama                  Runs a locally
-                                                  configured language
-                                                  model for AI tasks.
+## Layer 5 — Claims
 
-  Testing                 pytest (project         Supports automated
-                          includes a tests        backend tests.
-                          directory)              
+Structured statements extracted from the document.
 
-  Configuration           Environment variables / Configures runtime
-                          `.env`                  settings and service
-                                                  connections.
-  -----------------------------------------------------------------------
+## Layer 6 — Answers
 
-### Why these technologies?
+Questions answered using retrieved evidence.
 
--   **FastAPI:** Provides a Python API layer with automatic OpenAPI
-    documentation.
--   **SQLite:** Offers lightweight local relational storage without
-    requiring a separate database server.
--   **ChromaDB:** Enables similarity search over document chunks using
-    vector embeddings.
--   **NetworkX:** Makes it possible to represent dependencies and
-    traverse related nodes during impact analysis.
--   **Ollama:** Provides a way to run supported language models locally,
-    depending on hardware and model choice.
--   **React:** Supports a modular, component-based web interface.
+## Layer 7 — Evidence
 
-> Check the frontend's `package.json` and backend `requirements.txt` for
-> the exact installed versions and dependencies. This README describes
-> the intended stack; it does not pin package versions.
+Links between answers and the exact document/version/chunk/claim evidence used.
 
-------------------------------------------------------------------------
+## Layer 8 — Change
 
-## Repository Structure
+Differences between claims across versions.
 
-The backend structure currently follows this organization:
+## Layer 9 — Impact
 
-``` text
+Relationships from changed claims to potentially affected answers.
+
+## Layer 10 — Human Review
+
+A review gate where a person can inspect and resolve the detected impact.
+
+---
+
+# 8. Impact Analysis
+
+Impact analysis is the feature that differentiates the system from a basic document version tracker.
+
+A version change does not automatically mean every AI answer is invalid.
+
+The system therefore attempts to trace the actual dependency path.
+
+Example:
+
+```text
+Policy v1
+   │
+   ├── Claim: reimbursement deadline = 30 days
+   │                  │
+   │                  ▼
+   │          Historical Answer A
+   │          "You have 30 days..."
+   │
+   └── Other unrelated claims
+                      │
+                      ▼
+               Other answers
+```
+
+After v2:
+
+```text
+Policy v2
+   │
+   ├── Claim: reimbursement deadline = 15 days
+   │                  │
+   │                  ▼
+   │            CLAIM CHANGE
+   │                  │
+   │                  ▼
+   │            IMPACT TRACE
+   │                  │
+   │                  ▼
+   │          Historical Answer A
+   │                  │
+   │                  ▼
+   │            Review Required
+   │
+   └── Unchanged claims → unrelated answers remain unaffected
+```
+
+The backend's `ImpactService` works with the NetworkX graph and stored claim changes to identify affected answers and create alerts.
+
+---
+
+# 9. Human Review Workflow
+
+The system intentionally includes a human review gate.
+
+```text
+Changed Claim
+     ↓
+Potentially Affected Answer
+     ↓
+Alert Generated
+     ↓
+Review Center
+     ↓
+Human Investigation
+     ↓
+Decision
+```
+
+Possible review actions exposed by the current frontend include:
+
+- Mark as reviewed / resolve
+- Refresh affected answers
+- Dismiss as false positive
+- Escalate to committee
+
+The review UI is designed around the principle that automated impact detection is a signal for human verification rather than an unquestionable decision.
+
+---
+
+# 10. Live Mode and Demo Mode
+
+The frontend has two distinct data modes.
+
+## Live Mode
+
+Live Mode communicates with the real FastAPI backend.
+
+It uses actual:
+
+- SQLite records
+- ChromaDB data
+- Uploaded documents
+- Extracted claims
+- Versions
+- Answers
+- Evidence
+- Alerts
+- Review items
+- Audit information
+
+Uploading a document in Live Mode creates real backend data and triggers the actual processing pipeline.
+
+## Demo Mode
+
+Demo Mode uses frontend demonstration data from the project's demo-data layer.
+
+It is intentionally isolated from Live Mode so that a demonstration can be run without requiring a populated backend repository.
+
+The project includes explicit switching between Live and Demo modes rather than silently replacing backend failures with fake data.
+
+This distinction is important:
+
+```text
+LIVE
+  → Real backend data
+
+DEMO
+  → Demonstration data
+```
+
+---
+
+# 11. Authentication
+
+The current application supports Google Sign-In for user authentication.
+
+The authentication flow is:
+
+```text
+User
+ │
+ ▼
+Google Sign-In
+ │
+ ▼
+Google ID Token
+ │
+ ▼
+FastAPI /api/v1/auth/google
+ │
+ ▼
+Google token verification
+ │
+ ▼
+Local SQLite user record
+ │
+ ▼
+Application JWT
+ │
+ ▼
+Frontend localStorage
+ │
+ ▼
+Bearer token on protected API calls
+```
+
+The backend validates:
+
+- Google token validity
+- Token audience against the configured Google client ID
+- Verified Google email
+- Required Google account identifiers
+
+The application then issues a local JWT used to protect business APIs.
+
+Protected backend areas include document, claim, RAG, and impact functionality.
+
+For development/testing, the backend also contains a development login endpoint that is only permitted in development configuration.
+
+---
+
+# 12. Technology Stack
+
+## Frontend
+
+| Technology | Purpose |
+|---|---|
+| React 19 | Component-based web UI |
+| TypeScript | Static typing |
+| Vite | Development server and production build |
+| Tailwind CSS | Utility-first styling |
+| React Router | Frontend routing |
+| Lucide React | UI icons |
+| Recharts | Data visualization |
+| Motion | UI animation |
+| React Three Fiber / Three.js | 3D/visual interface capabilities |
+| XYFlow | Graph-oriented UI visualization |
+| `@react-oauth/google` | Google authentication integration |
+
+## Backend
+
+| Technology | Purpose |
+|---|---|
+| Python | Backend implementation |
+| FastAPI | HTTP API framework |
+| Uvicorn | ASGI application server |
+| Pydantic / pydantic-settings | Validation and configuration |
+| SQLAlchemy | Database ORM |
+| SQLite | Local relational persistence |
+| ChromaDB | Local vector storage and semantic retrieval |
+| NetworkX | Dependency graph and impact traversal |
+| PyMuPDF | PDF text extraction |
+| Google Auth | Google ID token verification |
+| PyJWT | Application JWT sessions |
+| HTTPX | HTTP communication, including Ollama checks |
+| pytest | Automated backend testing |
+
+## AI / Retrieval
+
+| Component | Purpose |
+|---|---|
+| Ollama | Local language-model runtime |
+| `llama3.2:3b` | Current configured local LLM default |
+| `all-minilm` | Current configured embedding model name |
+| ChromaDB | Vector retrieval |
+| RAG pipeline | Evidence-grounded question answering |
+
+---
+
+# 13. Repository Structure
+
+The repository is divided into frontend and backend applications:
+
+```text
 SovereignBlackIce/
+│
 ├── Backend/
 │   ├── app/
 │   │   ├── api/
+│   │   │   ├── dependencies.py
 │   │   │   └── routes/
+│   │   │       ├── auth.py
 │   │   │       ├── claims.py
 │   │   │       ├── documents.py
 │   │   │       ├── health.py
 │   │   │       ├── impact.py
 │   │   │       └── rag.py
+│   │   │
 │   │   ├── core/
+│   │   │   ├── config.py
+│   │   │   ├── exceptions.py
+│   │   │   ├── logging_config.py
+│   │   │   └── security.py
+│   │   │
 │   │   ├── database/
+│   │   │   ├── database.py
+│   │   │   ├── models.py
+│   │   │   └── schemas.py
+│   │   │
 │   │   ├── repositories/
+│   │   │   ├── alert_repository.py
+│   │   │   ├── answer_repository.py
+│   │   │   ├── chunk_repository.py
+│   │   │   └── document_repository.py
+│   │   │
 │   │   ├── services/
+│   │   │   ├── hashing_service.py
+│   │   │   ├── text_extraction_service.py
+│   │   │   ├── chunking_service.py
+│   │   │   ├── vector_store_service.py
+│   │   │   ├── claim_extraction_service.py
+│   │   │   ├── claim_service.py
+│   │   │   ├── claim_comparison_service.py
+│   │   │   ├── document_service.py
+│   │   │   ├── rag_service.py
+│   │   │   ├── graph_service.py
+│   │   │   └── impact_service.py
+│   │   │
 │   │   ├── utils/
-│   │   ├── main.py
-│   │   └── __init__.py
+│   │   └── main.py
+│   │
 │   ├── data/
-│   ├── scripts/
 │   ├── storage/
+│   ├── scripts/
+│   │   ├── run_demo.py
+│   │   ├── reset_local_data.py
+│   │   └── verification scripts
 │   ├── tests/
 │   ├── requirements.txt
 │   ├── .env.example
 │   └── README.md
-└── Frontend/
-    └── (React frontend application)
+│
+├── Frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── context/
+│   │   ├── data/
+│   │   ├── pages/
+│   │   ├── services/
+│   │   ├── types/
+│   │   └── ...
+│   ├── package.json
+│   ├── .env.example
+│   ├── index.html
+│   └── vite configuration
+│
+└── README.md
 ```
 
-### Backend modules
+---
 
--   `app/main.py` --- FastAPI application entry point and startup
-    configuration.
--   `app/api/routes/` --- HTTP route modules for documents, claims,
-    health, impact, and RAG.
--   `app/core/` --- Application configuration, exceptions, and logging.
--   `app/database/` --- Database setup, models, and schemas.
--   `app/repositories/` --- Data access and persistence logic.
--   `app/services/` --- Core processing logic, including text
-    extraction, chunking, claim comparison, graph analysis, retrieval,
-    and vector-store operations.
--   `app/utils/` --- Shared helper functions.
--   `tests/` --- Backend tests.
--   `data/` and `storage/` --- Local runtime data and storage locations;
-    these may contain generated or private data and should not be
-    committed unless intentionally needed.
+# 14. Backend Architecture
 
-------------------------------------------------------------------------
+The backend follows a layered architecture.
 
-## Getting Started
+```text
+HTTP Request
+     │
+     ▼
+API Route
+     │
+     ▼
+Service Layer
+     │
+     ├──────────────► Repository Layer ─────► SQLite
+     │
+     ├──────────────► Vector Store ─────────► ChromaDB
+     │
+     ├──────────────► Ollama
+     │
+     └──────────────► NetworkX
+```
 
-### Prerequisites
+## API Layer
 
-Install or prepare the following:
+`Backend/app/api/routes/` contains HTTP endpoint definitions.
 
--   Python 3.12 (or a compatible version supported by the project
-    dependencies).
--   Node.js and npm for the frontend.
--   Git.
--   Ollama, if using local language-model inference.
--   A model downloaded in Ollama that matches the application's
-    configuration.
+## Service Layer
 
-Check versions:
+Services contain the application's domain logic.
 
-``` powershell
+Examples:
+
+- `DocumentService` — document validation, hashing, storage, version creation, and processing orchestration.
+- `ClaimExtractionService` — structured claim extraction.
+- `ClaimComparisonService` — cross-version claim comparison.
+- `RAGService` — indexing, semantic retrieval, and grounded question answering.
+- `GraphService` — dependency graph construction and traversal.
+- `ImpactService` — impact analysis and alert generation.
+- `HashingService` — SHA-256 content fingerprinting.
+- `TextExtractionService` — TXT/PDF text extraction.
+
+## Repository Layer
+
+Repositories isolate persistence operations from service logic.
+
+Examples include document, answer, chunk, and alert repositories.
+
+## Database Layer
+
+SQLAlchemy models represent the application's structured records, while Pydantic schemas define API contracts.
+
+---
+
+# 15. Frontend Architecture
+
+The frontend is a React application written in TypeScript.
+
+The major architectural pieces are:
+
+```text
+React UI
+   │
+   ├── Pages
+   │
+   ├── Components
+   │
+   ├── AppContext
+   │
+   └── API Service
+             │
+             ▼
+        FastAPI Backend
+```
+
+## AppContext
+
+The application context coordinates global application state such as:
+
+- Current user
+- Authentication state
+- Live/Demo mode
+- Documents
+- Review items
+- Audit events
+- Backend status
+- Toast notifications
+- Upload actions
+- Review actions
+- Impact analysis actions
+
+## API Service
+
+`Frontend/src/services/api.ts` centralizes backend communication.
+
+The API base URL is configured through:
+
+```text
+VITE_API_BASE_URL
+```
+
+The service automatically attaches the stored application JWT as a Bearer token for authenticated API requests.
+
+---
+
+# 16. Data Model
+
+At a conceptual level, the backend maintains these major entities:
+
+```text
+User
+ │
+ └── authentication/session identity
+
+Document
+ │
+ └── DocumentVersion
+       │
+       ├── EvidenceChunk
+       └── Claim
+             │
+             └── ClaimChange
+
+Answer
+ │
+ └── AnswerEvidence
+
+Alert
+ │
+ ├── Document / Version
+ ├── Claim Change
+ └── Affected Answer
+```
+
+This can be visualized as:
+
+```text
+Document
+   │
+   ├── Version 1 ──┐
+   │                ├── Claims
+   │                └── Chunks
+   │
+   └── Version 2 ──┐
+                    ├── Claims
+                    └── Chunks
+                         │
+                         ▼
+                    Claim Changes
+                         │
+                         ▼
+                       Alerts
+                         │
+                         ▼
+                      Answers
+```
+
+The graph service then builds a runtime dependency graph from these records.
+
+---
+
+# 17. Getting Started
+
+## Prerequisites
+
+Install:
+
+- Git
+- Python 3.12
+- Node.js and npm
+- Ollama for local AI inference
+
+Check the installed versions:
+
+```powershell
 python --version
 node --version
 npm --version
 git --version
 ```
 
-### 1. Clone the repository
+---
 
-``` powershell
+## Clone the repository
+
+```powershell
 git clone https://github.com/ADARSH-pro-prog/SovereignBlackIce.git
 cd SovereignBlackIce
 ```
 
-### 2. Set up the backend
+---
 
-``` powershell
+## Backend setup
+
+```powershell
 cd Backend
 python -m venv venv
 .\venv\Scripts\Activate.ps1
@@ -419,230 +1052,866 @@ python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-If PowerShell blocks activation, you can run the venv's Python directly:
+If PowerShell activation is unavailable, the virtual environment's Python can be used directly:
 
-``` powershell
+```powershell
 .\venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-### 3. Configure environment variables
+---
 
-Create a local `.env` file based on the example:
+## Frontend setup
 
-``` powershell
+Open another terminal:
+
+```powershell
+cd "C:\path\to\SovereignBlackIce\Frontend"
+npm install
+```
+
+---
+
+# 18. Backend Configuration
+
+Backend configuration is managed through environment variables and `.env`.
+
+Start from the provided example:
+
+```powershell
+cd Backend
 Copy-Item .env.example .env
 ```
 
-Open `.env` and adjust the settings to match your environment, including
-any model runtime URL, model name, storage paths, or database settings.
-Do not commit `.env` or secrets.
+The current configuration class defines values such as:
 
-### 4. Configure Ollama (if required)
-
-Install Ollama from its official website, start the Ollama service, and
-download the model specified in your `.env` or application
-configuration.
-
-Example only:
-
-``` powershell
-ollama pull llama3.2:3b
+```text
+APP_NAME=Sovereign Black Ice
+APP_ENV=development
+DEBUG=True
+HOST=0.0.0.0
+PORT=8000
+DATABASE_URL=sqlite:///./data/database.db
+STORAGE_DIR=./storage
+CHROMA_DIR=./storage/chroma
+MAX_UPLOAD_SIZE_MB=10
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=llama3.2:3b
+EMBEDDING_MODEL=all-minilm
+GOOGLE_CLIENT_ID=<your-client-id>
+JWT_SECRET_KEY=<development-secret>
+JWT_ALGORITHM=HS256
+JWT_EXPIRE_MINUTES=1440
 ```
 
-The model name must match the configuration used by the backend.
-Hardware requirements vary by model.
+The exact values should be kept in `.env` and should not be committed if they contain secrets.
 
-------------------------------------------------------------------------
+### CORS
 
-## Running the Application
+The backend currently includes local frontend origins such as:
 
-Use **two terminals**: one for the backend and one for the frontend.
+```text
+http://localhost:3000
+http://127.0.0.1:3000
+http://localhost:5173
+http://127.0.0.1:5173
+http://localhost:8081
+```
 
-### Terminal 1 --- Backend
+If the frontend is moved to a different origin, the backend CORS configuration must be updated accordingly.
+
+---
+
+# 19. Frontend Configuration
+
+The frontend uses Vite environment variables.
+
+Create a local `.env` from the example if required:
+
+```powershell
+cd Frontend
+Copy-Item .env.example .env
+```
+
+Important variables include:
+
+```text
+VITE_API_BASE_URL=http://127.0.0.1:8000
+VITE_GOOGLE_CLIENT_ID=<your-google-client-id>
+```
+
+`VITE_API_BASE_URL` determines where the browser sends backend requests.
+
+Do not place private secrets in Vite variables. Vite variables exposed to frontend code should be treated as public configuration.
+
+---
+
+# 20. Running the Application
+
+The normal local development setup uses two terminals.
+
+## Terminal 1 — Backend
 
 From the repository root:
 
-``` powershell
+```powershell
 cd Backend
 .\venv\Scripts\Activate.ps1
-python -m uvicorn app.main:app --host 127.0.0.1 --port 8001
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-The backend API will be available at:
+Backend:
 
--   API base: `http://127.0.0.1:8001`
--   Interactive API docs: `http://127.0.0.1:8001/docs`
--   OpenAPI schema: `http://127.0.0.1:8001/api/v1/openapi.json`
-
-To enable automatic reload during development:
-
-``` powershell
-python -m uvicorn app.main:app --host 127.0.0.1 --port 8001 --reload
+```text
+http://127.0.0.1:8000
 ```
 
-### Terminal 2 --- Frontend
+Swagger UI:
 
-Open a second terminal:
+```text
+http://127.0.0.1:8000/docs
+```
 
-``` powershell
+ReDoc:
+
+```text
+http://127.0.0.1:8000/redoc
+```
+
+OpenAPI JSON:
+
+```text
+http://127.0.0.1:8000/api/v1/openapi.json
+```
+
+Health check:
+
+```text
+http://127.0.0.1:8000/health
+```
+
+---
+
+## Terminal 2 — Frontend
+
+```powershell
 cd Frontend
-npm install
 npm run dev
 ```
 
-Open the local URL printed by the frontend development server (often
-`http://localhost:5173`).
+The current frontend package is configured to use port `3000`:
 
-### Frontend API connection
-
-The frontend must send API requests to the backend address:
-
-``` text
-http://127.0.0.1:8001
+```text
+http://localhost:3000
 ```
 
-If the frontend uses an environment variable for the API base URL,
-configure it according to the variable name used in the frontend source.
-Do not assume a variable name without checking the project.
+The Vite dev server is configured with `--host 0.0.0.0`.
 
-If browser requests are blocked by CORS, configure the backend's allowed
-origins to include the exact local frontend origin. Avoid allowing all
-origins in production.
+---
 
-------------------------------------------------------------------------
+# 21. Using the Application
 
-## Using the Application
+A typical Live Mode workflow is:
 
-The exact labels and available actions depend on the frontend version. A
-typical workflow is:
+### Step 1 — Login
 
-1.  Open the dashboard and check service status.
-2.  Go to the document library and upload a source document.
-3.  Confirm that the document was processed and indexed.
-4.  Upload or register a newer version of the same source when testing
-    version comparison.
-5.  Review extracted claims and any detected changes.
-6.  Ask a question in the AI assistant and inspect the answer and
-    evidence.
-7.  Open the impact view to inspect relationships and potentially
-    affected outputs.
-8.  Review flagged items and confirm whether they actually require an
-    update.
+Use Google Sign-In.
 
-### Suggested demonstration scenario
+For development/testing, a development login path is also available when backend development mode allows it.
 
-Use a harmless sample policy document:
+### Step 2 — Open Documents
 
--   **Version 1:** "Expense reports must be submitted within 30 days."
--   Ask the AI assistant: "What is the expense report submission
-    deadline?"
--   **Version 2:** Change the deadline to "15 days."
--   Run the version comparison and inspect the changed claim.
--   Review whether the system identifies any previously stored answer
-    associated with the older rule.
--   Confirm the new answer reflects the updated source and inspect its
-    supporting evidence.
+Navigate to the Documents section.
 
-This is a demonstration scenario, not a guarantee that every workflow is
-fully automated in every build.
+Upload a `.txt` or `.pdf` file within the configured size limit.
 
-------------------------------------------------------------------------
+### Step 3 — Processing
 
-## API Documentation
+The backend creates:
 
-FastAPI provides interactive API documentation when the backend is
-running:
+```text
+Document
+   ↓
+Version 1
+   ↓
+SHA-256
+   ↓
+Extracted text
+   ↓
+Claims
+   ↓
+Chunks
+   ↓
+ChromaDB index
+```
 
-**http://127.0.0.1:8001/docs**
+### Step 4 — Ask a Question
 
-The OpenAPI specification is available at:
+Open the AI Assistant and ask a question whose answer should be present in the uploaded document.
 
-**http://127.0.0.1:8001/api/v1/openapi.json**
+The RAG pipeline retrieves evidence and produces a grounded response.
 
-The backend route modules include document, claim, health, impact, and
-RAG-related APIs. For exact endpoint paths, request schemas, and
-response formats, use the live Swagger documentation rather than relying
-on assumed routes.
+### Step 5 — Create a New Version
 
-------------------------------------------------------------------------
+Upload a modified version of the same document.
 
-## Data and Privacy
+The backend creates the next version and automatically processes its claims, comparison, indexing, and impact analysis.
 
-Sovereign Black Ice is designed around a local-first approach. When
-configured to use local storage and a locally hosted model, document
-content and inference can remain within the operator's environment.
+### Step 6 — Inspect Comparison
 
-However:
+The version comparison identifies changed claims.
 
--   Local-first does not automatically mean fully offline.
--   External model APIs, telemetry, remote storage, or other
-    integrations may transmit data if enabled.
--   Uploaded documents, embeddings, logs, and database files may contain
-    confidential information.
--   Keep `.env` files, credentials, and private source documents out of
-    public repositories.
--   Review access controls, backups, retention, and deployment security
-    before using sensitive organizational data.
+### Step 7 — Inspect Impact Analysis
 
-------------------------------------------------------------------------
+The graph shows relationships among the changed knowledge and stored answers.
 
-## Limitations
+### Step 8 — Review Alerts
 
--   Claim extraction and semantic comparison are probabilistic and may
-    miss subtle meaning changes or flag unchanged claims.
--   Retrieval can fail to find relevant passages if documents are poorly
-    extracted, indexed, or queried.
--   Generated answers may be incomplete or incorrect; citations should
-    be checked against the original source.
--   Impact analysis depends on the quality and completeness of recorded
-    relationships between sources, claims, and answers.
--   Supported file types and maximum upload sizes depend on the current
-    implementation and configuration.
--   The project is a prototype and should not be treated as a substitute
-    for legal, compliance, security, or domain-expert review.
+Potentially affected answers appear in the Review Center.
 
-------------------------------------------------------------------------
+### Step 9 — Human Decision
 
-## Roadmap
+The reviewer can inspect the evidence and choose the appropriate review action.
 
-Potential future improvements:
+---
 
--   More robust document-format support and extraction quality checks.
--   Stronger claim-level provenance and evidence visualization.
--   Better semantic diffing and reviewer feedback workflows.
--   Clearer status tracking for stale, reviewed, and superseded answers.
--   Expanded audit and export capabilities.
--   Authentication, role-based access control, and deployment hardening.
--   More automated integration and regression tests.
--   Packaging for easier local or on-premises deployment.
+# 22. Recommended Demonstration
 
-------------------------------------------------------------------------
+The following scenario demonstrates the project's core concept clearly.
 
-## Contributing
+## 1. Create Version 1
 
-Contributions and feedback are welcome.
+Create a text file called:
 
-1.  Fork the repository or create a feature branch.
-2.  Make a focused change.
-3.  Add or update tests where appropriate.
-4.  Run the relevant checks.
-5.  Submit a pull request describing the change and how it was tested.
+```text
+travel_policy.txt
+```
 
-Please do not commit secrets, private documents, local databases,
-virtual environments, or generated build artifacts.
+Example content:
 
-------------------------------------------------------------------------
+```text
+Travel Reimbursement Policy
 
-## License
+Employees must submit travel reimbursement claims within 30 days of the travel date.
+Valid receipts must be attached to every reimbursement claim.
+```
 
-No license has been specified yet. Until a license is added, the
-repository should not be assumed to grant permission to reuse, modify,
-or distribute the code.
+Upload it.
 
-------------------------------------------------------------------------
+---
 
-## Acknowledgments
+## 2. Ask the AI
 
-Built as a local-first AI knowledge-integrity project for a hackathon,
-exploring document versioning, evidence-aware question answering, and
-impact analysis.
+Ask:
+
+```text
+How many days does an employee have to submit a reimbursement claim?
+```
+
+Expected knowledge:
+
+```text
+30 days
+```
+
+Inspect the evidence associated with the answer.
+
+---
+
+## 3. Create Version 2
+
+Modify the policy:
+
+```text
+Employees must submit travel reimbursement claims within 15 days of the travel date.
+Valid receipts must be attached to every reimbursement claim.
+```
+
+Upload it as a new version.
+
+---
+
+## 4. Compare Versions
+
+The system should detect that the deadline changed.
+
+Conceptually:
+
+```text
+30 days
+   ↓
+15 days
+   ↓
+MODIFIED CLAIM
+```
+
+---
+
+## 5. Analyze Impact
+
+The system traces the changed claim through the dependency graph.
+
+If an earlier answer was grounded in the old version, it may be identified as potentially affected.
+
+---
+
+## 6. Review
+
+Open Review Center and inspect the affected answer and the source change.
+
+The reviewer then makes the human decision.
+
+---
+
+# 23. API Overview
+
+The FastAPI application exposes versioned APIs under:
+
+```text
+/api/v1
+```
+
+The exact request and response schemas are available in Swagger at `/docs`.
+
+## Authentication
+
+```text
+POST /api/v1/auth/google
+GET  /api/v1/auth/me
+POST /api/v1/auth/logout
+POST /api/v1/auth/dev-login
+```
+
+## Health
+
+```text
+GET /health
+GET /api/v1/health
+GET /api/v1/system/status
+```
+
+## Documents
+
+```text
+POST   /api/v1/documents/upload
+GET    /api/v1/documents
+GET    /api/v1/documents/{document_id}
+DELETE /api/v1/documents/{document_id}
+GET    /api/v1/documents/{document_id}/versions
+GET    /api/v1/documents/{document_id}/versions/{version_id}
+GET    /api/v1/documents/{document_id}/versions/{version_id}/text
+POST   /api/v1/documents/{document_id}/versions
+```
+
+## Claims and comparison
+
+```text
+POST /api/v1/documents/{document_id}/versions/{version_id}/claims/extract
+GET  /api/v1/documents/{document_id}/versions/{version_id}/claims
+GET  /api/v1/documents/{document_id}/claims
+GET  /api/v1/claims/{claim_id}
+GET  /api/v1/documents/{document_id}/compare
+POST /api/v1/documents/{document_id}/compare
+GET  /api/v1/documents/{document_id}/changes
+```
+
+## RAG and answers
+
+```text
+POST /api/v1/documents/{document_id}/versions/{version_id}/index
+GET  /api/v1/documents/{document_id}/versions/{version_id}/chunks
+POST /api/v1/search
+POST /api/v1/qa/ask
+GET  /api/v1/answers
+GET  /api/v1/answers/{answer_id}
+```
+
+## Impact and alerts
+
+```text
+POST  /api/v1/impact/analyze
+GET   /api/v1/impact/graph
+GET   /api/v1/alerts
+GET   /api/v1/alerts/{alert_id}
+PATCH /api/v1/alerts/{alert_id}/resolve
+GET   /api/v1/answers/{answer_id}/impact
+```
+
+All business APIs are protected by the backend's current authenticated-user dependency.
+
+---
+
+# 24. Local Data Reset
+
+During development, repeated testing can accumulate documents, claims, answers, vectors, and alerts in the local Live repository.
+
+The repository includes:
+
+```text
+Backend/scripts/reset_local_data.py
+```
+
+It is intentionally destructive and requires an explicit confirmation flag.
+
+Run:
+
+```powershell
+cd Backend
+.\venv\Scripts\Activate.ps1
+python scripts/reset_local_data.py --confirm
+```
+
+The reset utility clears application Live data including:
+
+- Documents
+- Document versions
+- Claims
+- Claim changes
+- Evidence chunks
+- Answers
+- Answer evidence
+- Alerts
+- Stored uploaded document directories
+- ChromaDB vectors
+
+It preserves the SQLite schema, source code, `.env`, authentication users by default, tests, and Demo Mode data.
+
+To also remove local user profiles:
+
+```powershell
+python scripts/reset_local_data.py --confirm --include-users
+```
+
+### Important
+
+Do not run the reset command against a production database or a directory containing data that must be preserved.
+
+---
+
+# 25. Testing
+
+The backend contains automated tests under:
+
+```text
+Backend/tests/
+```
+
+Run the backend tests from the `Backend` directory:
+
+```powershell
+pytest
+```
+
+For a more verbose run:
+
+```powershell
+pytest -v
+```
+
+Frontend TypeScript validation:
+
+```powershell
+cd Frontend
+npm run lint
+```
+
+Production frontend build:
+
+```powershell
+npm run build
+```
+
+Preview the production build locally:
+
+```powershell
+npm run preview
+```
+
+A useful pre-commit verification sequence is:
+
+```powershell
+cd Backend
+pytest
+
+cd ..\Frontend
+npm run lint
+npm run build
+```
+
+---
+
+# 26. Security and Privacy
+
+Sovereign Black Ice is designed to support local-first operation, but **local-first is not automatically the same as secure or fully offline**.
+
+## Data locality
+
+When configured entirely with local services, the primary processing components are local:
+
+```text
+Document
+   ↓
+Local FastAPI
+   ↓
+SQLite / ChromaDB
+   ↓
+Local Ollama
+```
+
+However, Google Sign-In requires communication with Google during authentication, and other integrations may introduce external communication depending on configuration.
+
+## Secrets
+
+Never commit:
+
+- `.env`
+- Google OAuth secrets
+- JWT secrets intended for production
+- Private documents
+- Local databases
+- Credentials
+
+## JWT
+
+The backend issues local JWT access tokens after authentication.
+
+The development configuration contains a default JWT secret value intended to be replaced for production use.
+
+## CORS
+
+Only trusted frontend origins should be configured for production deployments.
+
+## Human review
+
+The system should not be treated as an autonomous compliance or legal decision-maker. Detected changes and impacted answers require appropriate human verification.
+
+---
+
+# 27. Limitations
+
+## AI-generated claims are not guaranteed to be perfect
+
+Claim extraction can miss subtle meaning or produce incorrect interpretations.
+
+## Semantic comparison is not legal interpretation
+
+A detected `MODIFIED` claim means the system detected a meaningful difference according to its comparison logic. It does not establish legal significance.
+
+## RAG answers require verification
+
+Even when evidence is attached, users should verify important answers against the source document.
+
+## Impact analysis depends on provenance
+
+If an answer was not properly linked to source evidence, impact tracing cannot reliably determine whether that answer depends on a changed claim.
+
+## Local model performance depends on hardware
+
+Ollama inference speed and model quality depend on available CPU/GPU/RAM and the selected model.
+
+## Prototype / hackathon scope
+
+The project is intended as a working prototype and hackathon system. Production use with sensitive organizational information would require additional security, access control, deployment, observability, backup, and governance work.
+
+---
+
+# 28. Troubleshooting
+
+## Backend says port 8000 is already in use
+
+Do not automatically start a second backend.
+
+First check whether the existing backend is healthy:
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:8000/health
+```
+
+A healthy response resembles:
+
+```text
+status : ok
+app_name : Sovereign Black Ice
+version : 0.1.0
+```
+
+If the health endpoint works, the backend is already running.
+
+---
+
+## Frontend cannot connect to backend
+
+Check:
+
+```text
+Frontend VITE_API_BASE_URL
+        ↓
+http://127.0.0.1:8000
+```
+
+Then verify:
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:8000/health
+```
+
+Also check backend CORS origins.
+
+---
+
+## Ollama is disconnected
+
+Check that Ollama is running.
+
+The default backend target is:
+
+```text
+http://localhost:11434
+```
+
+You can inspect installed models with:
+
+```powershell
+ollama list
+```
+
+The configured default model is:
+
+```text
+llama3.2:3b
+```
+
+The backend also contains a deterministic claim-extraction fallback when Ollama cannot be reached.
+
+---
+
+## Review Center has no alerts
+
+This is expected when the Live repository has no unresolved impact alerts.
+
+A review item is normally produced after the workflow:
+
+```text
+Document v1
+   ↓
+Question / stored answer
+   ↓
+Document v2
+   ↓
+Changed claim
+   ↓
+Impact analysis
+   ↓
+Affected answer
+   ↓
+Alert
+   ↓
+Review Center
+```
+
+---
+
+## Live Mode contains old test data
+
+Use the local reset utility:
+
+```powershell
+cd Backend
+python scripts/reset_local_data.py --confirm
+```
+
+Then restart/reconnect the application and verify Live Mode begins empty.
+
+Demo Mode data is intentionally separate and should remain available after a normal reset.
+
+---
+
+# 29. Project Status
+
+Sovereign Black Ice currently provides an end-to-end prototype covering:
+
+- Google authentication
+- Protected application APIs
+- Document upload
+- SHA-256 document fingerprinting
+- Document version history
+- TXT/PDF text extraction
+- Claim extraction
+- Ollama-based claim extraction with heuristic fallback
+- Claim comparison
+- ChromaDB indexing
+- Semantic search
+- RAG question answering
+- Answer evidence tracking
+- NetworkX dependency graph
+- Version-change impact analysis
+- Impact alerts
+- Human review workflow
+- Live Mode
+- Demo Mode
+- Local development data reset
+- Backend automated tests
+- Frontend TypeScript checking and production builds
+
+The repository is primarily structured for local development and demonstration.
+
+---
+
+# 30. Future Improvements
+
+Potential future improvements include:
+
+### Deployment
+
+- Production-grade backend hosting
+- Persistent managed database options
+- Persistent vector-store deployment
+- Production model serving
+- Secure secrets management
+- HTTPS and deployment hardening
+
+### AI and retrieval
+
+- Stronger claim extraction validation
+- Better semantic contradiction detection
+- More robust citation verification
+- Multiple embedding-model support
+- Better retrieval evaluation
+
+### Impact analysis
+
+- More sophisticated dependency scoring
+- Improved semantic impact ranking
+- Better stale-answer detection
+- More detailed blast-radius visualization
+- Automated answer regeneration workflows with governance controls
+
+### Governance
+
+- Role-based access control
+- Reviewer roles
+- Approval policies
+- Richer audit records
+- Exportable compliance reports
+
+### Documents
+
+- Additional file formats
+- OCR for scanned PDFs
+- Better table extraction
+- Document metadata enrichment
+
+### Testing
+
+- Larger regression suite
+- More frontend end-to-end tests
+- Load testing
+- Retrieval quality benchmarks
+- Security testing
+
+---
+
+# 31. Contributing
+
+Contributions are welcome.
+
+Recommended workflow:
+
+```text
+Create branch
+    ↓
+Make focused change
+    ↓
+Add/update tests
+    ↓
+Run backend tests
+    ↓
+Run frontend typecheck/build
+    ↓
+Review git diff
+    ↓
+Commit
+    ↓
+Push branch
+```
+
+Before committing, check:
+
+```powershell
+git status
+git diff
+```
+
+Avoid committing:
+
+```text
+.env
+venv/
+.venv/
+node_modules/
+dist/
+local databases
+private uploaded documents
+ChromaDB runtime data
+credentials/secrets
+```
+
+---
+
+# 32. License
+
+No open-source license has currently been specified for this repository.
+
+Unless a license is added, the code should not be assumed to grant permission for unrestricted reuse, modification, or redistribution.
+
+---
+
+# Architecture Summary
+
+For a quick technical overview:
+
+```text
+                         SOVEREIGN BLACK ICE
+                                  │
+                    Local-First Knowledge Integrity
+                                  │
+              ┌───────────────────┴──────────────────┐
+              │                                      │
+          FRONTEND                                BACKEND
+              │                                      │
+     React + TypeScript                         FastAPI
+          + Vite                                  │
+      + Tailwind CSS                              │
+              │                    ┌───────────────┼────────────────┐
+              │                    │               │                │
+              │                 SQLite          ChromaDB          Ollama
+              │                    │               │                │
+              │                    └───────┬───────┘                │
+              │                            │                        │
+              │                         NetworkX                    │
+              │                            │                        │
+              └─────────────── HTTP ───────┴────────────────────────┘
+                                           │
+                                           ▼
+                              Document → Version → Claims
+                                           │
+                                           ▼
+                                  RAG → Answer → Evidence
+                                           │
+                                           ▼
+                              Change Detection → Impact
+                                           │
+                                           ▼
+                                    Human Review
+```
+
+## The central principle
+
+> **Sovereign Black Ice does not only ask what the AI knows now. It tracks how that knowledge changed and which previously generated answers may have depended on the changed information.**
+
+---
+
+## Repository
+
+GitHub:
+
+https://github.com/ADARSH-pro-prog/SovereignBlackIce
