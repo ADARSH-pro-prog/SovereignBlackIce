@@ -51,10 +51,14 @@ export const AuditLogPage: React.FC = () => {
   const { auditEvents, addToast, isLiveMode } = useApp();
 
   const [selectedEventId, setSelectedEventId] = useState<string>(
-
-    auditEvents[0]?.id || 'EVT-98421'
-
+    auditEvents[0]?.id || ''
   );
+
+  React.useEffect(() => {
+    if (auditEvents.length > 0 && (!selectedEventId || !auditEvents.some((e) => e.id === selectedEventId))) {
+      setSelectedEventId(auditEvents[0].id);
+    }
+  }, [auditEvents, selectedEventId]);
 
   const [filterQuery, setFilterQuery] = useState('');
 

@@ -55,10 +55,14 @@ export const ReviewCenterPage: React.FC = () => {
   const { reviews, updateReviewDecision, addToast, isLiveMode } = useApp();
 
   const [selectedReviewId, setSelectedReviewId] = useState<string>(
-
-    reviews[0]?.id || 'REV-4201'
-
+    reviews[0]?.id || ''
   );
+
+  React.useEffect(() => {
+    if (reviews.length > 0 && (!selectedReviewId || !reviews.some((r) => r.id === selectedReviewId))) {
+      setSelectedReviewId(reviews[0].id);
+    }
+  }, [reviews, selectedReviewId]);
 
   const [filterStatus, setFilterStatus] = useState<string>('Pending');
 
@@ -424,9 +428,15 @@ export const ReviewCenterPage: React.FC = () => {
 
           <div className="flex flex-col gap-3">
 
-            {filteredQueue.map((item) => {
-
-              const isSelected = item.id === selectedReview.id;
+            {filteredQueue.length === 0 ? (
+              <div className="bg-panel border border-line rounded-xl p-8 text-center text-xs text-muted flex flex-col items-center justify-center gap-2">
+                <CheckCircle2 className="w-8 h-8 text-ice" />
+                <p className="font-semibold text-ink">No Alerts Found</p>
+                <p className="text-muted">No review items match the current filters.</p>
+              </div>
+            ) : (
+              filteredQueue.map((item) => {
+                const isSelected = item.id === selectedReview?.id;
 
               return (
 
@@ -525,8 +535,8 @@ export const ReviewCenterPage: React.FC = () => {
                 </div>
 
               );
-
-            })}
+            })
+          )}
 
           </div>
 

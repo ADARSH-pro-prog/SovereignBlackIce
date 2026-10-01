@@ -136,9 +136,9 @@ export const ImpactAnalysisPage: React.FC = () => {
 
   const handleRecalculate = async () => {
 
-    const targetDocId = selectedDocId === 'all' ? documents[0]?.id : selectedDocId;
+    const targetDocId = (selectedDocId && selectedDocId !== 'all') ? selectedDocId : documents[0]?.id;
 
-    if (!targetDocId && isLiveMode) {
+    if (isLiveMode && !targetDocId) {
 
       addToast({
 
@@ -146,7 +146,7 @@ export const ImpactAnalysisPage: React.FC = () => {
 
         title: 'No Document Available',
 
-        message: 'Please upload a document first to analyze impact.',
+        message: 'A document is required before Impact Analysis can run. Please upload a document to begin.',
 
       });
 
@@ -162,9 +162,9 @@ export const ImpactAnalysisPage: React.FC = () => {
         selectedNewVerId || undefined,
       );
       if (result) setImpactResult(result);
-      await fetchGraph(selectedDocId);
+      await fetchGraph(selectedDocId === 'all' ? undefined : targetDocId);
     } else {
-      recalculateImpact('DOC-7704');
+      await recalculateImpact();
     }
 
   };
@@ -240,6 +240,31 @@ export const ImpactAnalysisPage: React.FC = () => {
           </div>
         )}
       </header>
+
+      {/* Empty State Banner when repository has no documents in Live Mode */}
+      {isLiveMode && documents.length === 0 && (
+        <div className="bg-panel border border-line rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-ice/10 border border-ice/20 text-ice">
+              <FileText className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold text-ink">No Documents in Knowledge Base</h2>
+              <p className="text-xs text-muted">
+                A document is required before Impact Analysis can run. Upload a document to begin tracking knowledge claims and affected AI answers.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard/documents')}
+            className="px-4 py-2 bg-raised hover:bg-panel border border-line-strong rounded-xl text-xs font-medium text-ink flex items-center gap-1.5 whitespace-nowrap transition-colors"
+          >
+            <span>Open Documents</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* Top Toolbar Strip */}
 
@@ -1119,13 +1144,17 @@ export const ImpactAnalysisPage: React.FC = () => {
 
                     <h3 className="text-xs font-semibold text-ink">
 
-                      Reimbursement Policy
+                      {isLiveMode
+                        ? (documents.find((d) => d.id === selectedDocId)?.title || documents[0]?.title || 'Monitored Policy')
+                        : 'Reimbursement Policy'}
 
                     </h3>
 
                     <div className="text-xs font-mono text-muted mt-1">
 
-                      DOC-7704 • v2.0
+                      {isLiveMode
+                        ? `${documents.find((d) => d.id === selectedDocId)?.id || documents[0]?.id || 'No Document'} • v${documents.find((d) => d.id === selectedDocId)?.versions?.[0]?.versionNumber || '1.0'}`
+                        : 'DOC-7704 • v2.0'}
 
                     </div>
 
